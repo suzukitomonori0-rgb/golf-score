@@ -192,12 +192,12 @@ Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a]
 const NONSHORT=Object.keys(RANK).length; // 14
 const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
 const RULES=[
- {t:'ホールベスト',p:'1点',b:['各ホールのベストスコアを競います。勝った一人に1点付きます。','同点の場合は次のホールに流れ、決着がついたホールの勝者が流れた分もまとめて獲得します。','ハンデは最大14。ショートホールを除いた全ホールに1打ずつ付くと考えてください（14未満はホールHDCP順に配分）。','18番で決着がつかない場合、流れた点は誰にも入りません。']},
+ {t:'ホールベスト',p:'1点',b:['各ホールのベストスコアを競います。勝った一人に1点付きます。','同点の場合は次のホールに流れ、決着がついたホールの勝者が流れた分もまとめて獲得します。','ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます（ショートホールを含む）。','18番で決着がつかない場合、流れた点は誰にも入りません。']},
  {t:'オリンピック',p:'金4・銀3・銅2・鉄1・ダイヤ5',b:['グリーンに乗った時点で遠い順に金・銀・銅・鉄とします。','1パットで入れた場合だけ得点になります（金4・銀3・銅2・鉄1点）。','グリーン外からのチップインはダイヤとして5点です。']},
  {t:'一通・カン',p:'各5点',b:['一通：金・銀・銅・鉄を各1つ以上揃えると5点。','カン：同じメダルを4つ揃えると5点。','2組目以降も揃うごとに5点加算します。ダイヤは一通・カンに含めません。']},
  {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ニアピンを取った人がパーを取れなかった場合も流れです。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
- {t:'ナッソー',p:'各3点',b:['全員総当たりで、ハンデ込みのスコアを比べます。','前半・後半・トータルの各セクションで勝つと3点。引き分けは0点です。']},
+ {t:'ナッソー',p:'各3点',b:['全員総当たりで、ハンデ込みのスコアを比べます。ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます。','前半・後半・トータルの各セクションで勝つと3点。引き分けは0点です。']},
  {t:'精算',p:'1点＝100円',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100円です。']}];
 
 function blankHole(){return {done:false,s:[null,null,null,null],oly:['','','',''],sand:[false,false,false,false],miss:[false,false,false,false],np:-1}}
@@ -210,7 +210,7 @@ let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!S.holes)S=fresh();
 if(!S.rate)S.rate=100;
-S.players.forEach(p=>{p.hc=Math.min(14,Math.max(0,Number(p.hc)||0))});
+S.players.forEach(p=>{p.hc=Math.min(36,Math.max(0,Number(p.hc)||0))});
 let modal=null, resetArm=false, endArm=false, delArm=false, histId=null;
 const HKEY='koga-golf-history-v1';
 let HIST=[];try{HIST=JSON.parse(localStorage.getItem(HKEY))||[]}catch(e){HIST=[]}
@@ -223,9 +223,11 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const order=()=>S.startIn?[10,11,12,13,14,15,16,17,18,1,2,3,4,5,6,7,8,9]:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
 const P=()=>[...Array(S.count).keys()];
 function strokes(hc,h){
-  if(COURSE[h].p===3)return 0;
-  hc=Math.max(0,Math.min(14,Math.round(Number(hc)||0)));
-  return Math.floor(hc/NONSHORT)+(RANK[h]<hc%NONSHORT?1:0);
+  hc=Math.max(0,Math.min(36,Math.round(Number(hc)||0)));
+  const ord=order(),front=ord.slice(0,9),inF=front.includes(h);
+  const hs=(inF?front:ord.slice(9)).sort((a,b)=>COURSE[a].h-COURSE[b].h);
+  const k=hs.length,rk=hs.indexOf(h);
+  return Math.floor(hc/k)+(rk<hc%k?1:0);
 }
 function relName(d){return {'-3':'アルバトロス','-2':'イーグル','-1':'バーディー','0':'パー','1':'ボギー','2':'ダボ','3':'トリプル'}[d]??(d>0?'+'+d:String(d))}
 
@@ -334,7 +336,7 @@ function renderHole(C){
     <div class="holehead"><div class="bigno">${h}</div>
       <div class="hmeta"><span class="lbl">${S.cur+1}ホール目 / ${h<=9?'OUT':'IN'}</span>
         <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span></div>
-        ${isShort?'<div><span class="tag">ショート・ハンデなし</span></div>':(()=>{const w=ps.filter(i=>strokes(S.players[i].hc,h)>0);return w.length?`<div><span class="tag hct">ハンデ付き：${w.map(i=>esc(S.players[i].name)).join('・')}</span></div>`:''})()}</div>
+        ${(()=>{const w=ps.filter(i=>strokes(S.players[i].hc,h)>0);return w.length?`<div><span class="tag hct">ハンデ付き：${w.map(i=>esc(S.players[i].name)).join('・')}</span></div>`:''})()}</div>
       <div class="carry">持ち越し<b class="num">${H.done?(C.hb[h].c||0):pending}</b></div></div>
     ${Object.values(S.holes).some(x=>x.done)?'':`<div class="box" style="margin:0 0 10px"><h3>スタートコース</h3><div class="seg"><button class="${!S.startIn?'on':''}" data-start="out">OUTスタート（1番〜）</button><button class="${S.startIn?'on':''}" data-start="in">INスタート（10番〜）</button></div></div>`}
     <div class="plist">${cards}</div>${np}${res}
@@ -426,11 +428,12 @@ function renderModal(){
   }
   const f=S.players.map((p,i)=>`<div class="field"${i>=S.count?' hidden':''}><div class="no">${i+1}</div>
     <input class="inp" id="pn${i}" data-pname="${i}" value="${esc(p.name)}" placeholder="名前" autocomplete="off">
-    <input class="inp n" id="ph${i}" data-phc="${i}" value="${esc(p.hc)}" inputmode="numeric" placeholder="HC" aria-label="ハンデ（最大14）"></div>`).join('');
+    <input class="inp n" id="ph${i}" data-phc="${i}" value="${esc(p.hc)}" inputmode="numeric" placeholder="HC" aria-label="ハンデ"></div>
+    <div class="hint" style="margin:-4px 0 8px 36px"${i>=S.count?' hidden':''}>前半 ${Math.round(Number(p.hc)||0)}・後半 ${Math.round(Number(p.hc)||0)}</div>`).join('');
   return `<div class="ov" data-close="1"><div class="sheet" role="dialog" aria-label="設定"><header><h2>設定</h2><button class="x" data-close="1" aria-label="閉じる">×</button></header>
     <div class="lab">人数</div><div class="seg">${[2,3,4].map(k=>`<button class="${S.count===k?'on':''}" data-count="${k}">${k}人</button>`).join('')}</div>
     <div class="lab">名前とハンディキャップ</div>${f}
-    <div class="hint">ハンデは最大14。ショートを除く14ホールにホールHDCP順で1打ずつ配分します（14なら全ミドル・ロングで1打）。</div>
+    <div class="hint">設定のハンデを前半・後半それぞれに適用し、各ハーフでコースHDCPの難しい順に1打ずつ付けます（例：3なら前半3・後半3）。</div>
     <div class="lab">スタートコース</div><div class="seg"><button class="${!S.startIn?'on':''}" data-start="out">OUTスタート（1番〜）</button><button class="${S.startIn?'on':''}" data-start="in">INスタート（10番〜）</button></div>
     <div class="hint">入れ替えても入力済みスコアはそのまま残ります。ナッソーの前半・後半はプレー順で区切ります。</div>
     <div class="lab">1点あたりの金額（任意）</div><input class="inp n" id="rate" data-rate="1" value="${S.rate||''}" inputmode="numeric" placeholder="100" style="width:120px">
@@ -487,7 +490,7 @@ app.addEventListener('change',e=>{
 app.addEventListener('input',e=>{
   const t=e.target,d=t.dataset;
   if(d.pname!==undefined){S.players[+d.pname].name=t.value||('プレーヤー'+'ABCD'[+d.pname]);save()}
-  if(d.phc!==undefined){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.players[+d.phc].hc=isNaN(v)?0:Math.min(14,v);save()}
+  if(d.phc!==undefined){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.players[+d.phc].hc=isNaN(v)?0:Math.min(36,v);save();const hn=t.closest('.field')&&t.closest('.field').nextElementSibling;const vv=isNaN(v)?0:Math.min(36,v);if(hn&&hn.classList.contains('hint'))hn.textContent=`前半 ${vv}・後半 ${vv}`}
   if(d.rate){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.rate=isNaN(v)?0:v;save()}
 });
 render();

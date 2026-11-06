@@ -495,7 +495,7 @@ app.addEventListener('change',e=>{
 });
 app.addEventListener('input',e=>{
   const t=e.target,d=t.dataset;
-  if(d.rhc!==undefined){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.roster[+d.rhc].hc=isNaN(v)?0:Math.min(36,v);syncPlayers();save()}
+  if(d.rhc!==undefined){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.roster[+d.rhc].hc=isNaN(v)?0:Math.min(36,v);syncPlayers();save();const hn=t.closest('.field')&&t.closest('.field').nextElementSibling;const vv=isNaN(v)?0:Math.min(36,v);if(hn&&hn.classList.contains('hint'))hn.textContent=`前半 ${vv}・後半 ${vv}`}
   if(d.rate){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.rate=isNaN(v)?0:v;save()}
 });
 render();
