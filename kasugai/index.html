@@ -198,7 +198,7 @@ const NONSHORT=Object.keys(RANK).length; // 14
 const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
 const RULES=[
  {t:'ホールベスト',p:'1点',b:['各ホールのベストスコアを競います。勝った一人に1点付きます。','同点の場合は誰にも点は入りません。次のホールへの流れ（持ち越し）はありません。']},
- {t:'ニアピン',p:'1点',b:['ショートホール4ホールすべてが対象。一番近い人が1点獲得します。','該当者なしの場合は流れ、次のショートホールに加算します。','前半・後半それぞれ2回目のショートで決着がつかなければ、流れた点は消えます（後半には持ち越しません）。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
+ {t:'ニアピン',p:'1点',b:['ショートホール4ホールすべてが対象。一番近い人が1点獲得します。','該当者なしの場合は流れ、次のショートホールに加算します。','前半・後半それぞれ2回目のショートで決着がつかなければ、流れた点は消えます（後半には持ち越しません）。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','消防隊！ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。さらに消した人に1点加算します（最初に消した1人のみ）。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
  {t:'バーディー・砂イチ',p:'各1点',b:['バーディーを獲得したら1点（イーグル以上も1点）。','砂イチはバンカーから出して1パットで成立、1点。','同じホールで両方達成した場合は両方加算します。']},
  {t:'サオ・2サオ',p:'1点・2点',b:['ファーストパットが1ピン以上の距離で、宣言してから1パットで入れたらサオ、1点。','2ピン以上の距離なら2サオ、2点。']},
  {t:'ナッソー',p:'各1点',b:['全員総当たりで、ハンデ込みのスコアを比べます。ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます。','前半・後半の各セクションで勝つと、対戦相手から1点もらいます（他の人とは無関係）。引き分けは0点です。トータルはありません。']},
@@ -263,10 +263,11 @@ function compute(){
     });
     if(par===3){
       const has=H.np>=0&&H.np<n;
-      const kill=ps.some(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par);
+      const killers=ps.filter(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par).slice(0,1),kill=killers.length>0;
+      if(has&&kill)killers.forEach(i=>{pts[i].np+=1});
       if(has&&H.s[H.np]<=par&&!kill){const v=1+npc;pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
       else{const half=ord.indexOf(h)<9?ord.slice(0,9):ord.slice(9);const nth=half.filter(x=>COURSE[x].p===3).indexOf(h)+1;const why=!has?'none':H.s[H.np]>par?'bogey':'kill';
-        if(nth>=2){npc=0;npr[h]={c:0,why,lost:true}}else{npc++;npr[h]={c:npc,why}}}
+        if(nth>=2){npc=0;npr[h]={c:0,why,lost:true,killers:has?killers:[]}}else{npc++;npr[h]={c:npc,why,killers:has?killers:[]}}}
     }
   }
   const sets=ps.map(()=>({ittsu:0,kan:0}));
@@ -333,14 +334,14 @@ function renderHole(C){
   const np=isShort?`<div class="box"><h3>ニアピン（${1+npPend}点${npPend?`・流れ${npPend}含む`:''}）</h3><div class="chips">
     ${ps.map(i=>`<button class="chip np" aria-pressed="${H.np===i}" data-np="${i}">${esc(S.players[i].name)}</button>`).join('')}
     <button class="chip np" aria-pressed="${H.np<0}" data-np="-1">該当なし</button></div>
-    <h3 style="margin-top:12px">ワンオンしなかった人</h3><div class="chips">
+    <h3 style="margin-top:12px">消防隊！ニアピンを消した人（最初の1人）</h3><div class="chips">
     ${ps.map(i=>`<button class="chip sand" aria-pressed="${!!(H.miss&&H.miss[i])}" data-miss="${i}"${H.np===i?' disabled':''}>${esc(S.players[i].name)}</button>`).join('')}</div>
-    <div class="hint">この中の誰かがパー以上を取るとニアピン消しで流れます。</div></div>`:'';
+    <div class="hint">ワンオンせずにパー以上を取り、最初にニアピンを消した人を1人選んでください。その人に1点入り、ニアピンは流れます。</div></div>`:'';
 
   let res='';
   if(H.done){const r=C.hb[h];
     const q=C.npr[h];
-    const npTxt=isShort?`<br>ニアピン：${q.w!=null?`<b>${esc(S.players[q.w].name)}</b> が ${q.v}点 獲得`:({none:'該当者なし',bogey:'パーを取れず不成立',kill:'ワンオンしなかった人がパーを取り、ニアピン消し'})[q.why]+(q.lost?'。2回目のショートのため、流れた点は消えます':'。次のショートへ流れます')}`:'';
+    const npTxt=isShort?`<br>ニアピン：${q.w!=null?`<b>${esc(S.players[q.w].name)}</b> が ${q.v}点 獲得`:({none:'該当者なし',bogey:'パーを取れず不成立',kill:'消防隊！ワンオンしなかった人がパーを取り、ニアピン消し'})[q.why]+(q.killers&&q.killers.length?`（消した${q.killers.map(i=>esc(S.players[i].name)).join('・')}に1点）`:'')+(q.lost?'。2回目のショートのため、流れた点は消えます':'。次のショートへ流れます')}`:'';
     res=`<div class="result">${r.w!=null?`ホールベスト：<b>${esc(S.players[r.w].name)}</b> が 1点 獲得`:'ホールベスト：同点のため該当なし'}${npTxt}</div>`;}
 
   return `<main class="wrap">
@@ -488,7 +489,7 @@ app.addEventListener('click',e=>{
   if(d.sao){const[i,k]=d.sao.split(':');if(!H.sao)H.sao=['','','',''];H.sao[+i]=H.sao[+i]===k?'':k;save();render();return}
   if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();render();return}
   if(d.np!==undefined){H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();render();return}
-  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=[false,false,false,false];H.miss[i]=!H.miss[i];save();render();return}
+  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=[false,false,false,false];const on=!H.miss[i];H.miss=H.miss.map(()=>false);H.miss[i]=on;save();render();return}
   if(d.confirm){const par=COURSE[h].p;for(let i=0;i<4;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
     if(S.cur<17)go(S.cur+1);else setView('sum');return}
   if(d.undo){H.done=false;save();render();return}
