@@ -205,7 +205,7 @@ const NONSHORT=Object.keys(RANK).length; // 14
 const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
 const RULES=[
  {t:'オリンピック',p:'金4・銀3・銅2・鉄1・ダイヤ5',b:['グリーンに乗った時点で遠い順に金・銀・銅・鉄とします。','1パットで入れた場合だけ得点になります（金4・銀3・銅2・鉄1点）。','グリーン外からのチップインはダイヤとして5点です。']},
- {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。消した人は1点獲得します。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
+ {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。最初に消した1人だけが1点獲得します。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
  {t:'サオ',p:'+3点・-3点',b:['カップから1ピン以上離れたところから、サオを宣言して1パットで入れたら3点獲得。','サオを宣言して3パットしたら-3点。']},
  {t:'精算',p:'1点＝100プノンペン',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100プノンペンです。']}];
@@ -275,7 +275,7 @@ function compute(){
     });
     if(par===3){
       const has=H.np>=0&&H.np<n;
-      const killers=ps.filter(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par),kill=killers.length>0;
+      const killers=ps.filter(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par).slice(0,1),kill=killers.length>0;
       if(has&&kill)killers.forEach(i=>{pts[i].np+=1});
       if(has&&H.s[H.np]<=par&&!kill){const v=3*(1+npc);pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
       else{npc++;npr[h]={c:npc,why:!has?'none':H.s[H.np]>par?'bogey':'kill',killers:has?killers:[]}}
@@ -347,9 +347,9 @@ function renderHole(C){
   const np=isShort?`<div class="box"><h3>ニアピン（${3*(1+npPend)}点${npPend?`・流れ${npPend}含む`:''}）</h3><div class="chips">
     ${ps.map(i=>`<button class="chip np" aria-pressed="${H.np===i}" data-np="${i}">${esc(S.players[i].name)}</button>`).join('')}
     <button class="chip np" aria-pressed="${H.np<0}" data-np="-1">該当なし</button></div>
-    <h3 style="margin-top:12px">ワンオンしなかった人</h3><div class="chips">
+    <h3 style="margin-top:12px">ニアピンを消した人（最初の1人）</h3><div class="chips">
     ${ps.map(i=>`<button class="chip sand" aria-pressed="${!!(H.miss&&H.miss[i])}" data-miss="${i}"${H.np===i?' disabled':''}>${esc(S.players[i].name)}</button>`).join('')}</div>
-    <div class="hint">この中の誰かがパー以上を取るとニアピン消しで流れます。</div></div>`:'';
+    <div class="hint">ワンオンせずにパー以上を取り、最初にニアピンを消した人を1人選んでください。その人に1点入り、ニアピンは流れます。</div></div>`:'';
 
   let res='';
   if(H.done){const r=C.hb[h];
@@ -497,7 +497,7 @@ app.addEventListener('click',e=>{
   if(d.sao){const[i,k]=d.sao.split(':');if(!H.sao)H.sao=Array(MAXP).fill('');H.sao[+i]=H.sao[+i]===k?'':k;save();render();return}
   if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();render();return}
   if(d.np!==undefined){H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();render();return}
-  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);H.miss[i]=!H.miss[i];save();render();return}
+  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);const on=!H.miss[i];H.miss=H.miss.map(()=>false);H.miss[i]=on;save();render();return}
   if(d.confirm){const par=COURSE[h].p;for(let i=0;i<MAXP;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
     if(S.cur<17)go(S.cur+1);else setView('sum');return}
   if(d.undo){H.done=false;save();render();return}
