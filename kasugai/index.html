@@ -198,9 +198,9 @@ const NONSHORT=Object.keys(RANK).length; // 14
 const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
 const RULES=[
  {t:'ホールベスト',p:'1点',b:['各ホールのベストスコアを競います。勝った一人に1点付きます。','同点の場合は次のホールに流れ、決着がついたホールの勝者が流れた分もまとめて獲得します。','流れは2ホールまで。3ホール続けて同点になった時点で流れた点は消え、0からやり直します（最大3点）。','18番で決着がつかない場合、流れた点は誰にも入りません。']},
- {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。一番近い人が3点獲得します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
- {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
- {t:'サオ・2サオ',p:'3点・6点',b:['ファーストパットが1ピン以上の距離で、宣言してから1パットで入れたらサオ、3点。','2ピン以上の距離なら2サオ、6点。']},
+ {t:'ニアピン',p:'1点',b:['ショートホール4ホールすべてが対象。一番近い人が1点獲得します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
+ {t:'バーディー・砂イチ',p:'各1点',b:['バーディーを獲得したら1点（イーグル以上も1点）。','砂イチはバンカーから出して1パットで成立、1点。','同じホールで両方達成した場合は両方加算します。']},
+ {t:'サオ・2サオ',p:'1点・2点',b:['ファーストパットが1ピン以上の距離で、宣言してから1パットで入れたらサオ、1点。','2ピン以上の距離なら2サオ、2点。']},
  {t:'ナッソー',p:'各1点',b:['全員総当たりで、ハンデ込みのスコアを比べます。ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます。','前半・後半の各セクションで勝つと、対戦相手から1点もらいます（他の人とは無関係）。引き分けは0点です。トータルはありません。']},
  {t:'精算',p:'1点＝1,000円',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは1,000円です。']}];
 
@@ -257,14 +257,14 @@ function compute(){
     if(w.length===1){pts[w[0]].hb+=1+carry;hb[h]={w:w[0],v:1+carry};carry=0}
     else{carry++;if(carry>2){carry=0;hb[h]={c:0,lost:true}}else hb[h]={c:carry}}
     ps.forEach(i=>{
-      if(H.s[i]<=par-1)pts[i].bd+=3;
-      if(H.sand[i])pts[i].sand+=3;
-      if(H.sao&&H.sao[i])pts[i].sao+=H.sao[i]==='2'?6:3;
+      if(H.s[i]<=par-1)pts[i].bd+=1;
+      if(H.sand[i])pts[i].sand+=1;
+      if(H.sao&&H.sao[i])pts[i].sao+=H.sao[i]==='2'?2:1;
     });
     if(par===3){
       const has=H.np>=0&&H.np<n;
       const kill=ps.some(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par);
-      if(has&&H.s[H.np]<=par&&!kill){const v=3*(1+npc);pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
+      if(has&&H.s[H.np]<=par&&!kill){const v=1+npc;pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
       else{npc++;npr[h]={c:npc,why:!has?'none':H.s[H.np]>par?'bogey':'kill'}}
     }
   }
@@ -324,12 +324,12 @@ function renderHole(C){
         <button class="chip sand" aria-pressed="${!!(H.sao&&H.sao[i]==='1')}" data-sao="${i}:1">サオ</button>
         <button class="chip sand" aria-pressed="${!!(H.sao&&H.sao[i]==='2')}" data-sao="${i}:2">2サオ</button>
         <button class="chip sand" aria-pressed="${!!H.sand[i]}" data-sand="${i}">砂イチ</button>
-        ${birdie?`<span class="badge">${relName(H.s[i]-par)} +3</span>`:''}
+        ${birdie?`<span class="badge">${relName(H.s[i]-par)} +1</span>`:''}
       </div></div>`;
   }).join('');
 
   const npPend=(()=>{let k=0;for(const x of order()){if(x===h)break;const r=C.npr[x];if(r)k=r.c||0}return k})();
-  const np=isShort?`<div class="box"><h3>ニアピン（${3*(1+npPend)}点${npPend?`・流れ${npPend}含む`:''}）</h3><div class="chips">
+  const np=isShort?`<div class="box"><h3>ニアピン（${1+npPend}点${npPend?`・流れ${npPend}含む`:''}）</h3><div class="chips">
     ${ps.map(i=>`<button class="chip np" aria-pressed="${H.np===i}" data-np="${i}">${esc(S.players[i].name)}</button>`).join('')}
     <button class="chip np" aria-pressed="${H.np<0}" data-np="-1">該当なし</button></div>
     <h3 style="margin-top:12px">ワンオンしなかった人</h3><div class="chips">
@@ -386,7 +386,7 @@ function renderSum(C,top=''){
       if(!H.done)return '<td style="color:var(--muted)">·</td>';
       const v=H.s[i],par=COURSE[h].p;let m='';
       if(r.w===i)m+=`<span class="mk hb">○${r.v>1?r.v:''}</span>`;
-      if(C.npr[h]&&C.npr[h].w===i)m+=`<span class="mk x">N${C.npr[h].v>3?C.npr[h].v:''}</span>`;
+      if(C.npr[h]&&C.npr[h].w===i)m+=`<span class="mk x">N${C.npr[h].v>1?C.npr[h].v:''}</span>`;
       if(H.sand[i])m+='<span class="mk x">砂</span>';
       if(H.sao&&H.sao[i])m+=`<span class="mk x">${H.sao[i]==='2'?'2サ':'サ'}</span>`;
       const st=strokes(S.players[i].hc,h);
