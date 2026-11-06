@@ -201,7 +201,7 @@ const RULES=[
  {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。一番近い人が3点獲得します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
  {t:'サオ・2サオ',p:'3点・6点',b:['ファーストパットが1ピン以上の距離で、宣言してから1パットで入れたらサオ、3点。','2ピン以上の距離なら2サオ、6点。']},
- {t:'ナッソー',p:'各1点',b:['全員総当たりで、ハンデ込みのスコアを比べます。ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます。','前半・後半の各セクションで勝つと1点。引き分けは0点です。トータルはありません。']},
+ {t:'ナッソー',p:'各1点',b:['全員総当たりで、ハンデ込みのスコアを比べます。ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます。','前半・後半の各セクションで勝つと、対戦相手から1点もらいます（他の人とは無関係）。引き分けは0点です。トータルはありません。']},
  {t:'精算',p:'1点＝1,000円',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは1,000円です。']}];
 
 function blankHole(){return {done:false,s:[null,null,null,null],oly:['','','',''],sand:[false,false,false,false],sao:['','','',''],miss:[false,false,false,false],np:-1}}
@@ -273,22 +273,22 @@ function compute(){
   const halves=[ord.slice(0,9),ord.slice(9)];
   const net=(i,hs)=>hs.reduce((a,h)=>a+(S.holes[h].done?S.holes[h].s[i]-strokes(S.players[i].hc,h):0),0);
   const gross=(i,hs)=>hs.reduce((a,h)=>a+(S.holes[h].done?S.holes[h].s[i]:0),0);
-  const nas=[];
+  const nas=[];const nasBal=ps.map(()=>0);
   for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
     const row={i,j,sec:[]};
     halves.forEach(hs=>{
       const doneN=hs.filter(h=>S.holes[h].done).length,complete=doneN===hs.length;
       const a=net(i,hs),b=net(j,hs);
       const r={a,b,complete,started:doneN>0,w:a<b?i:b<a?j:-1};
-      if(complete&&r.w>=0)pts[r.w].nas+=1;
+      if(complete&&r.w>=0){const l=r.w===i?j:i;nasBal[r.w]+=1;nasBal[l]-=1}
       row.sec.push(r);
     });
     nas.push(row);
   }
   const tot=ps.map(i=>Object.values(pts[i]).reduce((a,b)=>a+b,0));
   const sum=tot.reduce((a,b)=>a+b,0);
-  const bal=tot.map(t=>t*n-sum);
-  return {pts,med,sets,hb,carry,npr,npc,nas,tot,bal,gross,net,halves};
+  const bal=tot.map((t,i)=>t*n-sum+nasBal[i]);
+  return {pts,med,sets,hb,carry,npr,npc,nas,nasBal,tot,bal,gross,net,halves};
 }
 
 function hole(){return order()[S.cur]}
@@ -360,18 +360,19 @@ function renderHole(C){
 function renderSum(C,top=''){
   const ps=P(),n=S.count,ord=order();
   const doneN=ord.filter(h=>S.holes[h].done).length;
-  const rank=[...ps].sort((a,b)=>C.tot[b]-C.tot[a]);
+  const rank=[...ps].sort((a,b)=>C.bal[b]-C.bal[a]);
   const fmt=v=>(v>0?'+':'')+v;
   const yen=v=>S.rate>0?`<div style="font-size:11px">${v>0?'+':''}${(v*S.rate).toLocaleString('ja-JP')}円</div>`:'';
-  const stand=rank.map((i,k)=>`<div class="st${k===0&&C.tot[i]>0?' top':''}"><div class="rk">${k+1}</div>
+  const stand=rank.map((i,k)=>`<div class="st${k===0&&C.bal[i]>0?' top':''}"><div class="rk">${k+1}</div>
     <div class="nm">${esc(S.players[i].name)}<div style="font-size:11px;color:var(--muted);font-weight:500">グロス ${C.gross(i,ord)||'–'} ／ ネット ${doneN?C.net(i,ord):'–'}</div></div>
     <div class="pt">点数<b>${C.tot[i]}</b></div>
     <div class="bal">勝ち負け<b class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${fmt(C.bal[i])}</b>${yen(C.bal[i])}</div></div>`).join('');
 
-  const cats=[['hb','ホールベスト'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ'],['sao','サオ'],['nas','ナッソー']];
+  const cats=[['hb','ホールベスト'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ'],['sao','サオ']];
   const brk=`<div class="tw"><table><thead><tr><th class="l">種目</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}</tr></thead><tbody>
     ${cats.map(([k,l])=>`<tr><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.pts[i][k]||'·'}</td>`).join('')}</tr>`).join('')}
-    <tr class="tot"><td class="l">合計</td>${ps.map(i=>`<td class="sc">${C.tot[i]}</td>`).join('')}</tr></tbody></table></div>`;
+    <tr class="tot"><td class="l">合計</td>${ps.map(i=>`<td class="sc">${C.tot[i]}</td>`).join('')}</tr>
+    <tr><td class="l">ナッソー<div style="font-size:10px;color:var(--muted)">対戦相手との1対1</div></td>${ps.map(i=>`<td class="sc ${C.nasBal[i]>0?'pos':C.nasBal[i]<0?'neg':''}">${C.nasBal[i]>0?'+':''}${C.nasBal[i]||'·'}</td>`).join('')}</tr></tbody></table></div>`;
 
   const secN=['前半','後半'];
   const nas=C.nas.map(r=>`<tr><td class="l">${esc(S.players[r.i].name)}<br>vs ${esc(S.players[r.j].name)}</td>${r.sec.map(x=>{
@@ -398,9 +399,9 @@ function renderSum(C,top=''){
 
   return `<main class="wrap">${top}
     <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.carry?` · ホールベスト流れ${C.carry}`:''}${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
-      <div class="hint">勝ち負け＝他の各人との点数の差の合計（全員で合計0）。${S.rate>0?`1点＝${S.rate}円で換算。`:''}</div></div>
+      <div class="hint">勝ち負け＝他の各人との点数の差の合計に、ナッソーの1対1の勝ち負けを足したもの（全員で合計0）。${S.rate>0?`1点＝${S.rate}円で換算。`:''}</div></div>
     <div class="sec"><h2>種目別の点数</h2>${brk}</div>
-    <div class="sec"><h2>ナッソー（ハンデ込み・各1点）</h2>${n>1?nasT:'<div class="empty">2人以上で対戦します</div>'}</div>
+    <div class="sec"><h2>ナッソー（ハンデ込み・1対1で各1点）</h2>${n>1?nasT:'<div class="empty">2人以上で対戦します</div>'}</div>
     <div class="sec"><h2>スコアカード</h2>${card}</div>
     ${S.view==='sum'?(doneN>0?`<button class="btn pri" data-end="1" style="width:100%;margin-top:22px;${endArm?'background:var(--flag);border-color:var(--flag);color:var(--flag-ink)':''}">${endArm?(doneN<18?`まだ${18-doneN}ホール未確定です。もう一度押すと${doneN}ホールで終了します`:'もう一度押すと保存してゲームをリセットします'):(doneN<18?`ここで終了する（${doneN}/18ホール）`:'全て確定して終了')}</button>
       ${endArm?'<button class="btn" data-endcancel="1" style="width:100%;margin-top:8px">キャンセル</button>':''}
@@ -421,7 +422,7 @@ function renderHist(){
     histId=null;
   }
   if(!HIST.length)return `<main class="wrap"><div class="sec"><h2>履歴</h2><div class="empty">まだ保存されたラウンドはありません。集計画面の「全て確定して終了」で保存されます。</div></div></main>`;
-  const items=HIST.map(rec=>withRec(rec,()=>{const C=compute();const ps=P();const top=[...ps].sort((a,b)=>C.tot[b]-C.tot[a]);
+  const items=HIST.map(rec=>withRec(rec,()=>{const C=compute();const ps=P();const top=[...ps].sort((a,b)=>C.bal[b]-C.bal[a]);
     return `<button class="st" data-hopen="${rec.id}" style="grid-template-columns:minmax(0,1fr) auto;text-align:left;width:100%">
       <div class="nm" style="white-space:normal"><b>${fmtDate(rec.id)}</b>${(()=>{const k=Object.values(rec.holes).filter(x=>x.done).length;return k<18?` <span class="tag">${k}H途中終了</span>`:''})()}<div style="font-size:12px;color:var(--muted);font-weight:500">${top.map(i=>`${esc(S.players[i].name)} <span class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${C.bal[i]>0?'+':''}${C.bal[i]}</span>`).join('　')}</div></div>
       <div style="color:var(--muted);font-size:20px">›</div></button>`})).join('');
