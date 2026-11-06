@@ -187,7 +187,7 @@ tr.turn td{border-top:2px solid var(--green)}
 const KEY='kasugai-golf-game-v1';
 const COURSE={1:{p:5,h:7},2:{p:3,h:13},3:{p:4,h:11},4:{p:4,h:1},5:{p:3,h:15},6:{p:4,h:5},7:{p:4,h:3},8:{p:4,h:17},9:{p:5,h:9},
  10:{p:4,h:16},11:{p:5,h:4},12:{p:4,h:12},13:{p:3,h:18},14:{p:4,h:6},15:{p:4,h:2},16:{p:4,h:14},17:{p:5,h:8},18:{p:3,h:10}};
-const ROSTER=['鈴木','杉本','田野倉','木原'];
+const ROSTER=['鈴木','杉本','田野倉','木原','池田','Aさん','Bさん'];
 const RANK={};
 Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a].h-COURSE[b].h).forEach((h,i)=>RANK[h]=i);
 const NONSHORT=Object.keys(RANK).length; // 14
@@ -203,14 +203,15 @@ const RULES=[
 function blankHole(){return {done:false,s:[null,null,null,null],oly:['','','',''],sand:[false,false,false,false],sao:['','','',''],miss:[false,false,false,false],np:-1}}
 function fresh(){
   const holes={};for(let h=1;h<=18;h++)holes[h]=blankHole();
-  return {count:4,roster:ROSTER.map(n=>({name:n,hc:0,on:true})),players:ROSTER.map(n=>({name:n,hc:0})),
+  return {count:4,roster:ROSTER.map((n,k)=>({name:n,hc:0,on:k<4})),players:ROSTER.slice(0,4).map(n=>({name:n,hc:0})),
     startIn:false,rate:1000,rv:2,holes,cur:0,view:'hole'};
 }
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!S.holes)S=fresh();
 if(!S.rate||S.rv!==2){S.rate=1000;S.rv=2}
-if(!S.roster)S.roster=ROSTER.map(n=>({name:n,hc:0,on:true}));
+if(!S.roster)S.roster=ROSTER.map((n,k)=>({name:n,hc:0,on:k<4}));
+ROSTER.forEach(n=>{if(!S.roster.some(x=>x.name===n))S.roster.push({name:n,hc:0,on:false})});
 S.roster.forEach(p=>{p.hc=Math.min(36,Math.max(0,Number(p.hc)||0))});
 function syncPlayers(){const sel=S.roster.filter(x=>x.on);S.players=sel.map(x=>({name:x.name,hc:x.hc}));S.count=sel.length}
 syncPlayers();
@@ -434,7 +435,7 @@ function renderModal(){
     <div class="hint" style="margin:-4px 0 8px 36px">前半 ${halfHc(p.hc)[0]}・後半 ${halfHc(p.hc)[1]}</div>`:'').join('');
   return `<div class="ov" data-close="1"><div class="sheet" role="dialog" aria-label="設定"><header><h2>設定</h2><button class="x" data-close="1" aria-label="閉じる">×</button></header>
     <div class="lab">参加者（タップで選択）</div><div class="chips">${S.roster.map((p,k)=>`<button class="chip sand" style="font-size:15px;padding:6px 16px" aria-pressed="${p.on}" data-pick="${k}"${locked?' disabled':''}>${esc(p.name)}</button>`).join('')}</div>
-    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜4人を選択（現在${S.count}人）。`}</div>
+    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜4人を選択（現在${S.count}人）。4人選んでいるときは、誰かを外してから選んでください。`}</div>
     <div class="lab">ハンディキャップ</div>${f}
     <div class="hint">設定のハンデを前半・後半それぞれに適用し、各ハーフでコースHDCPの難しい順に1打ずつ付けます（例：3なら前半3・後半3）。</div>
     
@@ -482,7 +483,7 @@ app.addEventListener('click',e=>{
   if(d.confirm){const par=COURSE[h].p;for(let i=0;i<4;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
     if(S.cur<17)go(S.cur+1);else setView('sum');return}
   if(d.undo){H.done=false;save();render();return}
-  if(d.pick!==undefined){const k=+d.pick,x=S.roster[k];if(x.on&&S.roster.filter(y=>y.on).length<=2)return;x.on=!x.on;syncPlayers();save();render();return}
+  if(d.pick!==undefined){const k=+d.pick,x=S.roster[k];const nOn=S.roster.filter(y=>y.on).length;if(x.on&&nOn<=2)return;if(!x.on&&nOn>=4)return;x.on=!x.on;syncPlayers();save();render();return}
   if(d.start){const v=d.start==='in';if(v!==S.startIn){const h0=hole();S.startIn=v;S.cur=modal?order().indexOf(h0):0;save()}render();return}
   if(d.reset){if(!resetArm){resetArm=true;render();return}
     const keep={count:S.count,roster:S.roster,players:S.players,startIn:S.startIn,rate:S.rate};S=Object.assign(fresh(),keep);resetArm=false;modal=null;save();render();return}
