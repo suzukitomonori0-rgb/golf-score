@@ -204,7 +204,6 @@ const NONSHORT=Object.keys(RANK).length; // 14
 const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
 const RULES=[
  {t:'オリンピック',p:'金4・銀3・銅2・鉄1・ダイヤ5',b:['グリーンに乗った時点で遠い順に金・銀・銅・鉄とします。','1パットで入れた場合だけ得点になります（金4・銀3・銅2・鉄1点）。','グリーン外からのチップインはダイヤとして5点です。']},
- {t:'一通・カン',p:'各5点',b:['一通：金・銀・銅・鉄を各1つ以上揃えると5点。','カン：同じメダルを4つ揃えると5点。','2組目以降も揃うごとに5点加算します。ダイヤは一通・カンに含めません。']},
  {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
  {t:'精算',p:'1点＝100円',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100円です。']}];
@@ -278,8 +277,7 @@ function compute(){
       else{npc++;npr[h]={c:npc,why:!has?'none':H.s[H.np]>par?'bogey':'kill'}}
     }
   }
-  const sets=ps.map(i=>{const c=med[i];const ittsu=Math.min(c.g,c.s,c.b,c.i);
-    const kan=['g','s','b','i'].reduce((a,k)=>a+Math.floor(c[k]/4),0);pts[i].set=(ittsu+kan)*5;return {ittsu,kan}});
+  const sets=ps.map(()=>({ittsu:0,kan:0}));
   // nassau
   const halves=[ord.slice(0,9),ord.slice(9),ord];
   const net=(i,hs)=>hs.reduce((a,h)=>a+(S.holes[h].done?S.holes[h].s[i]-strokes(S.players[i].hc,h):0),0);
@@ -379,10 +377,10 @@ function renderSum(C,top=''){
     <div class="pt">点数<b>${C.tot[i]}</b></div>
     <div class="bal">勝ち負け<b class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${fmt(C.bal[i])}</b>${yen(C.bal[i])}</div></div>`).join('');
 
-  const cats=[['oly','オリンピック'],['set','一通・カン'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ']];
+  const cats=[['oly','オリンピック'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ']];
   const brk=`<div class="tw"><table><thead><tr><th class="l">種目</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}</tr></thead><tbody>
     ${cats.map(([k,l])=>`<tr><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.pts[i][k]||'·'}</td>`).join('')}</tr>`).join('')}
-    <tr><td class="l" style="font-size:11px;color:var(--muted)">メダル 金/銀/銅/鉄</td>${ps.map(i=>{const m=C.med[i];return `<td style="font-size:11px;color:var(--muted)">${m.g}/${m.s}/${m.b}/${m.i}${C.sets[i].ittsu?` 一通${C.sets[i].ittsu>1?'×'+C.sets[i].ittsu:''}`:''}${C.sets[i].kan?` カン${C.sets[i].kan>1?'×'+C.sets[i].kan:''}`:''}</td>`}).join('')}</tr>
+    <tr><td class="l" style="font-size:11px;color:var(--muted)">メダル 金/銀/銅/鉄</td>${ps.map(i=>{const m=C.med[i];return `<td style="font-size:11px;color:var(--muted)">${m.g}/${m.s}/${m.b}/${m.i}</td>`}).join('')}</tr>
     <tr class="tot"><td class="l">合計</td>${ps.map(i=>`<td class="sc">${C.tot[i]}</td>`).join('')}</tr></tbody></table></div>`;
 
   const secN=['前半','後半','トータル'];
