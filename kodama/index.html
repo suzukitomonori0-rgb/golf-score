@@ -205,7 +205,7 @@ const NONSHORT=Object.keys(RANK).length; // 14
 const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
 const RULES=[
  {t:'オリンピック',p:'金4・銀3・銅2・鉄1・ダイヤ5',b:['グリーンに乗った時点で遠い順に金・銀・銅・鉄とします。','1パットで入れた場合だけ得点になります（金4・銀3・銅2・鉄1点）。','グリーン外からのチップインはダイヤとして5点です。']},
- {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
+ {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。消した人は1点獲得します。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
  {t:'サオ',p:'+3点・-3点',b:['カップから1ピン以上離れたところから、サオを宣言して1パットで入れたら3点獲得。','サオを宣言して3パットしたら-3点。']},
  {t:'精算',p:'1点＝100プノンペン',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100プノンペンです。']}];
@@ -275,9 +275,10 @@ function compute(){
     });
     if(par===3){
       const has=H.np>=0&&H.np<n;
-      const kill=ps.some(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par);
+      const killers=ps.filter(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par),kill=killers.length>0;
+      if(has&&kill)killers.forEach(i=>{pts[i].np+=1});
       if(has&&H.s[H.np]<=par&&!kill){const v=3*(1+npc);pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
-      else{npc++;npr[h]={c:npc,why:!has?'none':H.s[H.np]>par?'bogey':'kill'}}
+      else{npc++;npr[h]={c:npc,why:!has?'none':H.s[H.np]>par?'bogey':'kill',killers:has?killers:[]}}
     }
   }
   const sets=ps.map(()=>({ittsu:0,kan:0}));
@@ -353,7 +354,7 @@ function renderHole(C){
   let res='';
   if(H.done){const r=C.hb[h];
     const q=C.npr[h];
-    const npTxt=isShort?`<br>ニアピン：${q.w!=null?`<b>${esc(S.players[q.w].name)}</b> が ${q.v}点 獲得`:({none:'該当者なしのため次のショートへ流れ',bogey:'パーを取れなかったため次のショートへ流れ',kill:'ワンオンしなかった人がパーを取ったため、ニアピン消しで流れ'})[q.why]}`:'';
+    const npTxt=isShort?`<br>ニアピン：${q.w!=null?`<b>${esc(S.players[q.w].name)}</b> が ${q.v}点 獲得`:({none:'該当者なしのため次のショートへ流れ',bogey:'パーを取れなかったため次のショートへ流れ',kill:'ワンオンしなかった人がパーを取ったため、ニアピン消しで流れ'})[q.why]}${q.killers&&q.killers.length?`（消した${q.killers.map(i=>esc(S.players[i].name)).join('・')}に1点）`:''}`:'';
     res=isShort?`<div class="result">${npTxt.replace(/^<br>/,'')}</div>`:'';}
 
   return `<main class="wrap">
