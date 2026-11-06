@@ -211,7 +211,9 @@ const RULES=[
  {t:'ナッソー',p:'各3点',b:['全員総当たりで、ハンデ込みのスコアを比べます。ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます（ショートホールを除く）。','前半・後半・トータルの各セクションで勝つと3点。引き分けは0点です。']},
  {t:'精算',p:'1点＝100円',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100円です。']}];
 
-function blankHole(){return {done:false,s:[null,null,null,null],oly:['','','',''],sand:[false,false,false,false],miss:[false,false,false,false],np:-1}}
+const MAXP=5;
+function blankHole(){return {done:false,s:Array(MAXP).fill(null),oly:Array(MAXP).fill(''),sand:Array(MAXP).fill(false),miss:Array(MAXP).fill(false),np:-1}}
+function padHole(H){const pad=(a,v)=>{a=a||[];while(a.length<MAXP)a.push(v);return a};H.s=pad(H.s,null);H.oly=pad(H.oly,'');H.sand=pad(H.sand,false);H.miss=pad(H.miss,false);return H}
 function fresh(){
   const holes={};for(let h=1;h<=18;h++)holes[h]=blankHole();
   return {count:4,roster:ROSTER.map((n,k)=>({key:n,name:n,hc:0,on:k<4})),players:ROSTER.slice(0,4).map(n=>({name:n,hc:0})),
@@ -230,6 +232,7 @@ const pname=x=>(x.name||'').trim()||x.key;
 S.roster.forEach(p=>{p.hc=Math.min(36,Math.max(0,Number(p.hc)||0))});
 function syncPlayers(){const sel=S.roster.filter(x=>x.on);S.players=sel.map(x=>({name:pname(x),hc:x.hc}));S.count=sel.length}
 syncPlayers();
+Object.values(S.holes).forEach(padHole);
 let modal=null, resetArm=false, endArm=false, delArm=false, histId=null;
 const HKEY='yomiuri-golf-history-v1';
 let HIST=[];try{HIST=JSON.parse(localStorage.getItem(HKEY))||[]}catch(e){HIST=[]}
@@ -453,7 +456,7 @@ function renderModal(){
     <div class="hint" style="margin:-4px 0 8px 36px">前半 ${Math.round(Number(p.hc)||0)}・後半 ${Math.round(Number(p.hc)||0)}</div>`:'').join('');
   return `<div class="ov" data-close="1"><div class="sheet" role="dialog" aria-label="設定"><header><h2>設定</h2><button class="x" data-close="1" aria-label="閉じる">×</button></header>
     <div class="lab">参加者（タップで選択）</div><div class="chips">${S.roster.map((p,k)=>`<button class="chip sand" style="font-size:15px;padding:6px 16px" aria-pressed="${p.on}" data-pick="${k}"${locked?' disabled':''}>${esc(pname(p))}</button>`).join('')}</div>
-    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜4人を選択（現在${S.count}人）。4人選んでいるときは、誰かを外してから選んでください。A〜Gは選ぶと名前を入力できます。`}</div>
+    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜5人を選択（現在${S.count}人）。5人選んでいるときは、誰かを外してから選んでください。A〜Gは選ぶと名前を入力できます。`}</div>
     <div class="lab">ハンディキャップ</div>${f}
     <div class="hint">設定のハンデを前半・後半それぞれに適用し、各ハーフでショートを除くホールに、コースHDCPの難しい順に1打ずつ付けます（例：3なら前半3・後半3）。</div>
     <div class="lab">スタートコース</div><div class="seg"><button class="${!S.startIn?'on':''}" data-start="out">OUTスタート（1番〜）</button><button class="${S.startIn?'on':''}" data-start="in">INスタート（10番〜）</button></div>
@@ -496,11 +499,11 @@ app.addEventListener('click',e=>{
   if(d.oly){const[i,k]=d.oly.split(':');H.oly[+i]=H.oly[+i]===k?'':k;save();render();return}
   if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();render();return}
   if(d.np!==undefined){H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();render();return}
-  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=[false,false,false,false];H.miss[i]=!H.miss[i];save();render();return}
-  if(d.confirm){const par=COURSE[h].p;for(let i=0;i<4;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
+  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);H.miss[i]=!H.miss[i];save();render();return}
+  if(d.confirm){const par=COURSE[h].p;for(let i=0;i<MAXP;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
     if(S.cur<17)go(S.cur+1);else setView('sum');return}
   if(d.undo){H.done=false;save();render();return}
-  if(d.pick!==undefined){const k=+d.pick,x=S.roster[k];const nOn=S.roster.filter(y=>y.on).length;if(x.on&&nOn<=2)return;if(!x.on&&nOn>=4)return;x.on=!x.on;syncPlayers();save();render();return}
+  if(d.pick!==undefined){const k=+d.pick,x=S.roster[k];const nOn=S.roster.filter(y=>y.on).length;if(x.on&&nOn<=2)return;if(!x.on&&nOn>=MAXP)return;x.on=!x.on;syncPlayers();save();render();return}
   if(d.start){const v=d.start==='in';if(v!==S.startIn){const h0=hole();S.startIn=v;S.cur=modal?order().indexOf(h0):0;save()}render();return}
   if(d.reset){if(!resetArm){resetArm=true;render();return}
     const keep={count:S.count,roster:S.roster,players:S.players,startIn:S.startIn,rate:S.rate};S=Object.assign(fresh(),keep);resetArm=false;modal=null;save();render();return}
