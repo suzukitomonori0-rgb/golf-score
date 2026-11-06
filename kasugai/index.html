@@ -193,6 +193,7 @@ const COURSE={1:{p:5,h:7},2:{p:3,h:13},3:{p:4,h:11},4:{p:4,h:1},5:{p:3,h:15},6:{
 const ROSTER=['鈴木','杉本','田野倉','木原','池田','伴典','Aさん','Bさん'];
 const GUESTS=['Aさん','Bさん'];
 const DEF_ON={'鈴木':0,'杉本':0,'田野倉':1,'池田':4};
+const DEF_V='2026-11-06a';
 const defRoster=()=>ROSTER.map(n=>({key:n,name:n,hc:DEF_ON[n]??0,on:n in DEF_ON}));
 const RANK={};
 Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a].h-COURSE[b].h).forEach((h,i)=>RANK[h]=i);
@@ -209,7 +210,7 @@ const RULES=[
 function blankHole(){return {done:false,s:[null,null,null,null],oly:['','','',''],sand:[false,false,false,false],sao:['','','',''],miss:[false,false,false,false],np:-1}}
 function fresh(){
   const holes={};for(let h=1;h<=18;h++)holes[h]=blankHole();
-  return {count:4,roster:defRoster(),players:Object.keys(DEF_ON).map(n=>({name:n,hc:DEF_ON[n]})),
+  return {count:4,defV:DEF_V,roster:defRoster(),players:Object.keys(DEF_ON).map(n=>({name:n,hc:DEF_ON[n]})),
     startIn:false,rate:1000,rv:2,holes,cur:0,view:'hole'};
 }
 let S;
@@ -223,6 +224,7 @@ ROSTER.forEach(n=>{if(!S.roster.some(x=>x.key===n))S.roster.push({key:n,name:n,h
 const pname=x=>(x.name||'').trim()||x.key;
 S.roster.forEach(p=>{p.hc=Math.min(36,Math.max(0,Number(p.hc)||0))});
 function syncPlayers(){const sel=S.roster.filter(x=>x.on);S.players=sel.map(x=>({name:pname(x),hc:x.hc}));S.count=sel.length}
+if(S.defV!==DEF_V&&!Object.values(S.holes).some(x=>x.done)){S.roster=defRoster();S.defV=DEF_V}
 syncPlayers();
 let modal=null, resetArm=false, endArm=false, delArm=false, histId=null;
 const HKEY='kasugai-golf-history-v1';
@@ -454,6 +456,8 @@ function renderModal(){
     <div class="lab">スタートコース</div><div class="seg"><button class="${!S.startIn?'on':''}" data-start="out">OUTスタート（1番〜）</button><button class="${S.startIn?'on':''}" data-start="in">INスタート（10番〜）</button></div>
     <div class="hint">入れ替えても入力済みスコアはそのまま残ります。ナッソーの前半・後半はプレー順で区切ります。</div>
     <div class="lab">1点あたりの金額（任意）</div><input class="inp n" id="rate" data-rate="1" value="${S.rate||''}" inputmode="numeric" placeholder="100" style="width:120px">
+    <div class="lab">参加者とハンデ</div>
+    <button class="btn" data-defset="1" style="width:100%"${locked?' disabled':''}>初期設定に戻す（鈴木0・杉本0・田野倉1・池田4）</button>
     <div class="lab">リセット</div>
     <button class="btn warn${resetArm?' on':''}" data-reset="1" style="width:100%">${resetArm?'もう一度押すと全スコアを消去します':'スコアをリセット（名前とハンデは残す）'}</button>
     <button class="btn" data-close="1" style="width:100%;margin-top:10px">閉じる</button>
@@ -479,7 +483,7 @@ app.addEventListener('click',e=>{
   if(d.end){if(!endArm){endArm=true;render();return}
     const rec={id:Date.now(),count:S.count,players:JSON.parse(JSON.stringify(S.players)),startIn:S.startIn,rate:S.rate,holes:JSON.parse(JSON.stringify(S.holes))};
     HIST.unshift(rec);saveHist();
-    const keep={count:S.count,roster:S.roster,players:S.players,startIn:S.startIn,rate:S.rate};S=Object.assign(fresh(),keep);
+    const keep=S.defV===DEF_V?{count:S.count,roster:S.roster,players:S.players,startIn:S.startIn,rate:S.rate}:{startIn:S.startIn,rate:S.rate};S=Object.assign(fresh(),keep);
     endArm=false;S.view='hist';histId=rec.id;save();render();window.scrollTo(0,0);return}
   if(d.endcancel){endArm=false;render();return}
   if(d.hopen){histId=+d.hopen;delArm=false;render();window.scrollTo(0,0);return}
@@ -497,8 +501,9 @@ app.addEventListener('click',e=>{
   if(d.undo){H.done=false;save();render();return}
   if(d.pick!==undefined){const k=+d.pick,x=S.roster[k];const nOn=S.roster.filter(y=>y.on).length;if(x.on&&nOn<=2)return;if(!x.on&&nOn>=4)return;x.on=!x.on;syncPlayers();save();render();return}
   if(d.start){const v=d.start==='in';if(v!==S.startIn){const h0=hole();S.startIn=v;S.cur=modal?order().indexOf(h0):0;save()}render();return}
+  if(d.defset){if(Object.values(S.holes).some(x=>x.done))return;S.roster=defRoster();S.defV=DEF_V;syncPlayers();save();render();return}
   if(d.reset){if(!resetArm){resetArm=true;render();return}
-    const keep={count:S.count,roster:S.roster,players:S.players,startIn:S.startIn,rate:S.rate};S=Object.assign(fresh(),keep);resetArm=false;modal=null;save();render();return}
+    const keep=S.defV===DEF_V?{count:S.count,roster:S.roster,players:S.players,startIn:S.startIn,rate:S.rate}:{startIn:S.startIn,rate:S.rate};S=Object.assign(fresh(),keep);resetArm=false;modal=null;save();render();return}
 });
 app.addEventListener('change',e=>{
   const t=e.target,d=t.dataset;
