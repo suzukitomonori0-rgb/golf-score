@@ -200,8 +200,8 @@ const CN=k=>COURSES[k].n;
 const cOf=h=>h<=9?S.front:S.back;
 const hn=h=>(h-1)%9+1;
 const COURSE=new Proxy({},{get:(_,k)=>{const h=+k;if(!(h>=1&&h<=18))return undefined;const x=COURSES[cOf(h)].d[hn(h)-1];return {p:x[0],h:x[1]}}});
-const ROSTER=['栗原','小林','田中','鈴木','相場','赤坂','斉藤','遠藤','児玉','藤勝','帽子山','渡辺','Aさん'];
-const GUESTS=['Aさん'];
+const ROSTER=['栗原','小林','田中','鈴木','相場','遠藤','児玉','赤坂','斉藤','阿部','藤勝','伊藤','渡辺','帽子山','ゲスト'];
+const GUESTS=['ゲスト'];
 const RANK={};
 Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a].h-COURSE[b].h).forEach((h,i)=>RANK[h]=i);
 const NONSHORT=Object.keys(RANK).length; // 14
@@ -460,7 +460,7 @@ function renderModal(){
   const f=S.roster.map((p,k)=>p.on&&GUESTS.includes(p.key)?`<div class="field" style="grid-template-columns:72px 1fr"><div style="font-weight:700;color:var(--muted)">${esc(p.key)}</div><input class="inp" id="rn${k}" data-rname="${k}" value="${esc(p.name===p.key?'':p.name)}" placeholder="名前を入力" autocomplete="off" aria-label="${esc(p.key)}の名前"></div>`:'').join('');
   return `<div class="ov" data-close="1"><div class="sheet" role="dialog" aria-label="設定"><header><h2>設定</h2><button class="x" data-close="1" aria-label="閉じる">×</button></header>
     <div class="lab">参加者（タップで選択）</div><div class="chips">${S.roster.map((p,k)=>`<button class="chip sand" style="font-size:15px;padding:6px 16px" aria-pressed="${p.on}" data-pick="${k}"${locked?' disabled':''}>${esc(pname(p))}</button>`).join('')}</div>
-    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜4人を選択（現在${S.count}人）。4人選んでいるときは、誰かを外してから選んでください。Aさんは選ぶと名前を入力できます。`}</div>
+    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜4人を選択（現在${S.count}人）。4人選んでいるときは、誰かを外してから選んでください。ゲストは選ぶと名前を入力できます。`}</div>
     ${f?`<div class="lab">ゲストの名前</div>${f}`:''}
     <div class="lab">コース</div>${locked?`<div class="hint">前半 ${CN(S.front)}・後半 ${CN(S.back)}（スコア入力中は変更できません）</div>`:`<div><div style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">前半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.front===k?'on':''}" data-front="${k}">${CN(k)}</button>`).join('')}</div></div><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">後半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.back===k?'on':''}" data-back="${k}">${CN(k)}</button>`).join('')}</div></div></div><div class="hint">前半と後半に同じコースは選べません。同じコースを選ぶと入れ替わります。</div>`}
     <div class="lab">1点あたりの金額（任意）</div><input class="inp n" id="rate" data-rate="1" value="${S.rate||''}" inputmode="numeric" placeholder="100" style="width:120px">
