@@ -82,6 +82,9 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 .ovp{display:inline-block;margin-left:6px;font-family:var(--f-num);font-size:18px;font-weight:700;color:var(--muted)}
 .ovp.o{color:var(--ink)}
 .ovp.u{color:var(--lose)}
+.capb{display:inline-block;margin:4px 0 0;font-size:11px;font-weight:900;padding:2px 9px;border-radius:999px;background:var(--lose);color:#fff;white-space:nowrap}
+.pname .capb{margin-left:0;color:#fff;font-size:11px}
+.nm .capb{margin-left:6px;vertical-align:2px}
 .pname b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pname span{font-size:12px;color:var(--muted)}
 .pname .hcb{display:inline-block;font-size:11px;font-weight:900;padding:1px 7px;border-radius:4px;background:var(--green);color:var(--green-ink);margin-left:4px}
@@ -208,7 +211,7 @@ const RULES=[
  {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。最初に消した1人だけが1点獲得します。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
  {t:'サオ',p:'+3点・-3点',b:['カップから1ピン以上離れたところから、サオを宣言して1パットで入れたら3点獲得。','サオを宣言して3パットしたら-3点。']},
- {t:'精算',p:'1点＝100プノンペン',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100プノンペンです。']}];
+ {t:'精算',p:'1点＝100プノンペン',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100プノンペンです。','支払額の上限は2,000プノンペンです。']}];
 
 const MAXP=5;
 function blankHole(){return {done:false,s:Array(MAXP).fill(null),oly:Array(MAXP).fill(''),sand:Array(MAXP).fill(false),miss:Array(MAXP).fill(false),sao:Array(MAXP).fill(''),np:-1}}
@@ -242,6 +245,8 @@ function withRec(rec,fn){const live=S;S=Object.assign(fresh(),JSON.parse(JSON.st
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PAY_CAP=2000;
+const overCap=(C,i)=>S.rate>0&&C.bal[i]*S.rate<-PAY_CAP;
 const order=()=>[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
 const P=()=>[...Array(S.count).keys()];
 function strokes(hc,h){
@@ -332,7 +337,7 @@ function renderHole(C){
     const birdie=H.done&&H.s[i]<=par-1;
     return `<div class="pc${lead?' lead':''}">
       <div class="prow">
-        <div class="pname"><b>${esc(pl.name)}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}</b></div>
+        <div class="pname"><b>${esc(pl.name)}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}</b>${overCap(C,i)?'<span class="capb">上限突破がんばれ！</span>':''}</div>
         <label class="selw${H.done||H.s[i]!=null?'':' draft'}"><b>${val}</b><small>${relName(val-par)}</small><select data-score="${i}" aria-label="${esc(pl.name)}のスコア">${opts.join('')}</select></label>
       </div>
       <div class="chips">${medChips}<span class="sep"></span>
@@ -379,7 +384,7 @@ function renderSum(C,top=''){
   const fmt=v=>(v>0?'+':'')+v;
   const yen=v=>S.rate>0?`<div style="font-size:11px">${v>0?'+':''}${(v*S.rate).toLocaleString('ja-JP')}プノンペン</div>`:'';
   const stand=rank.map((i,k)=>`<div class="st${k===0&&C.tot[i]>0?' top':''}"><div class="rk">${k+1}</div>
-    <div class="nm">${esc(S.players[i].name)}<div style="font-size:11px;color:var(--muted);font-weight:500">グロス ${C.gross(i,ord)||'–'}</div></div>
+    <div class="nm">${esc(S.players[i].name)}${overCap(C,i)?'<span class="capb">上限突破がんばれ！</span>':''}<div style="font-size:11px;color:var(--muted);font-weight:500">グロス ${C.gross(i,ord)||'–'}</div></div>
     <div class="pt">点数<b>${C.tot[i]}</b></div>
     <div class="bal">勝ち負け<b class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${fmt(C.bal[i])}</b>${yen(C.bal[i])}</div></div>`).join('');
 
