@@ -192,6 +192,8 @@ const COURSE={1:{p:5,h:7},2:{p:3,h:13},3:{p:4,h:11},4:{p:4,h:1},5:{p:3,h:15},6:{
  10:{p:4,h:16},11:{p:5,h:4},12:{p:4,h:12},13:{p:3,h:18},14:{p:4,h:6},15:{p:4,h:2},16:{p:4,h:14},17:{p:5,h:8},18:{p:3,h:10}};
 const ROSTER=['鈴木','杉本','田野倉','木原','池田','伴典','Aさん','Bさん'];
 const GUESTS=['Aさん','Bさん'];
+const DEF_ON={'鈴木':0,'杉本':0,'田野倉':1,'池田':4};
+const defRoster=()=>ROSTER.map(n=>({key:n,name:n,hc:DEF_ON[n]??0,on:n in DEF_ON}));
 const RANK={};
 Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a].h-COURSE[b].h).forEach((h,i)=>RANK[h]=i);
 const NONSHORT=Object.keys(RANK).length; // 14
@@ -207,14 +209,14 @@ const RULES=[
 function blankHole(){return {done:false,s:[null,null,null,null],oly:['','','',''],sand:[false,false,false,false],sao:['','','',''],miss:[false,false,false,false],np:-1}}
 function fresh(){
   const holes={};for(let h=1;h<=18;h++)holes[h]=blankHole();
-  return {count:4,roster:ROSTER.map((n,k)=>({key:n,name:n,hc:0,on:k<4})),players:ROSTER.slice(0,4).map(n=>({name:n,hc:0})),
+  return {count:4,roster:defRoster(),players:Object.keys(DEF_ON).map(n=>({name:n,hc:DEF_ON[n]})),
     startIn:false,rate:1000,rv:2,holes,cur:0,view:'hole'};
 }
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!S.holes)S=fresh();
 if(!S.rate||S.rv!==2){S.rate=1000;S.rv=2}
-if(!S.roster)S.roster=ROSTER.map((n,k)=>({key:n,name:n,hc:0,on:k<4}));
+if(!S.roster)S.roster=defRoster();
 S.roster.forEach(x=>{if(!x.key)x.key=x.name});
 ROSTER.forEach(n=>{if(!S.roster.some(x=>x.key===n))S.roster.push({key:n,name:n,hc:0,on:false})});
 {const ix=n=>{const k=ROSTER.indexOf(n);return k<0?99:k};S.roster.sort((a,b)=>ix(a.key)-ix(b.key))}
