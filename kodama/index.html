@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E5A3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="児玉">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>:root{color-scheme:light}html,body{-webkit-text-size-adjust:100%}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px)}</style>
+<title>児玉 スコア＆ゲーム</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: scorecard app — sticky header, one hole per screen, fixed bottom tab bar */
+:root{
+  --bg:#EDF1EC; --surface:#FFFFFF; --sunk:#E3E9E2; --ink:#14231A; --muted:#5B6A60; --line:#D2DBD1;
+  --green:#1E5A3A; --green-ink:#FFFFFF; --flag:#E2B21C; --flag-ink:#2A2100;
+  --gold:#B8901A; --silver:#7E8B92; --bronze:#A0602F; --iron:#4A545B; --diamond:#2479AE;
+  --win:#1E7A45; --lose:#B23A3A;
+  --f-body:"Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --f-num:"Barlow Condensed", "Noto Sans JP", "Arial Narrow", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1611; --surface:#17221B; --sunk:#111A14; --ink:#E4ECE5; --muted:#93A297; --line:#2A3830;
+  --green:#4FA877; --green-ink:#08140D; --flag:#E9BF36; --flag-ink:#2A2100;
+  --gold:#D8B23E; --silver:#A9B5BB; --bronze:#C98552; --iron:#8C979E; --diamond:#5BAEE0;
+  --win:#5CC48A; --lose:#E07070; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1611; --surface:#17221B; --sunk:#111A14; --ink:#E4ECE5; --muted:#93A297; --line:#2A3830;
+  --green:#4FA877; --green-ink:#08140D; --flag:#E9BF36; --flag-ink:#2A2100;
+  --gold:#D8B23E; --silver:#A9B5BB; --bronze:#C98552; --iron:#8C979E; --diamond:#5BAEE0;
+  --win:#5CC48A; --lose:#E07070; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px));
+  padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--green)}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--green);color:var(--green-ink)}
+
+.hd{display:flex;align-items:center;gap:8px;padding-block:10px}
+.hd h1{font-size:15px;font-weight:900;margin:0;flex:1;min-width:0;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd h1 small{display:block;font-size:11px;font-weight:500;opacity:.8;letter-spacing:.06em}
+.hbtn{background:transparent;border:1.5px solid currentColor;border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;color:var(--green-ink)}
+.strip{display:flex;gap:6px;overflow-x:auto;padding-block:0 10px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.chipH{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--green-ink) 45%,transparent);
+  background:transparent;color:var(--green-ink);font-family:var(--f-num);font-size:17px;font-weight:600;position:relative}
+.chipH.done{background:color-mix(in srgb,var(--green-ink) 22%,transparent);border-color:transparent}
+.chipH.cur{background:var(--flag);color:var(--flag-ink);border-color:var(--flag)}
+.chipH.turn{margin-left:10px}
+
+/* hole head */
+.holehead{display:flex;align-items:flex-end;gap:14px;padding-block:18px 10px}
+.bigno{font-family:var(--f-num);font-size:64px;font-weight:700;line-height:.85;color:var(--green)}
+.hmeta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.hmeta .lbl{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.hmeta .vals{display:flex;gap:14px;font-size:14px}
+.hmeta .vals b{font-family:var(--f-num);font-size:22px;font-weight:700;margin-left:3px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--flag);color:var(--flag-ink);letter-spacing:.06em}
+.carry{margin-left:auto;text-align:right;font-size:12px;color:var(--muted);white-space:nowrap;flex:0 0 auto}
+.carry b{display:block;font-family:var(--f-num);font-size:26px;color:var(--ink);line-height:1}
+
+/* player cards */
+.plist{display:grid;gap:10px}
+.pc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;display:grid;gap:10px}
+.pc.lead{border-color:var(--green);box-shadow:inset 4px 0 0 var(--green)}
+.prow{display:flex;align-items:center;gap:10px}
+.pname{flex:1;min-width:0}
+.ovp{display:inline-block;margin-left:6px;font-family:var(--f-num);font-size:18px;font-weight:700;color:var(--muted)}
+.ovp.o{color:var(--ink)}
+.ovp.u{color:var(--lose)}
+.pname b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname span{font-size:12px;color:var(--muted)}
+.pname .hcb{display:inline-block;font-size:11px;font-weight:900;padding:1px 7px;border-radius:4px;background:var(--green);color:var(--green-ink);margin-left:4px}
+.tag.hct{background:var(--green);color:var(--green-ink)}
+td.hcell{background:color-mix(in srgb,var(--green) 12%,transparent)}
+.hsup{font-size:8px;color:var(--green);letter-spacing:-1px;margin-left:1px;vertical-align:6px}
+.dots{display:inline-flex;gap:3px;vertical-align:middle;margin-left:4px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block}
+.selw{position:relative;flex:0 0 auto;width:92px;height:52px;border-radius:10px;background:var(--sunk);border:1.5px solid var(--line);
+  display:flex;align-items:center;gap:5px;padding:0 22px 0 12px;color:var(--ink)}
+.selw::after{content:"";position:absolute;right:10px;top:50%;width:6px;height:6px;margin-top:-5px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg)}
+.selw b{font-family:var(--f-num);font-size:28px;font-weight:700;line-height:1}
+.selw small{font-size:10px;font-weight:700;color:var(--muted);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.selw.draft{border-style:dashed}.selw.draft b{color:var(--muted)}
+.selw:focus-within{outline:2px solid var(--flag);outline-offset:2px}
+.selw select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;-webkit-appearance:none;appearance:none;border:0;cursor:pointer}
+.net{width:44px;text-align:center;font-size:11px;color:var(--muted);line-height:1.1}
+.net b{display:block;font-family:var(--f-num);font-size:22px;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{border:1.5px solid var(--line);background:transparent;border-radius:999px;padding:4px 11px;font-size:13px;font-weight:700;min-height:34px}
+.chip[aria-pressed="true"]{color:#fff;border-color:transparent}
+.chip[disabled]{opacity:.3;cursor:not-allowed}
+.chip.m-g[aria-pressed="true"]{background:var(--gold)} .chip.m-s[aria-pressed="true"]{background:var(--silver)}
+.chip.m-b[aria-pressed="true"]{background:var(--bronze)} .chip.m-i[aria-pressed="true"]{background:var(--iron)}
+.chip.m-d[aria-pressed="true"]{background:var(--diamond)}
+.chip.sand[aria-pressed="true"],.chip.np[aria-pressed="true"]{background:var(--green);color:var(--green-ink)}
+.chip .p{font-family:var(--f-num);font-weight:600;opacity:.75;margin-left:3px}
+.sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.badge{font-size:11px;font-weight:900;padding:3px 8px;border-radius:4px;background:var(--flag);color:var(--flag-ink)}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.box h3{margin:0 0 8px;font-size:12px;letter-spacing:.12em;color:var(--muted)}
+.result{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--sunk);font-size:14px}
+.result b{color:var(--green)}
+.actions{display:flex;gap:8px;margin-top:14px}
+.btn{flex:1;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 10px;font-weight:700;font-size:15px}
+.btn.pri{background:var(--green);color:var(--green-ink);border-color:var(--green)}
+.btn.sm{flex:0 0 auto;padding:13px 16px}
+.btn.warn{color:var(--lose);border-color:var(--lose)}
+.btn.warn.on{background:var(--lose);color:#fff}
+
+/* tab bar */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs button{flex:1;background:none;border:0;padding:12px 6px 14px;font-size:13px;font-weight:700;color:var(--muted);border-top:3px solid transparent}
+nav.tabs button.on{color:var(--green);border-top-color:var(--green)}
+
+/* summary */
+.sec{margin-top:22px}
+.sec h2{font-size:12px;letter-spacing:.14em;color:var(--muted);margin:0 0 8px;font-weight:900}
+.stand{display:grid;gap:8px}
+.st{display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.st .rk{font-family:var(--f-num);font-size:28px;font-weight:700;color:var(--muted)}
+.st.top{border-color:var(--flag);box-shadow:inset 4px 0 0 var(--flag)}
+.st.top .rk{color:var(--gold)}
+.st .nm{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st .pt{text-align:right;font-size:11px;color:var(--muted);line-height:1.1}
+.st .pt b{display:block;font-family:var(--f-num);font-size:26px;color:var(--ink)}
+.st .bal{text-align:right;min-width:64px;font-size:11px;color:var(--muted);line-height:1.1}
+.st .bal b{display:block;font-family:var(--f-num);font-size:26px}
+.pos{color:var(--win)} .neg{color:var(--lose)}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;color:var(--muted);font-weight:700;background:var(--sunk)}
+td.l,th.l{text-align:left}
+tr:last-child td{border-bottom:0}
+tr.tot td{font-weight:900;background:var(--sunk)}
+tr.turn td{border-top:2px solid var(--green)}
+.sc{font-family:var(--f-num);font-size:18px;font-weight:600}
+.mk{font-size:10px;font-weight:900;display:inline-block;margin-left:2px;padding:0 3px;border-radius:3px;color:#fff;vertical-align:2px}
+.mk.hb{background:var(--green);color:var(--green-ink)} .mk.g{background:var(--gold)} .mk.s{background:var(--silver)} .mk.b{background:var(--bronze)}
+.mk.i{background:var(--iron)} .mk.d{background:var(--diamond)} .mk.x{background:var(--flag);color:var(--flag-ink)}
+.under{color:var(--lose)}
+.legend{font-size:11px;color:var(--muted);margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.empty{color:var(--muted);font-size:13px;padding:6px 0}
+
+/* sheet */
+.ov{position:fixed;inset:0;z-index:20;background:color-mix(in srgb,#000 45%,transparent);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:88%;overflow-y:auto;border-radius:18px 18px 0 0;
+  padding:18px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet header{position:static;background:none;color:inherit;display:flex;align-items:center;margin-bottom:10px}
+.sheet h2{font-size:18px;margin:0;flex:1}
+.x{border:0;background:var(--sunk);border-radius:999px;width:36px;height:36px;font-size:18px}
+.field{display:grid;grid-template-columns:28px 1fr 88px;gap:8px;align-items:center;margin-bottom:8px}
+.field .no{font-family:var(--f-num);font-size:20px;color:var(--muted);text-align:center}
+.inp{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:16px;color:var(--ink);min-width:0}
+.inp.n{text-align:center;font-family:var(--f-num);font-size:20px}
+.lab{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin:16px 0 6px}
+.seg{display:flex;background:var(--sunk);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:8px;padding:9px 6px;font-weight:700;font-size:14px;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--green);box-shadow:0 1px 2px color-mix(in srgb,#000 15%,transparent)}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.rule h4{margin:0 0 4px;font-size:15px;display:flex;gap:8px;align-items:center}
+.rule h4 span{font-family:var(--f-num);font-size:13px;color:var(--green);font-weight:700}
+.rule ul{margin:4px 0 0;padding-left:1.2em;font-size:13px;color:var(--muted);display:grid;gap:3px}
+@media (max-width:360px){.prow{gap:8px}.net{width:36px}.selw{width:84px}.chip{padding:4px 9px}.bigno{font-size:54px}.btn{font-size:14px;padding:12px 6px}.st{padding:10px}}
+@media (prefers-reduced-motion: no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+const KEY='kodama-golf-game-v1';
+const COURSES={W:{n:'西',d:[[5,5],[4,7],[3,2],[4,6],[4,8],[4,9],[5,4],[4,1],[3,3]]},
+ S:{n:'南',d:[[4,4],[5,1],[4,2],[3,7],[4,6],[4,3],[4,5],[3,8],[5,9]]},
+ E:{n:'東',d:[[4,9],[4,1],[4,3],[3,7],[5,6],[3,8],[5,5],[4,2],[4,4]]}};
+const CN=k=>COURSES[k].n;
+const cOf=h=>h<=9?S.front:S.back;
+const hn=h=>(h-1)%9+1;
+const COURSE=new Proxy({},{get:(_,k)=>{const h=+k;if(!(h>=1&&h<=18))return undefined;const x=COURSES[cOf(h)].d[hn(h)-1];return {p:x[0],h:x[1]}}});
+const ROSTER=['栗原','小林','田中','鈴木','相場','赤坂','斉藤','遠藤','児玉','藤勝','帽子山','渡辺','Aさん'];
+const GUESTS=['Aさん'];
+const RANK={};
+Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a].h-COURSE[b].h).forEach((h,i)=>RANK[h]=i);
+const NONSHORT=Object.keys(RANK).length; // 14
+const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
+const RULES=[
+ {t:'オリンピック',p:'金4・銀3・銅2・鉄1・ダイヤ5',b:['グリーンに乗った時点で遠い順に金・銀・銅・鉄とします。','1パットで入れた場合だけ得点になります（金4・銀3・銅2・鉄1点）。','グリーン外からのチップインはダイヤとして5点です。']},
+ {t:'一通・カン',p:'各5点',b:['一通：金・銀・銅・鉄を各1つ以上揃えると5点。','カン：同じメダルを4つ揃えると5点。','2組目以降も揃うごとに5点加算します。ダイヤは一通・カンに含めません。']},
+ {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
+ {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
+ {t:'精算',p:'1点＝100円',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100円です。']}];
+
+const MAXP=5;
+function blankHole(){return {done:false,s:Array(MAXP).fill(null),oly:Array(MAXP).fill(''),sand:Array(MAXP).fill(false),miss:Array(MAXP).fill(false),np:-1}}
+function padHole(H){const pad=(a,v)=>{a=a||[];while(a.length<MAXP)a.push(v);return a};H.s=pad(H.s,null);H.oly=pad(H.oly,'');H.sand=pad(H.sand,false);H.miss=pad(H.miss,false);return H}
+function fresh(){
+  const holes={};for(let h=1;h<=18;h++)holes[h]=blankHole();
+  return {count:4,roster:ROSTER.map((n,k)=>({key:n,name:n,hc:0,on:k<4})),players:ROSTER.slice(0,4).map(n=>({name:n,hc:0})),
+    startIn:false,front:'W',back:'S',rate:100,holes,cur:0,view:'hole'};
+}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S||!S.holes)S=fresh();
+if(!S.front)S.front='W';if(!S.back)S.back='S';S.startIn=false;
+if(!S.rate)S.rate=100;
+if(!S.roster)S.roster=ROSTER.map((n,k)=>({key:n,name:n,hc:0,on:k<4}));
+S.roster.forEach(x=>{if(!x.key)x.key=x.name});
+S.roster=S.roster.filter(x=>ROSTER.includes(x.key)||x.on);
+ROSTER.forEach(n=>{if(!S.roster.some(x=>x.key===n))S.roster.push({key:n,name:n,hc:0,on:false})});
+{const ix=n=>{const k=ROSTER.indexOf(n);return k<0?99:k};S.roster.sort((a,b)=>ix(a.key)-ix(b.key))}
+const pname=x=>(x.name||'').trim()||x.key;
+S.roster.forEach(p=>{p.hc=Math.min(36,Math.max(0,Number(p.hc)||0))});
+function syncPlayers(){const sel=S.roster.filter(x=>x.on);S.players=sel.map(x=>({name:pname(x),hc:x.hc}));S.count=sel.length}
+syncPlayers();
+Object.values(S.holes).forEach(padHole);
+let modal=null, resetArm=false, endArm=false, delArm=false, histId=null;
+const HKEY='kodama-golf-history-v1';
+let HIST=[];try{HIST=JSON.parse(localStorage.getItem(HKEY))||[]}catch(e){HIST=[]}
+function saveHist(){try{localStorage.setItem(HKEY,JSON.stringify(HIST))}catch(e){}}
+function fmtDate(t){const d=new Date(t);return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function withRec(rec,fn){const live=S;S=Object.assign(fresh(),JSON.parse(JSON.stringify(rec)));try{return fn()}finally{S=live}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const order=()=>[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
+const P=()=>[...Array(S.count).keys()];
+function strokes(hc,h){
+  return 0;
+  if(COURSE[h].p===3)return 0;
+  hc=Math.max(0,Math.min(36,Math.round(Number(hc)||0)));
+  const ord=order(),front=ord.slice(0,9),inF=front.includes(h);
+  const hs=(inF?front:ord.slice(9)).filter(x=>COURSE[x].p!==3).sort((a,b)=>COURSE[a].h-COURSE[b].h);
+  const k=hs.length,rk=hs.indexOf(h);
+  return Math.floor(hc/k)+(rk<hc%k?1:0);
+}
+function relName(d){return {'-3':'アルバトロス','-2':'イーグル','-1':'バーディー','0':'パー','1':'ボギー','2':'ダボ','3':'トリプル'}[d]??(d>0?'+'+d:String(d))}
+
+function compute(){
+  const n=S.count,ps=P(),ord=order();
+  const pts=ps.map(()=>({hb:0,oly:0,set:0,np:0,bd:0,sand:0,nas:0}));
+  const med=ps.map(()=>({g:0,s:0,b:0,i:0}));
+  const hb={};let carry=0;const npr={};let npc=0;
+  for(const h of ord){
+    const H=S.holes[h];if(!H.done)continue;
+    const par=COURSE[h].p;
+    const nets=ps.map(i=>H.s[i]-strokes(S.players[i].hc,h));
+    const m=Math.min(...nets),w=ps.filter(i=>nets[i]===m);
+    if(w.length===1){hb[h]={w:w[0],v:1+carry};carry=0}
+    else{carry++;hb[h]={c:carry}}
+    ps.forEach(i=>{
+      const o=H.oly[i];if(o&&MED[o]){pts[i].oly+=MED[o].pt;if(o!=='d')med[i][o]++}
+      if(H.s[i]<=par-1)pts[i].bd+=3;
+      if(H.sand[i])pts[i].sand+=3;
+    });
+    if(par===3){
+      const has=H.np>=0&&H.np<n;
+      const kill=ps.some(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par);
+      if(has&&H.s[H.np]<=par&&!kill){const v=3*(1+npc);pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
+      else{npc++;npr[h]={c:npc,why:!has?'none':H.s[H.np]>par?'bogey':'kill'}}
+    }
+  }
+  const sets=ps.map(i=>{const c=med[i];const ittsu=Math.min(c.g,c.s,c.b,c.i);
+    const kan=['g','s','b','i'].reduce((a,k)=>a+Math.floor(c[k]/4),0);pts[i].set=(ittsu+kan)*5;return {ittsu,kan}});
+  // nassau
+  const halves=[ord.slice(0,9),ord.slice(9),ord];
+  const net=(i,hs)=>hs.reduce((a,h)=>a+(S.holes[h].done?S.holes[h].s[i]-strokes(S.players[i].hc,h):0),0);
+  const gross=(i,hs)=>hs.reduce((a,h)=>a+(S.holes[h].done?S.holes[h].s[i]:0),0);
+  const nas=[];
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+    const row={i,j,sec:[]};
+    halves.forEach(hs=>{
+      const doneN=hs.filter(h=>S.holes[h].done).length,complete=doneN===hs.length;
+      const a=net(i,hs),b=net(j,hs);
+      const r={a,b,complete,started:doneN>0,w:a<b?i:b<a?j:-1};
+      
+      row.sec.push(r);
+    });
+    nas.push(row);
+  }
+  const tot=ps.map(i=>Object.values(pts[i]).reduce((a,b)=>a+b,0));
+  const sum=tot.reduce((a,b)=>a+b,0);
+  const bal=tot.map(t=>t*n-sum);
+  return {pts,med,sets,hb,carry,npr,npc,nas,tot,bal,gross,net,halves};
+}
+
+function hole(){return order()[S.cur]}
+function setView(v){S.view=v;endArm=false;delArm=false;if(v!=='hist')histId=null;save();render();window.scrollTo(0,0)}
+function go(i){S.cur=Math.max(0,Math.min(17,i));save();render();window.scrollTo(0,0)}
+
+function renderHeader(){
+  const ord=order();
+  const chips=ord.map((h,i)=>`<button class="chipH${S.holes[h].done?' done':''}${i===S.cur&&S.view==='hole'?' cur':''}${i===9?' turn':''}" data-go="${i}" aria-label="${CN(cOf(h))}${hn(h)}番ホール">${hn(h)}</button>`).join('');
+  return `<header><div class="wrap"><div class="hd"><h1><small>KODAMA CC · ${CN(S.front)}→${CN(S.back)}</small>児玉カントリー倶楽部</h1>
+  <button class="hbtn" data-modal="rules">ルール</button><button class="hbtn" data-modal="settings">設定</button></div>
+  <div class="strip" id="strip">${chips}</div></div></header>`;
+}
+
+function renderHole(C){
+  const h=hole(),c=COURSE[h],H=S.holes[h],ps=P(),par=c.p;
+  const isShort=par===3;
+  const pending=(()=>{let k=0;for(const x of order()){if(x===h)break;const r=C.hb[x];if(r)k=r.c||0}return k})();
+  const cards=ps.map(i=>{
+    const pl=S.players[i],st=strokes(pl.hc,h);
+    const val=H.s[i]??par;
+    const opts=[];for(let v=1;v<=par+7;v++){const d=v-par;opts.push(`<option value="${v}"${v===val?' selected':''}>${v}　${relName(d)}</option>`)}
+    const lead=false;
+    const medChips=['g','s','b','i','d'].map(k=>{
+      const on=H.oly[i]===k;
+      const taken=k!=='d'&&!on&&ps.some(j=>j!==i&&H.oly[j]===k);
+      return `<button class="chip m-${k}" aria-pressed="${on}" data-oly="${i}:${k}"${taken?' disabled':''}>${MED[k].n}<span class="p">${MED[k].pt}</span></button>`}).join('');
+    const birdie=H.done&&H.s[i]<=par-1;
+    return `<div class="pc${lead?' lead':''}">
+      <div class="prow">
+        <div class="pname"><b>${esc(pl.name)}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}</b></div>
+        <label class="selw${H.done||H.s[i]!=null?'':' draft'}"><b>${val}</b><small>${relName(val-par)}</small><select data-score="${i}" aria-label="${esc(pl.name)}のスコア">${opts.join('')}</select></label>
+      </div>
+      <div class="chips">${medChips}<span class="sep"></span>
+        <button class="chip sand" aria-pressed="${!!H.sand[i]}" data-sand="${i}">砂イチ<span class="p">3</span></button>
+        ${birdie?`<span class="badge">${relName(H.s[i]-par)} +3</span>`:''}
+      </div></div>`;
+  }).join('');
+
+  const npPend=(()=>{let k=0;for(const x of order()){if(x===h)break;const r=C.npr[x];if(r)k=r.c||0}return k})();
+  const np=isShort?`<div class="box"><h3>ニアピン（${3*(1+npPend)}点${npPend?`・流れ${npPend}含む`:''}）</h3><div class="chips">
+    ${ps.map(i=>`<button class="chip np" aria-pressed="${H.np===i}" data-np="${i}">${esc(S.players[i].name)}</button>`).join('')}
+    <button class="chip np" aria-pressed="${H.np<0}" data-np="-1">該当なし</button></div>
+    <h3 style="margin-top:12px">ワンオンしなかった人</h3><div class="chips">
+    ${ps.map(i=>`<button class="chip sand" aria-pressed="${!!(H.miss&&H.miss[i])}" data-miss="${i}"${H.np===i?' disabled':''}>${esc(S.players[i].name)}</button>`).join('')}</div>
+    <div class="hint">この中の誰かがパー以上を取るとニアピン消しで流れます。</div></div>`:'';
+
+  let res='';
+  if(H.done){const r=C.hb[h];
+    const q=C.npr[h];
+    const npTxt=isShort?`<br>ニアピン：${q.w!=null?`<b>${esc(S.players[q.w].name)}</b> が ${q.v}点 獲得`:({none:'該当者なしのため次のショートへ流れ',bogey:'パーを取れなかったため次のショートへ流れ',kill:'ワンオンしなかった人がパーを取ったため、ニアピン消しで流れ'})[q.why]}`:'';
+    res=isShort?`<div class="result">${npTxt.replace(/^<br>/,'')}</div>`:'';}
+
+  return `<main class="wrap">
+    <div class="holehead"><div class="bigno">${hn(h)}</div>
+      <div class="hmeta"><span class="lbl">${S.cur+1}ホール目 / ${CN(cOf(h))}コース</span>
+        <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span></div>
+        ${isShort?'<div><span class="tag">ショート</span></div>':''}</div>
+      ${isShort?`<div class="carry">ニアピン流れ<b class="num">${H.done&&C.npr[h]?(C.npr[h].c||0):npPend}</b></div>`:''}</div>
+    ${Object.values(S.holes).some(x=>x.done)?'':`<div class="box" style="margin:0 0 10px"><h3>コース</h3><div style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">前半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.front===k?'on':''}" data-front="${k}">${CN(k)}</button>`).join('')}</div></div><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">後半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.back===k?'on':''}" data-back="${k}">${CN(k)}</button>`).join('')}</div></div></div></div>`}
+    <div class="plist">${cards}</div>${np}${res}
+    <div class="actions">
+      <button class="btn sm" data-go="${S.cur-1}"${S.cur===0?' disabled':''} aria-label="前のホール">◀</button>
+      ${H.done?`<button class="btn" data-undo="1">未確定に戻す</button><button class="btn pri" data-go="${S.cur+1}"${S.cur===17?' disabled':''}>次のホールへ ▶</button>`
+        :`<button class="btn pri" data-confirm="1">スコア確定${S.cur<17?'して次へ':''}</button>`}
+    </div></main>`;
+}
+
+function renderSum(C,top=''){
+  const ps=P(),n=S.count,ord=order();
+  const doneN=ord.filter(h=>S.holes[h].done).length;
+  const rank=[...ps].sort((a,b)=>C.tot[b]-C.tot[a]);
+  const fmt=v=>(v>0?'+':'')+v;
+  const yen=v=>S.rate>0?`<div style="font-size:11px">${v>0?'+':''}${(v*S.rate).toLocaleString('ja-JP')}円</div>`:'';
+  const stand=rank.map((i,k)=>`<div class="st${k===0&&C.tot[i]>0?' top':''}"><div class="rk">${k+1}</div>
+    <div class="nm">${esc(S.players[i].name)}<div style="font-size:11px;color:var(--muted);font-weight:500">グロス ${C.gross(i,ord)||'–'}</div></div>
+    <div class="pt">点数<b>${C.tot[i]}</b></div>
+    <div class="bal">勝ち負け<b class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${fmt(C.bal[i])}</b>${yen(C.bal[i])}</div></div>`).join('');
+
+  const cats=[['oly','オリンピック'],['set','一通・カン'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ']];
+  const brk=`<div class="tw"><table><thead><tr><th class="l">種目</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}</tr></thead><tbody>
+    ${cats.map(([k,l])=>`<tr><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.pts[i][k]||'·'}</td>`).join('')}</tr>`).join('')}
+    <tr><td class="l" style="font-size:11px;color:var(--muted)">メダル 金/銀/銅/鉄</td>${ps.map(i=>{const m=C.med[i];return `<td style="font-size:11px;color:var(--muted)">${m.g}/${m.s}/${m.b}/${m.i}${C.sets[i].ittsu?` 一通${C.sets[i].ittsu>1?'×'+C.sets[i].ittsu:''}`:''}${C.sets[i].kan?` カン${C.sets[i].kan>1?'×'+C.sets[i].kan:''}`:''}</td>`}).join('')}</tr>
+    <tr class="tot"><td class="l">合計</td>${ps.map(i=>`<td class="sc">${C.tot[i]}</td>`).join('')}</tr></tbody></table></div>`;
+
+  const secN=['前半','後半','トータル'];
+  const nas=C.nas.map(r=>`<tr><td class="l">${esc(S.players[r.i].name)}<br>vs ${esc(S.players[r.j].name)}</td>${r.sec.map(x=>{
+      if(!x.started)return '<td style="color:var(--muted)">–</td>';
+      const lab=x.w<0?'引分':esc(S.players[x.w].name);
+      return `<td><span class="num" style="font-size:16px">${x.a}-${x.b}</span><br><span style="font-size:11px;${x.complete?'font-weight:700;color:'+(x.w<0?'var(--muted)':'var(--win)'):'color:var(--muted)'}">${x.complete?(x.w<0?'引分 0':lab+' +3'):'進行中 '+(x.w<0?'並び':lab)}</span></td>`}).join('')}</tr>`).join('');
+  const nasT=`<div class="tw"><table><thead><tr><th class="l">対戦（ネット）</th>${secN.map(s=>`<th>${s}</th>`).join('')}</tr></thead><tbody>${nas}</tbody></table></div>`;
+
+  const rows=ord.map((h,k)=>{const H=S.holes[h],r=C.hb[h];
+    return `<tr${k===9?' class="turn"':''}><td class="l"><b class="num" style="font-size:16px">${CN(cOf(h))}${hn(h)}</b> <span style="font-size:11px;color:var(--muted)">P${COURSE[h].p}</span></td>${ps.map(i=>{
+      if(!H.done)return '<td style="color:var(--muted)">·</td>';
+      const v=H.s[i],par=COURSE[h].p;let m='';
+      
+      if(H.oly[i])m+=`<span class="mk ${H.oly[i]}">${MED[H.oly[i]].n[0]}</span>`;
+      if(C.npr[h]&&C.npr[h].w===i)m+=`<span class="mk x">N${C.npr[h].v>3?C.npr[h].v:''}</span>`;
+      if(H.sand[i])m+='<span class="mk x">砂</span>';
+      return `<td><span class="sc${v<par?' under':''}">${v}</span>${m}</td>`}).join('')}<td style="font-size:11px;color:var(--muted)"></td></tr>`;
+  }).join('');
+  const half=(hs,l)=>`<tr class="tot"><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.gross(i,hs)||'–'}</td>`).join('')}<td></td></tr>`;
+  const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows}
+    ${half(C.halves[0],'前半')}${half(C.halves[1],'後半')}${half(ord,'合計')}</tbody></table></div>
+    <div class="legend"><span><span class="mk g">金</span><span class="mk s">銀</span><span class="mk b">銅</span><span class="mk i">鉄</span><span class="mk d">ダ</span> オリンピック</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span></div>`;
+
+  return `<main class="wrap">${top}
+    <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
+      <div class="hint">勝ち負け＝他の各人との点数の差の合計（全員で合計0）。${S.rate>0?`1点＝${S.rate}円で換算。`:''}</div></div>
+    <div class="sec"><h2>種目別の点数</h2>${brk}</div>
+    <div class="sec"><h2>スコアカード</h2>${card}</div>
+    ${S.view==='sum'?(doneN>0?`<button class="btn pri" data-end="1" style="width:100%;margin-top:22px;${endArm?'background:var(--flag);border-color:var(--flag);color:var(--flag-ink)':''}">${endArm?(doneN<18?`まだ${18-doneN}ホール未確定です。もう一度押すと${doneN}ホールで終了します`:'もう一度押すと保存してゲームをリセットします'):(doneN<18?`ここで終了する（${doneN}/18ホール）`:'全て確定して終了')}</button>
+      ${endArm?'<button class="btn" data-endcancel="1" style="width:100%;margin-top:8px">キャンセル</button>':''}
+      <div class="hint">結果は「履歴」に保存され、いつでも呼び出せます。参加者と名前は次のゲームに残ります。${doneN<18?'途中終了の場合、未確定のホールは集計に含まれません。':''}</div>`
+      :`<div class="hint" style="margin-top:18px">1ホール以上確定すると「終了」ボタンが表示されます。</div>`):''}
+  </main>`;
+}
+
+function renderHist(){
+  if(histId!=null){
+    const rec=HIST.find(x=>x.id===histId);
+    if(rec){
+      const head=`<div class="sec" style="display:flex;align-items:center;gap:8px"><button class="btn sm" data-hback="1" style="padding:9px 14px">◀ 一覧</button>
+        <div style="flex:1;min-width:0"><b>${fmtDate(rec.id)}</b><div class="hint" style="margin:0">児玉カントリー倶楽部 · ${CN(rec.front||'W')}→${CN(rec.back||'S')}</div></div></div>`;
+      const body=withRec(rec,()=>renderSum(compute(),head));
+      return body.replace(/<\/main>$/,`<button class="btn warn${delArm?' on':''}" data-hdel="${rec.id}" style="width:100%;margin-top:22px">${delArm?'もう一度押すと削除します':'この記録を削除'}</button></main>`);
+    }
+    histId=null;
+  }
+  if(!HIST.length)return `<main class="wrap"><div class="sec"><h2>履歴</h2><div class="empty">まだ保存されたラウンドはありません。集計画面の「全て確定して終了」で保存されます。</div></div></main>`;
+  const items=HIST.map(rec=>withRec(rec,()=>{const C=compute();const ps=P();const top=[...ps].sort((a,b)=>C.tot[b]-C.tot[a]);
+    return `<button class="st" data-hopen="${rec.id}" style="grid-template-columns:minmax(0,1fr) auto;text-align:left;width:100%">
+      <div class="nm" style="white-space:normal"><b>${fmtDate(rec.id)}</b>${(()=>{const k=Object.values(rec.holes).filter(x=>x.done).length;return k<18?` <span class="tag">${k}H途中終了</span>`:''})()}<div style="font-size:12px;color:var(--muted);font-weight:500">${top.map(i=>`${esc(S.players[i].name)} <span class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${C.bal[i]>0?'+':''}${C.bal[i]}</span>`).join('　')}</div></div>
+      <div style="color:var(--muted);font-size:20px">›</div></button>`})).join('');
+  return `<main class="wrap"><div class="sec"><h2>履歴 · ${HIST.length}ラウンド</h2><div class="stand">${items}</div></div></main>`;
+}
+
+function renderModal(){
+  if(!modal)return '';
+  if(modal==='rules'){
+    return `<div class="ov" data-close="1"><div class="sheet" role="dialog" aria-label="ルール"><header><h2>ルール</h2><button class="x" data-close="1" aria-label="閉じる">×</button></header>
+      ${RULES.map(r=>`<div class="rule"><h4>${r.t}<span>${r.p}</span></h4><ul>${r.b.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}
+    </div></div>`;
+  }
+  const locked=Object.values(S.holes).some(x=>x.done);
+  let no=0;
+  const f=S.roster.map((p,k)=>p.on&&GUESTS.includes(p.key)?`<div class="field" style="grid-template-columns:72px 1fr"><div style="font-weight:700;color:var(--muted)">${esc(p.key)}</div><input class="inp" id="rn${k}" data-rname="${k}" value="${esc(p.name===p.key?'':p.name)}" placeholder="名前を入力" autocomplete="off" aria-label="${esc(p.key)}の名前"></div>`:'').join('');
+  return `<div class="ov" data-close="1"><div class="sheet" role="dialog" aria-label="設定"><header><h2>設定</h2><button class="x" data-close="1" aria-label="閉じる">×</button></header>
+    <div class="lab">参加者（タップで選択）</div><div class="chips">${S.roster.map((p,k)=>`<button class="chip sand" style="font-size:15px;padding:6px 16px" aria-pressed="${p.on}" data-pick="${k}"${locked?' disabled':''}>${esc(pname(p))}</button>`).join('')}</div>
+    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜4人を選択（現在${S.count}人）。4人選んでいるときは、誰かを外してから選んでください。Aさんは選ぶと名前を入力できます。`}</div>
+    ${f?`<div class="lab">ゲストの名前</div>${f}`:''}
+    <div class="lab">コース</div>${locked?`<div class="hint">前半 ${CN(S.front)}・後半 ${CN(S.back)}（スコア入力中は変更できません）</div>`:`<div><div style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">前半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.front===k?'on':''}" data-front="${k}">${CN(k)}</button>`).join('')}</div></div><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">後半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.back===k?'on':''}" data-back="${k}">${CN(k)}</button>`).join('')}</div></div></div><div class="hint">前半と後半に同じコースは選べません。同じコースを選ぶと入れ替わります。</div>`}
+    <div class="lab">1点あたりの金額（任意）</div><input class="inp n" id="rate" data-rate="1" value="${S.rate||''}" inputmode="numeric" placeholder="100" style="width:120px">
+    <div class="lab">リセット</div>
+    <button class="btn warn${resetArm?' on':''}" data-reset="1" style="width:100%">${resetArm?'もう一度押すと全スコアを消去します':'スコアをリセット（参加者と名前は残す）'}</button>
+    <button class="btn" data-close="1" style="width:100%;margin-top:10px">閉じる</button>
+  </div></div>`;
+}
+
+function render(){
+  const C=compute();
+  document.getElementById('app').innerHTML=renderHeader()+(S.view==='sum'?renderSum(C):S.view==='hist'?renderHist():renderHole(C))+
+    `<nav class="tabs"><button class="${S.view==='hole'?'on':''}" data-view="hole">ホール入力</button><button class="${S.view==='sum'?'on':''}" data-view="sum">集計</button><button class="${S.view==='hist'?'on':''}" data-view="hist">履歴</button></nav>`+renderModal();
+  const cur=document.querySelector('.chipH.cur');
+  if(cur){const s=document.getElementById('strip');s.scrollLeft=cur.offsetLeft-s.clientWidth/2+cur.offsetWidth/2}
+}
+
+const app=document.getElementById('app');
+app.addEventListener('click',e=>{
+  const t=e.target.closest('button,[data-close]');if(!t)return;
+  const d=t.dataset;
+  if(d.close!==undefined&&(t===e.target||t.tagName==='BUTTON')){if(t.classList.contains('ov')&&e.target!==t)return;modal=null;resetArm=false;render();return}
+  if(t.disabled)return;
+  if(d.modal){modal=d.modal;resetArm=false;render();return}
+  if(d.view){setView(d.view);return}
+  if(d.end){if(!endArm){endArm=true;render();return}
+    const rec={id:Date.now(),count:S.count,players:JSON.parse(JSON.stringify(S.players)),startIn:false,front:S.front,back:S.back,rate:S.rate,holes:JSON.parse(JSON.stringify(S.holes))};
+    HIST.unshift(rec);saveHist();
+    const keep={count:S.count,roster:S.roster,players:S.players,front:S.front,back:S.back,rate:S.rate};S=Object.assign(fresh(),keep);
+    endArm=false;S.view='hist';histId=rec.id;save();render();window.scrollTo(0,0);return}
+  if(d.endcancel){endArm=false;render();return}
+  if(d.hopen){histId=+d.hopen;delArm=false;render();window.scrollTo(0,0);return}
+  if(d.hback){histId=null;delArm=false;render();window.scrollTo(0,0);return}
+  if(d.hdel){if(!delArm){delArm=true;render();return}
+    HIST=HIST.filter(x=>x.id!==+d.hdel);saveHist();histId=null;delArm=false;render();window.scrollTo(0,0);return}
+  if(d.go!==undefined){S.view='hole';go(+d.go);return}
+  const h=hole(),H=S.holes[h];
+  if(d.oly){const[i,k]=d.oly.split(':');H.oly[+i]=H.oly[+i]===k?'':k;save();render();return}
+  if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();render();return}
+  if(d.np!==undefined){H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();render();return}
+  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);H.miss[i]=!H.miss[i];save();render();return}
+  if(d.confirm){const par=COURSE[h].p;for(let i=0;i<MAXP;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
+    if(S.cur<17)go(S.cur+1);else setView('sum');return}
+  if(d.undo){H.done=false;save();render();return}
+  if(d.pick!==undefined){const k=+d.pick,x=S.roster[k];const nOn=S.roster.filter(y=>y.on).length;if(x.on&&nOn<=2)return;if(!x.on&&nOn>=4)return;x.on=!x.on;syncPlayers();save();render();return}
+  if(d.front||d.back){if(Object.values(S.holes).some(x=>x.done))return;const f=d.front||null,b=d.back||null;
+    if(f){if(f===S.back)S.back=S.front;S.front=f}if(b){if(b===S.front)S.front=S.back;S.back=b}save();render();return}
+  if(d.start){const v=d.start==='in';if(v!==S.startIn){const h0=hole();S.startIn=v;S.cur=modal?order().indexOf(h0):0;save()}render();return}
+  if(d.reset){if(!resetArm){resetArm=true;render();return}
+    const keep={count:S.count,roster:S.roster,players:S.players,front:S.front,back:S.back,rate:S.rate};S=Object.assign(fresh(),keep);resetArm=false;modal=null;save();render();return}
+});
+app.addEventListener('change',e=>{
+  const t=e.target,d=t.dataset;
+  if(d.score!==undefined){const H=S.holes[hole()];H.s[+d.score]=+t.value;save();render()}
+});
+app.addEventListener('input',e=>{
+  const t=e.target,d=t.dataset;
+  if(d.rname!==undefined){S.roster[+d.rname].name=t.value;syncPlayers();save()}
+  if(d.rhc!==undefined){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.roster[+d.rhc].hc=isNaN(v)?0:Math.min(36,v);syncPlayers();save();const hn=t.closest('.field')&&t.closest('.field').nextElementSibling;const vv=isNaN(v)?0:Math.min(36,v);if(hn&&hn.classList.contains('hint'))hn.textContent=`前半 ${vv}・後半 ${vv}`}
+  if(d.rate){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.rate=isNaN(v)?0:v;save()}
+});
+render();
+})();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+</script>
+</body>
+</html>
