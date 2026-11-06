@@ -203,12 +203,10 @@ Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a]
 const NONSHORT=Object.keys(RANK).length; // 14
 const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
 const RULES=[
- {t:'ホールベスト',p:'1点',b:['各ホールのベストスコアを競います。勝った一人に1点付きます。','同点の場合は次のホールに流れ、決着がついたホールの勝者が流れた分もまとめて獲得します。','ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます。ショートホールには付けません。','18番で決着がつかない場合、流れた点は誰にも入りません。']},
  {t:'オリンピック',p:'金4・銀3・銅2・鉄1・ダイヤ5',b:['グリーンに乗った時点で遠い順に金・銀・銅・鉄とします。','1パットで入れた場合だけ得点になります（金4・銀3・銅2・鉄1点）。','グリーン外からのチップインはダイヤとして5点です。']},
  {t:'一通・カン',p:'各5点',b:['一通：金・銀・銅・鉄を各1つ以上揃えると5点。','カン：同じメダルを4つ揃えると5点。','2組目以降も揃うごとに5点加算します。ダイヤは一通・カンに含めません。']},
  {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
- {t:'ナッソー',p:'各3点',b:['全員総当たりで、ハンデ込みのスコアを比べます。ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます（ショートホールを除く）。','前半・後半・トータルの各セクションで勝つと3点。引き分けは0点です。']},
  {t:'精算',p:'1点＝100円',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100円です。']}];
 
 const MAXP=5;
@@ -264,7 +262,7 @@ function compute(){
     const par=COURSE[h].p;
     const nets=ps.map(i=>H.s[i]-strokes(S.players[i].hc,h));
     const m=Math.min(...nets),w=ps.filter(i=>nets[i]===m);
-    if(w.length===1){pts[w[0]].hb+=1+carry;hb[h]={w:w[0],v:1+carry};carry=0}
+    if(w.length===1){hb[h]={w:w[0],v:1+carry};carry=0}
     else{carry++;hb[h]={c:carry}}
     ps.forEach(i=>{
       const o=H.oly[i];if(o&&MED[o]){pts[i].oly+=MED[o].pt;if(o!=='d')med[i][o]++}
@@ -291,7 +289,7 @@ function compute(){
       const doneN=hs.filter(h=>S.holes[h].done).length,complete=doneN===hs.length;
       const a=net(i,hs),b=net(j,hs);
       const r={a,b,complete,started:doneN>0,w:a<b?i:b<a?j:-1};
-      if(complete&&r.w>=0)pts[r.w].nas+=3;
+      
       row.sec.push(r);
     });
     nas.push(row);
@@ -322,7 +320,7 @@ function renderHole(C){
     const pl=S.players[i],st=strokes(pl.hc,h);
     const val=H.s[i]??par;
     const opts=[];for(let v=1;v<=par+7;v++){const d=v-par;opts.push(`<option value="${v}"${v===val?' selected':''}>${v}　${relName(d)}</option>`)}
-    const lead=H.done&&C.hb[h]&&C.hb[h].w===i;
+    const lead=false;
     const medChips=['g','s','b','i','d'].map(k=>{
       const on=H.oly[i]===k;
       const taken=k!=='d'&&!on&&ps.some(j=>j!==i&&H.oly[j]===k);
@@ -353,14 +351,14 @@ function renderHole(C){
   if(H.done){const r=C.hb[h];
     const q=C.npr[h];
     const npTxt=isShort?`<br>ニアピン：${q.w!=null?`<b>${esc(S.players[q.w].name)}</b> が ${q.v}点 獲得`:({none:'該当者なしのため次のショートへ流れ',bogey:'パーを取れなかったため次のショートへ流れ',kill:'ワンオンしなかった人がパーを取ったため、ニアピン消しで流れ'})[q.why]}`:'';
-    res=`<div class="result">${r.w!=null?`ホールベスト：<b>${esc(S.players[r.w].name)}</b> が ${r.v}点 獲得${r.v>1?`（持ち越し${r.v-1}含む）`:''}`:`ホールベスト：同点のため持ち越し（現在 ${r.c}ホール分）`}${npTxt}</div>`;}
+    res=isShort?`<div class="result">${npTxt.replace(/^<br>/,'')}</div>`:'';}
 
   return `<main class="wrap">
     <div class="holehead"><div class="bigno">${h}</div>
       <div class="hmeta"><span class="lbl">${S.cur+1}ホール目 / ${h<=9?'OUT':'IN'}</span>
         <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span></div>
         ${isShort?'<div><span class="tag">ショート・ハンデなし</span></div>':(()=>{const w=ps.filter(i=>strokes(S.players[i].hc,h)>0);return w.length?`<div><span class="tag hct">ハンデ付き：${w.map(i=>esc(S.players[i].name)).join('・')}</span></div>`:''})()}</div>
-      <div class="carry">持ち越し<b class="num">${H.done?(C.hb[h].c||0):pending}</b></div></div>
+      ${isShort?`<div class="carry">ニアピン流れ<b class="num">${H.done&&C.npr[h]?(C.npr[h].c||0):npPend}</b></div>`:''}</div>
     ${Object.values(S.holes).some(x=>x.done)?'':`<div class="box" style="margin:0 0 10px"><h3>スタートコース</h3><div class="seg"><button class="${!S.startIn?'on':''}" data-start="out">OUTスタート（1番〜）</button><button class="${S.startIn?'on':''}" data-start="in">INスタート（10番〜）</button></div></div>`}
     <div class="plist">${cards}</div>${np}${res}
     <div class="actions">
@@ -381,7 +379,7 @@ function renderSum(C,top=''){
     <div class="pt">点数<b>${C.tot[i]}</b></div>
     <div class="bal">勝ち負け<b class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${fmt(C.bal[i])}</b>${yen(C.bal[i])}</div></div>`).join('');
 
-  const cats=[['hb','ホールベスト'],['oly','オリンピック'],['set','一通・カン'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ'],['nas','ナッソー']];
+  const cats=[['oly','オリンピック'],['set','一通・カン'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ']];
   const brk=`<div class="tw"><table><thead><tr><th class="l">種目</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}</tr></thead><tbody>
     ${cats.map(([k,l])=>`<tr><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.pts[i][k]||'·'}</td>`).join('')}</tr>`).join('')}
     <tr><td class="l" style="font-size:11px;color:var(--muted)">メダル 金/銀/銅/鉄</td>${ps.map(i=>{const m=C.med[i];return `<td style="font-size:11px;color:var(--muted)">${m.g}/${m.s}/${m.b}/${m.i}${C.sets[i].ittsu?` 一通${C.sets[i].ittsu>1?'×'+C.sets[i].ittsu:''}`:''}${C.sets[i].kan?` カン${C.sets[i].kan>1?'×'+C.sets[i].kan:''}`:''}</td>`}).join('')}</tr>
@@ -398,23 +396,22 @@ function renderSum(C,top=''){
     return `<tr${k===9?' class="turn"':''}><td class="l"><b class="num" style="font-size:16px">${h}</b> <span style="font-size:11px;color:var(--muted)">P${COURSE[h].p}</span></td>${ps.map(i=>{
       if(!H.done)return '<td style="color:var(--muted)">·</td>';
       const v=H.s[i],par=COURSE[h].p;let m='';
-      if(r.w===i)m+=`<span class="mk hb">○${r.v>1?r.v:''}</span>`;
+      
       if(H.oly[i])m+=`<span class="mk ${H.oly[i]}">${MED[H.oly[i]].n[0]}</span>`;
       if(C.npr[h]&&C.npr[h].w===i)m+=`<span class="mk x">N${C.npr[h].v>3?C.npr[h].v:''}</span>`;
       if(H.sand[i])m+='<span class="mk x">砂</span>';
       const st=strokes(S.players[i].hc,h);
-      return `<td${st?' class="hcell"':''}><span class="sc${v<par?' under':''}">${v}</span>${st?`<sup class="hsup">${'●'.repeat(st)}</sup>`:''}${m}</td>`}).join('')}<td style="font-size:11px;color:var(--muted)">${H.done&&r.c?'持越'+r.c:''}</td></tr>`;
+      return `<td${st?' class="hcell"':''}><span class="sc${v<par?' under':''}">${v}</span>${st?`<sup class="hsup">${'●'.repeat(st)}</sup>`:''}${m}</td>`}).join('')}<td style="font-size:11px;color:var(--muted)"></td></tr>`;
   }).join('');
   const half=(hs,l)=>`<tr class="tot"><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.gross(i,hs)||'–'}</td>`).join('')}<td></td></tr>`;
   const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows}
     ${half(C.halves[0],'前半')}${half(C.halves[1],'後半')}${half(ord,'合計')}</tbody></table></div>
-    <div class="legend"><span><span class="hsup">●</span> ハンデ付きホール（●の数＝打数）</span><span><span class="mk hb">○</span> ホールベスト（数字は獲得点）</span><span><span class="mk g">金</span><span class="mk s">銀</span><span class="mk b">銅</span><span class="mk i">鉄</span><span class="mk d">ダ</span> オリンピック</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span></div>`;
+    <div class="legend"><span><span class="hsup">●</span> ハンデ付きホール（●の数＝打数）</span><span><span class="mk g">金</span><span class="mk s">銀</span><span class="mk b">銅</span><span class="mk i">鉄</span><span class="mk d">ダ</span> オリンピック</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span></div>`;
 
   return `<main class="wrap">${top}
-    <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.carry?` · ホールベスト流れ${C.carry}`:''}${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
+    <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
       <div class="hint">勝ち負け＝他の各人との点数の差の合計（全員で合計0）。${S.rate>0?`1点＝${S.rate}円で換算。`:''}</div></div>
     <div class="sec"><h2>種目別の点数</h2>${brk}</div>
-    <div class="sec"><h2>ナッソー（ハンデ込み・各3点）</h2>${n>1?nasT:'<div class="empty">2人以上で対戦します</div>'}</div>
     <div class="sec"><h2>スコアカード</h2>${card}</div>
     ${S.view==='sum'?(doneN>0?`<button class="btn pri" data-end="1" style="width:100%;margin-top:22px;${endArm?'background:var(--flag);border-color:var(--flag);color:var(--flag-ink)':''}">${endArm?(doneN<18?`まだ${18-doneN}ホール未確定です。もう一度押すと${doneN}ホールで終了します`:'もう一度押すと保存してゲームをリセットします'):(doneN<18?`ここで終了する（${doneN}/18ホール）`:'全て確定して終了')}</button>
       ${endArm?'<button class="btn" data-endcancel="1" style="width:100%;margin-top:8px">キャンセル</button>':''}
