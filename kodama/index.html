@@ -107,6 +107,7 @@ td.hcell{background:color-mix(in srgb,var(--green) 12%,transparent)}
 .chip.m-g[aria-pressed="true"]{background:var(--gold)} .chip.m-s[aria-pressed="true"]{background:var(--silver)}
 .chip.m-b[aria-pressed="true"]{background:var(--bronze)} .chip.m-i[aria-pressed="true"]{background:var(--iron)}
 .chip.m-d[aria-pressed="true"]{background:var(--diamond)}
+.chip.sao-ng[aria-pressed="true"]{background:var(--lose);color:#fff}
 .chip.sand[aria-pressed="true"],.chip.np[aria-pressed="true"]{background:var(--green);color:var(--green-ink)}
 .chip .p{font-family:var(--f-num);font-weight:600;opacity:.75;margin-left:3px}
 .sep{width:1px;height:22px;background:var(--line);margin:0 2px}
@@ -206,11 +207,12 @@ const RULES=[
  {t:'オリンピック',p:'金4・銀3・銅2・鉄1・ダイヤ5',b:['グリーンに乗った時点で遠い順に金・銀・銅・鉄とします。','1パットで入れた場合だけ得点になります（金4・銀3・銅2・鉄1点）。','グリーン外からのチップインはダイヤとして5点です。']},
  {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
+ {t:'サオ',p:'+3点・-3点',b:['カップから1ピン以上離れたところから、サオを宣言して1パットで入れたら3点獲得。','サオを宣言して3パットしたら-3点。']},
  {t:'精算',p:'1点＝100円',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100円です。']}];
 
 const MAXP=5;
-function blankHole(){return {done:false,s:Array(MAXP).fill(null),oly:Array(MAXP).fill(''),sand:Array(MAXP).fill(false),miss:Array(MAXP).fill(false),np:-1}}
-function padHole(H){const pad=(a,v)=>{a=a||[];while(a.length<MAXP)a.push(v);return a};H.s=pad(H.s,null);H.oly=pad(H.oly,'');H.sand=pad(H.sand,false);H.miss=pad(H.miss,false);return H}
+function blankHole(){return {done:false,s:Array(MAXP).fill(null),oly:Array(MAXP).fill(''),sand:Array(MAXP).fill(false),miss:Array(MAXP).fill(false),sao:Array(MAXP).fill(''),np:-1}}
+function padHole(H){const pad=(a,v)=>{a=a||[];while(a.length<MAXP)a.push(v);return a};H.s=pad(H.s,null);H.oly=pad(H.oly,'');H.sand=pad(H.sand,false);H.miss=pad(H.miss,false);H.sao=pad(H.sao,'');return H}
 function fresh(){
   const holes={};for(let h=1;h<=18;h++)holes[h]=blankHole();
   return {count:4,roster:ROSTER.map((n,k)=>({key:n,name:n,hc:0,on:k<4})),players:ROSTER.slice(0,4).map(n=>({name:n,hc:0})),
@@ -255,7 +257,7 @@ function relName(d){return {'-3':'アルバトロス','-2':'イーグル','-1':'
 
 function compute(){
   const n=S.count,ps=P(),ord=order();
-  const pts=ps.map(()=>({hb:0,oly:0,set:0,np:0,bd:0,sand:0,nas:0}));
+  const pts=ps.map(()=>({hb:0,oly:0,set:0,np:0,bd:0,sand:0,sao:0,nas:0}));
   const med=ps.map(()=>({g:0,s:0,b:0,i:0}));
   const hb={};let carry=0;const npr={};let npc=0;
   for(const h of ord){
@@ -269,6 +271,7 @@ function compute(){
       const o=H.oly[i];if(o&&MED[o]){pts[i].oly+=MED[o].pt;if(o!=='d')med[i][o]++}
       if(H.s[i]<=par-1)pts[i].bd+=3;
       if(H.sand[i])pts[i].sand+=3;
+      if(H.sao&&H.sao[i])pts[i].sao+=H.sao[i]==='ok'?3:-3;
     });
     if(par===3){
       const has=H.np>=0&&H.np<n;
@@ -333,6 +336,8 @@ function renderHole(C){
       </div>
       <div class="chips">${medChips}<span class="sep"></span>
         <button class="chip sand" aria-pressed="${!!H.sand[i]}" data-sand="${i}">砂イチ<span class="p">3</span></button>
+        <button class="chip sand" aria-pressed="${!!(H.sao&&H.sao[i]==='ok')}" data-sao="${i}:ok">サオ成功<span class="p">+3</span></button>
+        <button class="chip sao-ng" aria-pressed="${!!(H.sao&&H.sao[i]==='ng')}" data-sao="${i}:ng">サオ3パット<span class="p">-3</span></button>
         ${birdie?`<span class="badge">${relName(H.s[i]-par)} +3</span>`:''}
       </div></div>`;
   }).join('');
@@ -377,7 +382,7 @@ function renderSum(C,top=''){
     <div class="pt">点数<b>${C.tot[i]}</b></div>
     <div class="bal">勝ち負け<b class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${fmt(C.bal[i])}</b>${yen(C.bal[i])}</div></div>`).join('');
 
-  const cats=[['oly','オリンピック'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ']];
+  const cats=[['oly','オリンピック'],['np','ニアピン'],['bd','バーディー'],['sand','砂イチ'],['sao','サオ']];
   const brk=`<div class="tw"><table><thead><tr><th class="l">種目</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}</tr></thead><tbody>
     ${cats.map(([k,l])=>`<tr><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.pts[i][k]||'·'}</td>`).join('')}</tr>`).join('')}
     <tr><td class="l" style="font-size:11px;color:var(--muted)">メダル 金/銀/銅/鉄</td>${ps.map(i=>{const m=C.med[i];return `<td style="font-size:11px;color:var(--muted)">${m.g}/${m.s}/${m.b}/${m.i}</td>`}).join('')}</tr>
@@ -398,12 +403,13 @@ function renderSum(C,top=''){
       if(H.oly[i])m+=`<span class="mk ${H.oly[i]}">${MED[H.oly[i]].n[0]}</span>`;
       if(C.npr[h]&&C.npr[h].w===i)m+=`<span class="mk x">N${C.npr[h].v>3?C.npr[h].v:''}</span>`;
       if(H.sand[i])m+='<span class="mk x">砂</span>';
+      if(H.sao&&H.sao[i])m+=H.sao[i]==='ok'?'<span class="mk x">サ</span>':'<span class="mk" style="background:var(--lose)">サ×</span>';
       return `<td><span class="sc${v<par?' under':''}">${v}</span>${m}</td>`}).join('')}<td style="font-size:11px;color:var(--muted)"></td></tr>`;
   }).join('');
   const half=(hs,l)=>`<tr class="tot"><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.gross(i,hs)||'–'}</td>`).join('')}<td></td></tr>`;
   const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows}
     ${half(C.halves[0],'前半')}${half(C.halves[1],'後半')}${half(ord,'合計')}</tbody></table></div>
-    <div class="legend"><span><span class="mk g">金</span><span class="mk s">銀</span><span class="mk b">銅</span><span class="mk i">鉄</span><span class="mk d">ダ</span> オリンピック</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span></div>`;
+    <div class="legend"><span><span class="mk g">金</span><span class="mk s">銀</span><span class="mk b">銅</span><span class="mk i">鉄</span><span class="mk d">ダ</span> オリンピック</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span><span><span class="mk x">サ</span> サオ成功</span><span><span class="mk" style="background:var(--lose)">サ×</span> サオ3パット</span></div>`;
 
   return `<main class="wrap">${top}
     <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
@@ -487,6 +493,7 @@ app.addEventListener('click',e=>{
   if(d.go!==undefined){S.view='hole';go(+d.go);return}
   const h=hole(),H=S.holes[h];
   if(d.oly){const[i,k]=d.oly.split(':');H.oly[+i]=H.oly[+i]===k?'':k;save();render();return}
+  if(d.sao){const[i,k]=d.sao.split(':');if(!H.sao)H.sao=Array(MAXP).fill('');H.sao[+i]=H.sao[+i]===k?'':k;save();render();return}
   if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();render();return}
   if(d.np!==undefined){H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();render();return}
   if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);H.miss[i]=!H.miss[i];save();render();return}
