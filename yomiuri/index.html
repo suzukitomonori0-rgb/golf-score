@@ -87,6 +87,9 @@ body>#app>header .chipH.done:not(.cur){background:rgba(11,36,22,.85)}
 .pc.lead{border-color:var(--green);box-shadow:inset 4px 0 0 var(--green)}
 .prow{display:flex;align-items:center;gap:10px}
 .pname{flex:1;min-width:0}
+.ovp{display:inline-block;margin-left:6px;font-family:var(--f-num);font-size:18px;font-weight:700;color:var(--muted)}
+.ovp.o{color:var(--ink)}
+.ovp.u{color:var(--lose)}
 .pname b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pname span{font-size:12px;color:var(--muted)}
 .pname .hcb{display:inline-block;font-size:11px;font-weight:900;padding:1px 7px;border-radius:4px;background:var(--green);color:var(--green-ink);margin-left:4px}
@@ -329,7 +332,7 @@ function renderHole(C){
     const birdie=H.done&&H.s[i]<=par-1;
     return `<div class="pc${lead?' lead':''}">
       <div class="prow">
-        <div class="pname"><b>${esc(pl.name)}${lead?' <span class="mk hb">○</span>':''}</b></div>
+        <div class="pname"><b>${esc(pl.name)}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}</b></div>
         <label class="selw${H.done||H.s[i]!=null?'':' draft'}"><b>${val}</b><small>${relName(val-par)}</small><select data-score="${i}" aria-label="${esc(pl.name)}のスコア">${opts.join('')}</select></label>
       </div>
       <div class="chips">${medChips}<span class="sep"></span>
