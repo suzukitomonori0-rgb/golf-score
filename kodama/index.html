@@ -337,7 +337,7 @@ function renderHole(C){
       <div class="chips">${medChips}<span class="sep"></span>
         <button class="chip sand" aria-pressed="${!!H.sand[i]}" data-sand="${i}">砂イチ<span class="p">3</span></button>
         <button class="chip sand" aria-pressed="${!!(H.sao&&H.sao[i]==='ok')}" data-sao="${i}:ok">サオ成功<span class="p">+3</span></button>
-        <button class="chip sao-ng" aria-pressed="${!!(H.sao&&H.sao[i]==='ng')}" data-sao="${i}:ng">サオ3パット<span class="p">-3</span></button>
+        <button class="chip sao-ng" aria-pressed="${!!(H.sao&&H.sao[i]==='ng')}" data-sao="${i}:ng">サオ失敗<span class="p">-3</span></button>
         ${birdie?`<span class="badge">${relName(H.s[i]-par)} +3</span>`:''}
       </div></div>`;
   }).join('');
@@ -409,7 +409,7 @@ function renderSum(C,top=''){
   const half=(hs,l)=>`<tr class="tot"><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.gross(i,hs)||'–'}</td>`).join('')}<td></td></tr>`;
   const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows}
     ${half(C.halves[0],'前半')}${half(C.halves[1],'後半')}${half(ord,'合計')}</tbody></table></div>
-    <div class="legend"><span><span class="mk g">金</span><span class="mk s">銀</span><span class="mk b">銅</span><span class="mk i">鉄</span><span class="mk d">ダ</span> オリンピック</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span><span><span class="mk x">サ</span> サオ成功</span><span><span class="mk" style="background:var(--lose)">サ×</span> サオ3パット</span></div>`;
+    <div class="legend"><span><span class="mk g">金</span><span class="mk s">銀</span><span class="mk b">銅</span><span class="mk i">鉄</span><span class="mk d">ダ</span> オリンピック</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span><span><span class="mk x">サ</span> サオ成功</span><span><span class="mk" style="background:var(--lose)">サ×</span> サオ失敗</span></div>`;
 
   return `<main class="wrap">${top}
     <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
