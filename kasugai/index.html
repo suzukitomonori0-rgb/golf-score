@@ -197,8 +197,8 @@ Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a]
 const NONSHORT=Object.keys(RANK).length; // 14
 const MED={g:{n:'金',pt:4},s:{n:'銀',pt:3},b:{n:'銅',pt:2},i:{n:'鉄',pt:1},d:{n:'ダイヤ',pt:5}};
 const RULES=[
- {t:'ホールベスト',p:'1点',b:['各ホールのベストスコアを競います。勝った一人に1点付きます。','同点の場合は次のホールに流れ、決着がついたホールの勝者が流れた分もまとめて獲得します。','流れは2ホールまで。3ホール続けて同点になった時点で流れた点は消え、0からやり直します（最大3点）。','18番で決着がつかない場合、流れた点は誰にも入りません。']},
- {t:'ニアピン',p:'1点',b:['ショートホール4ホールすべてが対象。一番近い人が1点獲得します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
+ {t:'ホールベスト',p:'1点',b:['各ホールのベストスコアを競います。勝った一人に1点付きます。','同点の場合は誰にも点は入りません。次のホールへの流れ（持ち越し）はありません。']},
+ {t:'ニアピン',p:'1点',b:['ショートホール4ホールすべてが対象。一番近い人が1点獲得します。','該当者なしの場合は流れ、次のショートホールに加算します。','前半・後半それぞれ2回目のショートで決着がつかなければ、流れた点は消えます（後半には持ち越しません）。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。','ニアピンが流れても、そのホールでスコアが一番良ければホールベストは獲得できます。']},
  {t:'バーディー・砂イチ',p:'各1点',b:['バーディーを獲得したら1点（イーグル以上も1点）。','砂イチはバンカーから出して1パットで成立、1点。','同じホールで両方達成した場合は両方加算します。']},
  {t:'サオ・2サオ',p:'1点・2点',b:['ファーストパットが1ピン以上の距離で、宣言してから1パットで入れたらサオ、1点。','2ピン以上の距離なら2サオ、2点。']},
  {t:'ナッソー',p:'各1点',b:['全員総当たりで、ハンデ込みのスコアを比べます。ハンデは設定の数値を前半・後半それぞれに適用し、コースHDCPの難しい順に1打ずつ付けます。','前半・後半の各セクションで勝つと、対戦相手から1点もらいます（他の人とは無関係）。引き分けは0点です。トータルはありません。']},
@@ -254,8 +254,8 @@ function compute(){
     const par=COURSE[h].p;
     const nets=ps.map(i=>H.s[i]-strokes(S.players[i].hc,h));
     const m=Math.min(...nets),w=ps.filter(i=>nets[i]===m);
-    if(w.length===1){pts[w[0]].hb+=1+carry;hb[h]={w:w[0],v:1+carry};carry=0}
-    else{carry++;if(carry>2){carry=0;hb[h]={c:0,lost:true}}else hb[h]={c:carry}}
+    if(w.length===1){pts[w[0]].hb+=1;hb[h]={w:w[0],v:1}}
+    else{hb[h]={c:0,tie:true}}
     ps.forEach(i=>{
       if(H.s[i]<=par-1)pts[i].bd+=1;
       if(H.sand[i])pts[i].sand+=1;
@@ -265,7 +265,8 @@ function compute(){
       const has=H.np>=0&&H.np<n;
       const kill=ps.some(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par);
       if(has&&H.s[H.np]<=par&&!kill){const v=1+npc;pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
-      else{npc++;npr[h]={c:npc,why:!has?'none':H.s[H.np]>par?'bogey':'kill'}}
+      else{const half=ord.indexOf(h)<9?ord.slice(0,9):ord.slice(9);const nth=half.filter(x=>COURSE[x].p===3).indexOf(h)+1;const why=!has?'none':H.s[H.np]>par?'bogey':'kill';
+        if(nth>=2){npc=0;npr[h]={c:0,why,lost:true}}else{npc++;npr[h]={c:npc,why}}}
     }
   }
   const sets=ps.map(()=>({ittsu:0,kan:0}));
@@ -339,15 +340,15 @@ function renderHole(C){
   let res='';
   if(H.done){const r=C.hb[h];
     const q=C.npr[h];
-    const npTxt=isShort?`<br>ニアピン：${q.w!=null?`<b>${esc(S.players[q.w].name)}</b> が ${q.v}点 獲得`:({none:'該当者なしのため次のショートへ流れ',bogey:'パーを取れなかったため次のショートへ流れ',kill:'ワンオンしなかった人がパーを取ったため、ニアピン消しで流れ'})[q.why]}`:'';
-    res=`<div class="result">${r.w!=null?`ホールベスト：<b>${esc(S.players[r.w].name)}</b> が ${r.v}点 獲得${r.v>1?`（持ち越し${r.v-1}含む）`:''}`:(r.lost?'ホールベスト：3ホール続けて同点のため、流れた点は消えてリセット':`ホールベスト：同点のため持ち越し（現在 ${r.c}ホール分）`)}${npTxt}</div>`;}
+    const npTxt=isShort?`<br>ニアピン：${q.w!=null?`<b>${esc(S.players[q.w].name)}</b> が ${q.v}点 獲得`:({none:'該当者なし',bogey:'パーを取れず不成立',kill:'ワンオンしなかった人がパーを取り、ニアピン消し'})[q.why]+(q.lost?'。2回目のショートのため、流れた点は消えます':'。次のショートへ流れます')}`:'';
+    res=`<div class="result">${r.w!=null?`ホールベスト：<b>${esc(S.players[r.w].name)}</b> が 1点 獲得`:'ホールベスト：同点のため該当なし'}${npTxt}</div>`;}
 
   return `<main class="wrap">
     <div class="holehead"><div class="bigno">${h}</div>
       <div class="hmeta"><span class="lbl">${S.cur+1}ホール目 / ${h<=9?'OUT':'IN'}</span>
         <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span></div>
         ${(()=>{const w=ps.filter(i=>strokes(S.players[i].hc,h)>0);return w.length?`<div><span class="tag hct">ハンデ付き：${w.map(i=>esc(S.players[i].name)).join('・')}</span></div>`:''})()}</div>
-      <div class="carry">持ち越し<b class="num">${H.done?(C.hb[h].c||0):pending}</b></div></div>
+      ${isShort?`<div class="carry">ニアピン流れ<b class="num">${H.done&&C.npr[h]?(C.npr[h].c||0):npPend}</b></div>`:''}</div>
     ${Object.values(S.holes).some(x=>x.done)?'':`<div class="box" style="margin:0 0 10px"><h3>スタートコース</h3><div class="seg"><button class="${!S.startIn?'on':''}" data-start="out">OUTスタート（1番〜）</button><button class="${S.startIn?'on':''}" data-start="in">INスタート（10番〜）</button></div></div>`}
     <div class="plist">${cards}</div>${np}${res}
     <div class="actions">
@@ -390,7 +391,7 @@ function renderSum(C,top=''){
       if(H.sand[i])m+='<span class="mk x">砂</span>';
       if(H.sao&&H.sao[i])m+=`<span class="mk x">${H.sao[i]==='2'?'2サ':'サ'}</span>`;
       const st=strokes(S.players[i].hc,h);
-      return `<td${st?' class="hcell"':''}><span class="sc${v<par?' under':''}">${v}</span>${st?`<sup class="hsup">${'●'.repeat(st)}</sup>`:''}${m}</td>`}).join('')}<td style="font-size:11px;color:var(--muted)">${H.done&&r.c?'持越'+r.c:''}</td></tr>`;
+      return `<td${st?' class="hcell"':''}><span class="sc${v<par?' under':''}">${v}</span>${st?`<sup class="hsup">${'●'.repeat(st)}</sup>`:''}${m}</td>`}).join('')}<td style="font-size:11px;color:var(--muted)"></td></tr>`;
   }).join('');
   const half=(hs,l)=>`<tr class="tot"><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.gross(i,hs)||'–'}</td>`).join('')}<td></td></tr>`;
   const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows}
@@ -398,7 +399,7 @@ function renderSum(C,top=''){
     <div class="legend"><span><span class="hsup">●</span> ハンデ付きホール（●の数＝打数）</span><span><span class="mk hb">○</span> ホールベスト（数字は獲得点）</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span><span><span class="mk x">サ</span> サオ</span></div>`;
 
   return `<main class="wrap">${top}
-    <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.carry?` · ホールベスト流れ${C.carry}`:''}${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
+    <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
       <div class="hint">勝ち負け＝他の各人との点数の差の合計に、ナッソーの1対1の勝ち負けを足したもの（全員で合計0）。${S.rate>0?`1点＝${S.rate}円で換算。`:''}</div></div>
     <div class="sec"><h2>種目別の点数</h2>${brk}</div>
     <div class="sec"><h2>ナッソー（ハンデ込み・1対1で各1点）</h2>${n>1?nasT:'<div class="empty">2人以上で対戦します</div>'}</div>
