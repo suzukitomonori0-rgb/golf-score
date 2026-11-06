@@ -187,7 +187,7 @@ tr.turn td{border-top:2px solid var(--green)}
 const KEY='kasugai-golf-game-v1';
 const COURSE={1:{p:5,h:7},2:{p:3,h:13},3:{p:4,h:11},4:{p:4,h:1},5:{p:3,h:15},6:{p:4,h:5},7:{p:4,h:3},8:{p:4,h:17},9:{p:5,h:9},
  10:{p:4,h:16},11:{p:5,h:4},12:{p:4,h:12},13:{p:3,h:18},14:{p:4,h:6},15:{p:4,h:2},16:{p:4,h:14},17:{p:5,h:8},18:{p:3,h:10}};
-const ROSTER=['鈴木','杉本','田野倉','木原','池田','Aさん','Bさん'];
+const ROSTER=['鈴木','杉本','田野倉','木原','池田','伴典','Aさん','Bさん'];
 const RANK={};
 Object.keys(COURSE).map(Number).filter(h=>COURSE[h].p!==3).sort((a,b)=>COURSE[a].h-COURSE[b].h).forEach((h,i)=>RANK[h]=i);
 const NONSHORT=Object.keys(RANK).length; // 14
@@ -212,6 +212,7 @@ if(!S||!S.holes)S=fresh();
 if(!S.rate||S.rv!==2){S.rate=1000;S.rv=2}
 if(!S.roster)S.roster=ROSTER.map((n,k)=>({name:n,hc:0,on:k<4}));
 ROSTER.forEach(n=>{if(!S.roster.some(x=>x.name===n))S.roster.push({name:n,hc:0,on:false})});
+{const ix=n=>{const k=ROSTER.indexOf(n);return k<0?99:k};S.roster.sort((a,b)=>ix(a.name)-ix(b.name))}
 S.roster.forEach(p=>{p.hc=Math.min(36,Math.max(0,Number(p.hc)||0))});
 function syncPlayers(){const sel=S.roster.filter(x=>x.on);S.players=sel.map(x=>({name:x.name,hc:x.hc}));S.count=sel.length}
 syncPlayers();
