@@ -600,8 +600,8 @@ app.addEventListener('click',e=>{
     HIST=HIST.filter(x=>x.id!==+d.hdel);saveHist();histId=null;delArm=false;render();window.scrollTo(0,0);return}
   if(d.go!==undefined){S.view='hole';go(+d.go);return}
   const h=hole(),H=S.holes[h];
-  if(d.oly){const[i,k]=d.oly.split(':');const on=H.oly[+i]!==k;H.oly[+i]=on?k:'';save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,`ナイス${MED[k].n}！ +${MED[k].pt}点`);return}
-  if(d.sao){const[i,k]=d.sao.split(':');if(!H.sao)H.sao=Array(MAXP).fill('');const on=H.sao[+i]!==k;H.sao[+i]=on?k:'';save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,k==='ok'?'サオ成功！ナイス +3点':'残念… -3点',k!=='ok');return}
+  if(d.oly){const[i,k]=d.oly.split(':');const on=H.oly[+i]!==k;H.oly[+i]=on?k:'';save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,({g:'稼ぐねー金！',s:'ナイス銀！',b:'おいしい銅！',i:'コツコツ鉄！',d:'ラッキー⁉'})[k]+` +${MED[k].pt}点`);return}
+  if(d.sao){const[i,k]=d.sao.split(':');if(!H.sao)H.sao=Array(MAXP).fill('');const on=H.sao[+i]!==k;H.sao[+i]=on?k:'';save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,k==='ok'?'有言実行！ +3点':'残念… -3点',k!=='ok');return}
   if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();const rc=t.getBoundingClientRect();render();if(H.sand[i])pop(rc,'上手い！ +3点');return}
   if(d.np!==undefined){const was=H.np;H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();const rc=t.getBoundingClientRect();render();if(H.np>=0&&was!==H.np){const npP=(()=>{let k=0;for(const x of order()){if(x===h)break;const q=compute().npr[x];if(q)k=q.c||0}return k})();pop(rc,`ナイスニアピン！ +${3*(1+npP)}点`)}return}
   if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);const on=!H.miss[i];H.miss=H.miss.map(()=>false);H.miss[i]=on;save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,'ナイス火消し +1点');return}
