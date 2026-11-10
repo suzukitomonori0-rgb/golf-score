@@ -458,9 +458,9 @@ function renderHole(){
     <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${chipRow("first",FIRST,h.first)}</div>
     <div class="mini"><div class="grp"><span class="label">上り・下り</span>${chipRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${chipRow("line",LINE,h.line)}</div></div>
-    <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
     <div class="steps">${stepper("score","打数",h.score,scoreSub(h))}${""}${stepper("putts","パット",h.putts)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
+    <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
     <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
     <div class="nav">${pos===0?"<span></span>":`<button class="btn" data-go="-1">← ${ord[pos-1]+1}番</button>`}
@@ -915,7 +915,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2015";
+const APP_VERSION="2026.11.10-2017";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
