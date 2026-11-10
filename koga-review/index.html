@@ -259,7 +259,7 @@ h2{margin:0;font-size:16px;font-weight:700}
 
     <div class="tools">
       <button class="btn ghost" id="newBtn">新しいラウンド</button>
-      <button class="btn primary" id="saveRound">このラウンドをみんなの蓄積に保存</button>
+      <button class="btn primary" id="saveRound" hidden>このラウンドをみんなの蓄積に保存</button>
     </div>
     <p class="note" id="histNote"></p>
     <p class="note" id="saveMsg" hidden></p>
@@ -930,7 +930,7 @@ $("saveRound").onclick=async()=>{
   R.id??="r"+Date.now();
   const played=R.holes.filter(h=>h.score!=null).length,m={set textContent(t){setMsg(t)},set hidden(v){}};
   m.hidden=false;
-  if(!played){m.textContent="打数が入っていないので保存できません。";return}
+  if(played<18){m.textContent="18ホールすべての打数を入れてから保存してください。";return}
   const d=new Date(),date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   const snap={id:R.id,date,out:R.out,inn:R.inn,holes:R.holes.map(h=>({par:h.par,score:h.score,putts:h.putts,pin:h.pin,ball:h.ball&&h.ball[0]==="o"&&h.chip?h.ball+">"+h.chip:h.ball,slope:h.slope}))};
   const full={...snap,holes:R.holes.map(h=>({...h}))};
@@ -960,7 +960,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2041";
+const APP_VERSION="2026.11.10-2049";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
