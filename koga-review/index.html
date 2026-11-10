@@ -774,7 +774,7 @@ document.addEventListener("click",e=>{
     save();renderInput();return}
   if(t.dataset.f){const f=t.dataset.f;h[f]=h[f]===t.dataset.v?null:t.dataset.v;save();renderHole();return}
   if(t.dataset.go){if(t.dataset.go==="rev"){show("rev");return}R.cur=Math.min(17,Math.max(0,R.cur+(+t.dataset.go)));gmode="pin";save();renderInput();
-    document.getElementById("holePanel").scrollIntoView({block:"start",behavior:"smooth"});return}
+    window.scrollTo({top:0,left:0,behavior:"instant"});return}
 });
 document.addEventListener("input",e=>{if(e.target.id==="memo"){R.holes[R.cur].memo=e.target.value;save()}});
 function changeCourse(){
@@ -821,7 +821,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1910";
+const APP_VERSION="2026.11.10-1913";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
