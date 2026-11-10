@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d5a43">
+<link rel="apple-touch-icon" href="../kodama/apple-touch-icon.png">
+<link rel="icon" href="../kodama/icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>児玉CC ラウンド振り返り</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: スマホ1カラムのスコアカード。上部に固定ヘッダー（合計）、下に「入力」「振り返り」の2画面 */
+:root{
+  --paper:#eef2ee; --card:#ffffff; --ink:#15221b; --muted:#5b6b62; --line:#d3dcd5;
+  --green:#1d5a43; --green-soft:#e1ede6; --flag:#c9930a; --flag-soft:#fbf1d4;
+  --under:#2463a8; --over:#b5532a; --over-soft:#f8e6dc;
+  --font:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0f1512; --card:#18211c; --ink:#e4ebe6; --muted:#93a39a; --line:#2b3731;
+  --green:#5fbf95; --green-soft:#1d3329; --flag:#e7bb3c; --flag-soft:#352c12;
+  --under:#7fb2ec; --over:#ec946c; --over-soft:#3a2219; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f1512; --card:#18211c; --ink:#e4ebe6; --muted:#93a39a; --line:#2b3731;
+  --green:#5fbf95; --green-soft:#1d3329; --flag:#e7bb3c; --flag-soft:#352c12;
+  --under:#7fb2ec; --over:#ec946c; --over-soft:#3a2219; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);padding-block:14px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.toprow{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.club{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+h1{margin:0;font-size:20px;font-weight:900;letter-spacing:.02em;text-wrap:balance}
+.total{text-align:right;line-height:1.1}
+.total b{font-size:34px;font-weight:900}
+.total small{display:block;font-size:12px;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px}
+.tabs button{border:0;background:none;padding:8px;border-radius:8px;font-weight:700;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--green);color:var(--paper)}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.label{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.courses{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.courses label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:700}
+select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.note{font-size:12px;color:var(--muted);margin:0}
+
+/* ホール選択ストリップ */
+.strip{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.strip .side{grid-column:1/-1;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-top:4px}
+.hb{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:4px 0 3px;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
+.hb .n{font-size:10px;color:var(--muted)}
+.hb.on{border-color:var(--green);box-shadow:0 0 0 2px var(--green) inset}
+.mark{display:inline-grid;place-items:center;width:24px;height:24px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.mark.u{border:1.5px solid var(--under);border-radius:50%;color:var(--under)}
+.mark.u2{border:1.5px solid var(--under);border-radius:50%;box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--under);color:var(--under)}
+.mark.b{border:1.5px solid var(--over);color:var(--over)}
+.mark.d{border:1.5px solid var(--over);box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--over);color:var(--over)}
+.mark.e{color:var(--muted);font-weight:400}
+
+/* ホール入力 */
+.holehead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.holehead .hn{font-size:30px;font-weight:900;line-height:1}
+.holehead .hn small{font-size:14px;font-weight:700;margin-left:2px}
+.holehead .cs{font-size:13px;color:var(--muted)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stp{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--paper);border-radius:10px;padding:8px 4px}
+.stp .row{display:flex;align-items:center;gap:6px}
+.stp button{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px;line-height:1}
+.stp .v{min-width:30px;text-align:center;font-size:24px;font-weight:900}
+.stp .v.empty{color:var(--muted);font-weight:400}
+.grp{display:flex;flex-direction:column;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--paper);font-weight:700}
+.chip[disabled]{opacity:.4;cursor:default}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+textarea{font:inherit;width:100%;min-height:58px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);resize:vertical}
+.auto{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+.auto span{background:var(--paper);border-radius:6px;padding:2px 8px}
+.nav{display:flex;justify-content:space-between;gap:10px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;font-weight:700}
+.btn.primary{background:var(--green);border-color:var(--green);color:var(--paper)}
+.btn.ghost{background:none}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.confirm{background:var(--over-soft);border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+
+/* 振り返り */
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sum div{background:var(--paper);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:0;min-width:0}
+.sum b{font-size:20px;font-weight:900;line-height:1.2}
+.sum span{font-size:11px;color:var(--muted)}
+.card18{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;text-align:center;overflow-x:auto}
+.card18 .h{font-size:10px;color:var(--muted)}
+.card18 .p{font-size:10px;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:112px 1fr 36px;gap:8px;align-items:center;font-size:13px}
+.bar .track{height:14px;background:var(--paper);border-radius:4px;overflow:hidden}
+.bar .fill{height:100%;background:var(--green);border-radius:4px}
+.bar.top .fill{background:var(--flag)}
+.bar .v{text-align:right;font-weight:700}
+.lst{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.lst li{display:grid;grid-template-columns:22px 1fr;gap:6px;font-size:14px}
+.lst .ic{font-weight:900;text-align:center}
+.lst .good .ic{color:var(--green)} .lst .bad .ic{color:var(--over)}
+.task{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.task.first{border-color:var(--flag);background:var(--flag-soft)}
+.task .t{display:flex;gap:8px;align-items:baseline}
+.task .rk{font-weight:900;color:var(--flag);font-size:13px;white-space:nowrap}
+.task h3{margin:0;font-size:16px;font-weight:700;text-wrap:balance}
+.task p{margin:0;font-size:13px;color:var(--muted)}
+.task .drill{font-size:13px;color:var(--ink)}
+.task .drill b{color:var(--green)}
+.goal{display:grid;grid-template-columns:1fr auto auto auto;gap:4px 10px;font-size:14px;align-items:center}
+.goal .arrow{color:var(--muted)}
+.goal .to{font-weight:900;color:var(--green)}
+.proj{background:var(--green-soft);border-radius:10px;padding:12px;font-size:14px}
+.proj b{font-size:22px;font-weight:900;color:var(--green)}
+.memos{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.memos div{display:grid;grid-template-columns:40px 1fr;gap:6px}
+.memos .hn{color:var(--muted);font-weight:700}
+.sample{font-size:12px;background:var(--flag-soft);color:var(--ink);border-radius:8px;padding:6px 10px}
+h2{margin:0;font-size:16px;font-weight:700}
+.gmode{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:8px;padding:2px;align-self:flex-start}
+.gmode button{border:0;background:none;padding:4px 12px;border-radius:6px;font-size:13px;color:var(--muted)}
+.gmode button[aria-pressed="true"]{background:var(--green);color:var(--paper);font-weight:700}
+.gwrap{display:grid;grid-template-columns:56px auto 56px;gap:6px;align-items:center;justify-content:center;justify-items:center}
+.mini .chips .chip{padding:5px 10px}
+.off{border:1px dashed var(--line);background:none;border-radius:8px;font-size:11px;color:var(--muted);padding:6px 6px;line-height:1.3}
+.off.sel{border-style:solid;border-color:var(--over);color:var(--over);font-weight:700}
+.off[disabled]{opacity:.35;cursor:default}
+.green{width:min(200px,52vw);aspect-ratio:1;max-width:100%;border-radius:50%;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;background:var(--card);border:2px solid var(--green)}
+.q{border:0;background:var(--green-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--muted);padding:0}
+.q .ic{display:flex;gap:4px;align-items:center;min-height:22px}
+.fl{color:var(--flag);font-size:20px;line-height:1}
+.bl{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--card);border:2px solid var(--ink)}
+.glegend{display:flex;gap:14px;justify-content:center;font-size:12px;color:var(--muted);align-items:center}
+.gtbl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;font-size:14px;align-items:center}
+.gtbl .k{color:var(--muted)} .gtbl .x{text-align:right;font-weight:700}
+.gtbl .hl{color:var(--over)}
+.q.rec{box-shadow:inset 0 0 0 3px var(--flag)}
+.q.avoid{background:var(--over-soft)}
+.q em{font-style:normal;font-size:10px;font-weight:900;color:var(--flag)}
+.recbox{background:var(--flag-soft);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.recbox b{font-size:15px}
+.recbox .sub{color:var(--muted);font-size:12px}
+.tilt{display:grid;grid-template-columns:auto auto 1fr auto;gap:4px 12px;font-size:13px;align-items:baseline}
+.tilt .k{color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.bar .fill{transition:width .4s ease}}
+@media (max-width:380px){.sum{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:78px 1fr 32px}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="toprow">
+      <div>
+        <div class="club">KODAMA COUNTRY CLUB</div>
+        <h1>児玉CC ラウンド振り返り</h1>
+      </div>
+      <div class="total"><b class="num" id="tot">0</b><small id="totSub">PAR 72</small></div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabIn" aria-selected="true">入力</button>
+      <button role="tab" id="tabRev" aria-selected="false">振り返り</button>
+    </div>
+  </header>
+
+  <section id="viewIn" class="wrap" style="gap:16px">
+    <div id="sampleNote" class="sample">サンプルのラウンドを表示しています。「新しいラウンド」で白紙から入力できます。</div>
+    <div class="panel">
+      <div class="courses">
+        <label for="outC">OUT（前半）<select id="outC"></select></label>
+        <label for="inC">IN（後半）<select id="inC"></select></label>
+      </div>
+      <p class="note">パーはコース情報どおり（各36）。ティー変更などで違う場合はホールごとに修正できます。</p>
+      <div class="strip" id="strip"></div>
+    </div>
+
+    <div class="panel" id="holePanel"></div>
+
+    <div class="tools">
+      <button class="btn ghost" id="newBtn">新しいラウンド</button>
+      <button class="btn ghost" id="sampleBtn">サンプルを読み込む</button>
+      <button class="btn primary" id="saveRound">このラウンドをみんなの蓄積に保存</button>
+    </div>
+    <p class="note" id="histNote"></p>
+    <p class="note" id="saveMsg" hidden></p>
+    <div class="confirm" id="confirmBox" hidden>
+      入力中のデータを消して白紙にしますか？
+      <button class="btn" id="yesNew">消して始める</button>
+      <button class="btn ghost" id="noNew">やめる</button>
+    </div>
+  </section>
+
+  <section id="viewRev" class="wrap" style="gap:16px" hidden></section>
+</div>
+
+<script>
+const COURSES={"西":[5,4,3,4,4,4,5,4,3],"南":[4,5,4,3,4,4,4,3,5],"東":[4,4,4,3,5,3,5,4,4]};
+const TEE=[["fw","FWキープ"],["left","左ラフ"],["right","右ラフ"],["ob","OB・池"]];
+const FIRST=[["s","〜1m"],["m","1〜3m"],["l","3〜7m"],["xl","7m〜"]];
+const CAUSE=[["tee","ティーショット"],["second","セカンド"],["approach","アプローチ"],["putt","パット"],["judge","判断ミス"]];
+const CAT={tee:"ティーショット",second:"セカンド",approach:"アプローチ",putt:"パット",pen:"ペナルティ",judge:"判断ミス"};
+const KEY="kodama-review-v3";
+const QN={BL:"奥左",BR:"奥右",FL:"手前左",FR:"手前右",oB:"奥にこぼれ",oF:"手前に外れ",oL:"左に外れ",oR:"右に外れ"};
+const SLOPE=[["up","上り"],["flat","平坦"],["down","下り"]];
+const LINE=[["hook","フック"],["straight","まっすぐ"],["slice","スライス"]];
+let gmode="pin";
+const HKEY="kodama-history-v1";
+function slopeOf(pin,ball,t,rnd){
+  if(pin===ball)return rnd()<0.5?"flat":(t.fb>0?"up":"down");
+  let v=0;
+  if(pin[0]!==ball[0])v+=(pin[0]==="B"?1:-1)*t.fb;
+  if(pin[1]!==ball[1])v+=(pin[1]==="R"?1:-1)*t.lr;
+  return v>0?"up":v<0?"down":"flat";
+}
+function sampleHistory(){
+  let seed=11;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+  const tilt={};Object.keys(COURSES).forEach(c=>COURSES[c].forEach((p,k)=>{tilt[c+k]={fb:rnd()<0.8?1:-1,lr:[-1,0,1,1][Math.floor(rnd()*4)]}}));
+  const combos=[["西","南"],["南","東"],["東","西"],["西","南"],["南","東"],["西","南"],["東","西"],["西","南"]];
+  const Q=["BL","BR","FL","FR"];
+  return combos.map(([o,n],ri)=>({id:"s"+ri,sample:true,date:`2026-${String(3+ri).padStart(2,"0")}-14`,out:o,inn:n,
+    holes:[...COURSES[o].map((p,k)=>[o,k,p]),...COURSES[n].map((p,k)=>[n,k,p])].map(([c,k,p])=>{
+      const pin=Q[Math.floor(rnd()*4)],ball=Q[Math.floor(rnd()*4)],slope=slopeOf(pin,ball,tilt[c+k],rnd);
+      const putts=slope==="down"?(rnd()<0.45?3:2):slope==="up"?(rnd()<0.2?1:2):2;
+      return {par:p,score:p+(putts-2)+Math.floor(rnd()*2),putts,pin,ball,slope};})}));
+}
+const SAMPLE=sampleHistory();
+let LOCAL;try{LOCAL=JSON.parse(localStorage.getItem(HKEY))}catch(e){LOCAL=null}
+LOCAL=Array.isArray(LOCAL)?LOCAL.filter(r=>!r.sample):[];
+function saveLocal(){try{localStorage.setItem(HKEY,JSON.stringify(LOCAL))}catch(e){}}
+let SHARED=null,PLAYERS=0,DBSTATE="none";
+const MIN_REAL=5;
+function realRounds(){return SHARED??LOCAL}
+function getHist(){const real=realRounds();return real.length>=MIN_REAL?real:[...real,...SAMPLE]}
+function recordsFor(c,k){return getHist().flatMap(r=>{const i=r.out===c?k:r.inn===c?9+k:-1;return i<0||!r.holes[i]?[]:[r.holes[i]]})}
+function relOf(r){
+  if(r.ball[0]==="o")return r.ball==="oF"?"ピンより手前（外れ）":r.ball==="oB"?"ピンより奥（こぼれ）":"横に外れ";
+  if(r.pin===r.ball)return "ピンと同じ区画";
+  if(r.pin[0]!==r.ball[0])return r.ball[0]==="F"?"ピンより手前":"ピンより奥";
+  return "ピンの横";
+}
+function learn(c,k){
+  const recs=recordsFor(c,k);let fb=0,lr=0,n=0;const st={};
+  recs.forEach(r=>{
+    if(!r.pin||!r.ball)return;
+    if(r.putts!=null){const rel=relOf(r);(st[rel]??={n:0,p:0,t:0});st[rel].n++;st[rel].p+=r.putts;if(r.putts>=3)st[rel].t++}
+    if(r.ball[0]==="o"||r.pin===r.ball||!r.slope||r.slope==="flat")return;
+    const sgn=r.slope==="up"?1:-1,dd=r.pin[0]!==r.ball[0],ds=r.pin[1]!==r.ball[1],w=dd&&ds?0.5:1;
+    if(dd)fb+=w*sgn*(r.pin[0]==="B"?1:-1);
+    if(ds)lr+=w*sgn*(r.pin[1]==="R"?1:-1);
+    n++;});
+  return {fb,lr,n,st,rounds:recs.length};
+}
+function tiltText(L){
+  const a=[];if(L.fb>=1)a.push("奥が高い");if(L.fb<=-1)a.push("手前が高い");if(L.lr>=1)a.push("右が高い");if(L.lr<=-1)a.push("左が高い");
+  return a.length?a.join("・"):"傾きははっきりしない";
+}
+function recommend(c,k,pin){
+  const L=learn(c,k);
+  if(L.n<3)return {L,none:true};
+  const dH=L.fb>=1?"B":L.fb<=-1?"F":null,sH=L.lr>=1?"R":L.lr<=-1?"L":null;
+  const rec=(dH?(dH==="B"?"F":"B"):pin[0])+(sH?(sH==="R"?"L":"R"):pin[1]);
+  let avoid=(rec[0]==="F"?"B":"F")+(rec[1]==="L"?"R":"L");
+  if(!dH&&!sH)avoid=null;
+  const low=[dH?(dH==="B"?"手前":"奥"):"",sH?(sH==="R"?"左":"右"):""].filter(Boolean).join("・");
+  return {L,rec,avoid,low};
+}
+
+function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",pin:null,ball:null,slope:null,line:null}}
+function blankRound(out="西",inn="南"){return {id:"r"+Date.now(),out,inn,cur:0,sample:false,holes:[...COURSES[out],...COURSES[inn]].map(blankHole)}}
+function sampleRound(){
+  const r=blankRound("西","南");r.sample=true;
+  const d=[[6,2,"right",0,0,"l"],[4,2,"fw",0,0,"xl"],[5,3,null,0,1,"xl",null,"バンカーから出すだけ。その後3パット"],[7,2,"ob",2,0,"l","tee","ドライバーを右OB"],
+   [5,2,"fw",0,0,"m","second"],[4,1,"left",0,0,"m",null,"寄せワン"],[6,2,"fw",0,0,"l"],[6,3,"left",0,0,"l"],[4,2,null,0,0,"xl"],
+   [5,2,"right",0,0,"l"],[5,2,"fw",0,0,"l"],[6,3,"fw",0,0,"xl",null,"下りのファーストを強く打ちすぎた"],[3,2,null,0,0,"xl"],[7,2,"ob",2,0,"s","judge","右がOBなのにドライバー。3Wで良かった"],
+   [5,2,"left",0,1,"m"],[6,3,"left",1,0,"l",null,"左の池"],[4,2,null,0,0,"l"],[7,2,"fw",0,0,"m","approach","疲れてアプローチをザックリ"]];
+  d.forEach((x,i)=>Object.assign(r.holes[i],{score:x[0],putts:x[1],tee:x[2],pen:x[3],bunker:x[4],first:x[5],cause:x[6]||null,memo:x[7]||""}));
+  const G=[["BR","FL","up","straight"],["BL","FR","up","slice"],["FL","BR","down","hook"],["FR","FR","flat","straight"],["BL","oF","up","hook"],["FR","oL","up","straight"],["BR","FL","up","slice"],["FL","BL","down","slice"],["BR","FR","up","hook"],
+   ["BL","FL","up","straight"],["FR","FR","flat","slice"],["FR","BR","down","slice"],["BL","FL","up","hook"],["FL","FL","flat","straight"],["BR","oF","up","hook"],["FL","BL","down","slice"],["BR","oF","up","straight"],["BL","FR","up","hook"]];
+  G.forEach((x,i)=>Object.assign(r.holes[i],{pin:x[0],ball:x[1],slope:x[2],line:x[3]}));
+  return r;
+}
+let R;
+try{R=JSON.parse(localStorage.getItem(KEY))}catch(e){R=null}
+if(!R||!R.holes)R=sampleRound();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(R))}catch(e){}}
+
+const $=id=>document.getElementById(id);
+function markCls(h){if(h.score==null)return "e";const d=h.score-h.par;return d<=-2?"u2":d===-1?"u":d===0?"":d===1?"b":"d"}
+function gir(h){return h.score!=null&&h.putts!=null&&(h.score-h.putts)<=h.par-2}
+function courseOf(i){return i<9?R.out:R.inn}
+
+function renderHeader(){
+  const played=R.holes.filter(h=>h.score!=null);
+  const tot=played.reduce((a,h)=>a+h.score,0), par=played.reduce((a,h)=>a+h.par,0);
+  $("tot").textContent=played.length?tot:"–";
+  const d=tot-par;
+  $("totSub").textContent=played.length?`${played.length}H ${d>0?"+"+d:d===0?"E":d}`:`PAR ${R.holes.reduce((a,h)=>a+h.par,0)}`;
+}
+function renderStrip(){
+  let html='<div class="side">OUT '+R.out+'</div>';
+  R.holes.forEach((h,i)=>{
+    if(i===9)html+='<div class="side">IN '+R.inn+'</div>';
+    html+=`<button class="hb${i===R.cur?" on":""}" data-h="${i}" aria-label="${i+1}番ホール"><span class="n">${i+1}</span><span class="mark ${markCls(h)}">${h.score??"·"}</span></button>`;
+  });
+  $("strip").innerHTML=html;
+}
+function chipRow(field,opts,val,dis){
+  return `<div class="chips">${opts.map(([k,l])=>`<button class="chip" data-f="${field}" data-v="${k}" aria-pressed="${val===k}"${dis?" disabled":""}>${l}</button>`).join("")}</div>`;
+}
+function stepper(field,label,val){
+  return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div></div>`;
+}
+function renderHole(){
+  const i=R.cur,h=R.holes[i],p3=h.par===3;
+  const g=gir(h);
+  let auto=[];
+  if(h.score!=null&&h.putts!=null){auto.push(g?"パーオン":"パーオンならず");
+    if(!g&&h.score<=h.par)auto.push("リカバリー成功");
+    if(h.putts>=3)auto.push("3パット");}
+  const cc=courseOf(i),ck=i<9?i:i-9;
+  const rc=h.pin?recommend(cc,ck,h.pin):null;
+  $("holePanel").innerHTML=`
+    <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="cs">${courseOf(i)}コース ${i<9?i+1:i-8}番</div></div>
+    <div class="steps">${stepper("par","パー",h.par)}${stepper("score","打数",h.score)}${stepper("putts","パット",h.putts)}</div>
+    ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
+    <div class="grp"><span class="label">ティーショット${p3?"（パー3は対象外）":""}</span>${chipRow("tee",TEE,h.tee,p3)}</div>
+    <div class="grp"><span class="label">グリーン（上が奥）</span>
+      <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button></div>
+      ${greenPad(h,rc)}
+      <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span></div>
+      ${recBox(h,rc)}
+    </div>
+    <div class="grp"><span class="label">ファーストパットの距離</span>${chipRow("first",FIRST,h.first)}</div>
+    <div class="mini"><div class="grp"><span class="label">上り・下り</span>${chipRow("slope",SLOPE,h.slope)}</div>
+    <div class="grp"><span class="label">ライン</span>${chipRow("line",LINE,h.line)}</div></div>
+    <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
+    <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
+    <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
+    <div class="nav"><button class="btn" data-go="-1"${i===0?" disabled":""}>← ${i}番</button>
+    ${i===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${i+2}番へ →</button>`}</div>`;
+}
+function greenPad(h,rc){
+  const q=k=>`<button class="q${rc&&rc.rec===k?" rec":""}${rc&&rc.avoid===k?" avoid":""}" data-gq="${k}" aria-label="${QN[k]}">${rc&&rc.rec===k?"<em>狙い目</em>":""}<span class="ic">${h.pin===k?'<span class="fl">⚑</span>':""}${h.ball===k?'<span class="bl"></span>':""}</span>${QN[k]}</button>`;
+  const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode==="pin"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
+  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="green">${q("BL")}${q("BR")}${q("FL")}${q("FR")}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>`;
+}
+function recBox(h,rc){
+  const i=R.cur,cc=courseOf(i),ck=i<9?i:i-9;
+  if(!h.pin){const L=learn(cc,ck);return `<div class="recbox"><span class="sub">${L.rounds?`このグリーンの蓄積 ${L.rounds}回分。ピン位置を入れると、狙い目の区画を表示します。`:"このホールの蓄積データはまだありません。ラウンドを保存するたびに学習します。"}</span></div>`}
+  if(rc.none)return `<div class="recbox"><span class="sub">傾斜が分かるデータがまだ${rc.L.n}件です。3件以上たまると落としどころを提案します。</span></div>`;
+  const st=Object.entries(rc.L.st).filter(([k,o])=>o.n>=2).sort((a,b)=>a[1].p/a[1].n-b[1].p/b[1].n).slice(0,3);
+  return `<div class="recbox"><b>狙い目：${QN[rc.rec]}${rc.rec===h.pin&&rc.low?`（ピンより${rc.low}側）`:""}</b>
+    <span>このグリーンは${tiltText(rc.L)}傾向です。ここに止めれば上りのパットが残ります。${rc.avoid&&rc.avoid!==rc.rec?`${QN[rc.avoid]}に乗ると下りになりやすいです。`:""}</span>
+    ${st.length?`<span class="sub">過去の平均パット：${st.map(([k,o])=>`${k} ${(o.p/o.n).toFixed(1)}（${o.n}回）`).join("／")}</span>`:""}
+    <span class="sub">傾斜データ ${rc.L.n}件から推定</span></div>`;
+}
+function histNote(){
+  const n=realRounds().length,mix=n<MIN_REAL;
+  const head=SHARED?`みんなの共有データ：${PLAYERS}人・${n}ラウンド`:DBSTATE==="loading"?"共有データを読み込み中…":DBSTATE==="slow"?`共有データを読み込めませんでした。この端末の記録（${n}ラウンド）で表示しています。`:`この端末の記録：${n}ラウンド（共有の保存先が未設定です）`;
+  $("histNote").textContent=head+(mix?`。${MIN_REAL}ラウンドたまるまでは、サンプルのデータも混ぜてグリーンの傾きを推定します。`:"");
+}
+function refreshShared(){
+  histNote();
+  const a=document.activeElement;
+  if(!$("viewIn").hidden&&!(a&&a.id==="memo"))renderHole();
+  if(!$("viewRev").hidden)renderReview();
+}
+// ===== 共有の保存先（Googleスプレッドシート）=====
+// スプレッドシートの「ウェブアプリ」URLをここに入れる
+const GAS_URL="";
+const CLUB="kodama";
+let PID=null;
+try{PID=localStorage.getItem("golf-player-id")}catch(e){}
+if(!PID){PID="p"+Math.random().toString(36).slice(2,10)+Date.now().toString(36);try{localStorage.setItem("golf-player-id",PID)}catch(e){}}
+async function loadShared(){
+  if(!GAS_URL){DBSTATE="none";histNote();return}
+  DBSTATE="loading";histNote();
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),12000);
+  try{
+    const res=await fetch(GAS_URL+"?club="+CLUB,{signal:ctl.signal});
+    const j=await res.json();
+    if(!j.ok)throw new Error("bad");
+    SHARED=(j.rounds||[]).filter(r=>r&&Array.isArray(r.holes));PLAYERS=j.players||0;DBSTATE="ok";
+  }catch(e){SHARED=null;DBSTATE="slow"}
+  finally{clearTimeout(t)}
+  refreshShared();
+}
+loadShared();
+function renderInput(){
+  $("sampleNote").hidden=!R.sample;
+  ["outC","inC"].forEach(id=>{$(id).innerHTML=Object.keys(COURSES).map(k=>`<option${(id==="outC"?R.out:R.inn)===k?" selected":""}>${k}</option>`).join("")});
+  renderStrip();renderHole();renderHeader();histNote();
+}
+
+/* ---- 分析 ---- */
+function analyze(){
+  const H=R.holes.map((h,i)=>({...h,i})).filter(h=>h.score!=null);
+  const n=H.length; if(!n)return null;
+  const s={n,score:0,par:0,putts:0,puttN:0,fwOpp:0,fw:0,left:0,right:0,ob:0,gir:0,girN:0,three:0,threeLong:0,threeShort:0,
+    pen:0,bunkerH:0,sandSave:0,scrOpp:0,scr:0,birdie:0,par3:[],par4:[],par5:[],front:0,frontN:0,back:0,backN:0,carry:0,bigs:0,
+    loss:{tee:0,second:0,approach:0,putt:0,pen:0,judge:0},longFirst:0,longFirstN:0,
+    sl:{up:{n:0,p:0,t:0},flat:{n:0,p:0,t:0},down:{n:0,p:0,t:0}},ln:{hook:{n:0,p:0,t:0},straight:{n:0,p:0,t:0},slice:{n:0,p:0,t:0}},
+    depth:{short:0,just:0,over:0},sideMiss:0,threeDown:0};
+  H.forEach((h,k)=>{
+    const d=h.score-h.par; s.score+=h.score;s.par+=h.par;
+    s["par"+h.par]?.push(d);
+    if(h.i<9){s.front+=d;s.frontN++}else{s.back+=d;s.backN++}
+    if(d<0)s.birdie++; if(d>=2)s.bigs++;
+    const prev=R.holes[h.i-1];
+    if(h.i>0&&h.i!==9&&prev&&prev.score!=null&&prev.score-prev.par>=2&&d>=1)s.carry++;
+    if(h.putts!=null){s.putts+=h.putts;s.puttN++;
+      if(h.putts>=3){s.three++; if(h.first==="xl"||h.first==="l")s.threeLong++; if(h.first==="s"||h.first==="m")s.threeShort++;}
+      s.girN++; const g=gir(h); if(g)s.gir++; else {s.scrOpp++; if(d<=0)s.scr++;}}
+    if(h.putts!=null){
+      if(h.slope){const o=s.sl[h.slope];o.n++;o.p+=h.putts;if(h.putts>=3){o.t++;if(h.slope==="down")s.threeDown++}}
+      if(h.line){const o=s.ln[h.line];o.n++;o.p+=h.putts;if(h.putts>=3)o.t++}}
+    if(h.pin&&h.ball){
+      if(h.ball==="oF")s.depth.short++; else if(h.ball==="oB")s.depth.over++;
+      else if(h.ball==="oL"||h.ball==="oR")s.sideMiss++;
+      else{const pb=h.pin[0]==="B",bb=h.ball[0]==="B";s.depth[pb===bb?"just":(bb?"over":"short")]++;
+        if(h.pin[1]!==h.ball[1])s.sideMiss++;}
+    }
+    if(h.first==="xl"){s.longFirstN++; if(h.putts!=null&&h.putts<=2)s.longFirst++;}
+    if(h.par>3&&h.tee){s.fwOpp++; if(h.tee==="fw")s.fw++; if(h.tee==="left")s.left++; if(h.tee==="right")s.right++; if(h.tee==="ob")s.ob++;}
+    s.pen+=h.pen;
+    if(h.bunker>0){s.bunkerH++; if(d<=0)s.sandSave++;}
+    // 失点の振り分け（パー比のオーバー分）
+    let over=Math.max(0,d);
+    const pl=Math.min(over,Math.max(0,(h.putts??2)-2)); s.loss.putt+=pl; over-=pl;
+    const pn=Math.min(over,h.pen); s.loss[h.cause==="judge"?"judge":"pen"]+=pn; over-=pn;
+    if(over>0){
+      if(h.cause&&h.cause!=="putt"){s.loss[h.cause]+=over}
+      else{const teeMiss=h.par>3&&(h.tee==="left"||h.tee==="right"||h.tee==="ob");
+        s.loss[teeMiss?"tee":"second"]+=1; if(over>1)s.loss.approach+=over-1;}
+    }
+  });
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  s.avg3=avg(s.par3);s.avg4=avg(s.par4);s.avg5=avg(s.par5);
+  return {s,H};
+}
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const sg=v=>v>0?"+"+v:v===0?"±0":""+v;
+
+function buildInsights(s){
+  const good=[],bad=[],tasks=[];
+  // 良かった点
+  if(s.fwOpp&&pct(s.fw,s.fwOpp)>=50)good.push(`ティーショットはFWキープ率${pct(s.fw,s.fwOpp)}%。ドライバーは安定していました。`);
+  if(s.scr>=2)good.push(`パーオンを外したホールで${s.scr}回パー以上を拾えています（寄せワン力）。`);
+  if(s.sandSave>0)good.push(`バンカーに入った${s.bunkerH}ホールのうち${s.sandSave}ホールでパー以上。`);
+  if(s.birdie>0)good.push(`バーディーが${s.birdie}個ありました。`);
+  if(s.longFirstN>=2&&s.longFirst/s.longFirstN>=0.7)good.push(`7m以上のロングパットも${s.longFirstN}回中${s.longFirst}回は2パットで収めました。`);
+  if(s.avg5!=null&&s.avg5<=0.5)good.push(`パー5は平均${sg(+s.avg5.toFixed(1))}。稼ぎどころで崩れていません。`);
+  if(s.puttN>=9&&s.putts/s.puttN<=1.8)good.push(`1ホール平均${(s.putts/s.puttN).toFixed(2)}パット。グリーン上は好調でした。`);
+
+  // 課題候補（失点の大きさで並べる）
+  const L=s.loss;
+  const av=o=>o.n?o.p/o.n:null;
+  const worstLine=Object.entries(s.ln).filter(([k,o])=>o.t>=2).sort((a,b)=>b[1].t-a[1].t)[0];
+  const lineName={hook:"フック",straight:"まっすぐの",slice:"スライス"};
+  if(s.sl.down.n>=2&&s.sl.up.n>=2&&av(s.sl.down)-av(s.sl.up)>=0.5)
+    bad.push(`下りのファーストパットは平均${av(s.sl.down).toFixed(1)}パット、上りは${av(s.sl.up).toFixed(1)}パット。下りが残ると崩れています。`);
+  else if(s.sl.up.n>=3&&av(s.sl.up)<=2)good.push(`上りのパットは平均${av(s.sl.up).toFixed(1)}パットで安定していました。`);
+  if(worstLine)bad.push(`${lineName[worstLine[0]]}ラインで3パットが${worstLine[1].t}回ありました。`);
+  const dT=s.depth.short+s.depth.just+s.depth.over;
+  if(dT>=6){
+    if(s.depth.short>=s.depth.over+3){
+      bad.push(`ピンに対して手前に止まった・外れたのが${s.depth.short}回、奥が${s.depth.over}回。縦の距離が足りていません。`);
+      tasks.push({w:s.depth.short*0.4,title:"番手選び（ショート傾向）",
+        why:`${dT}回のうち${s.depth.short}回がピンより手前でした。ピン位置に対して番手が1つ小さい可能性があります。`,
+        drill:"ピンまでの距離に5yを足して番手を選ぶ。練習場で番手ごとのキャリーを測り直しておく。",
+        metric:"ピンより手前",now:s.depth.short,to:Math.max(0,s.depth.short-3)});
+    }else if(s.depth.over>=s.depth.short+3){
+      bad.push(`ピンより奥に止まった・こぼれたのが${s.depth.over}回。オーバーが多く、下りのパットが残りやすくなっています。`);
+      tasks.push({w:s.depth.over*0.4,title:"番手選び（オーバー傾向）",
+        why:`${dT}回のうち${s.depth.over}回がピンより奥でした。奥からは下りのパットになりがちです。`,
+        drill:"手前のピンでは番手を1つ落とし、グリーン中央より手前に止める意識で打つ。",
+        metric:"ピンより奥",now:s.depth.over,to:Math.max(0,s.depth.over-3)});
+    }else if(s.depth.just/dT>=0.5)good.push(`ピンと同じ縦のゾーンに${s.depth.just}回乗せました。縦の距離感は合っています。`);
+  }
+  if(s.three>=2&&s.threeDown>=Math.ceil(s.three/2)){
+    bad.push(`3パット${s.three}回のうち${s.threeDown}回は下りのパットでした。`);
+    tasks.push({w:s.loss.putt+0.6,title:"下りのタッチと、下りを残さない攻め方",
+      why:`パットで${s.loss.putt}打を失い、その多くが下りです。${worstLine?lineName[worstLine[0]]+"ラインの下りに特に注意してください。":""}ピンより奥に乗ると下りが残ります。`,
+      drill:"下り2〜5mを、カップを50cm以上オーバーさせない強さで各10球。コースでは、ピンの手前から上りを残すように攻める。",
+      metric:"3パット",now:s.three,to:Math.max(0,Math.floor(s.three/2))});
+  }else if(s.three>=2){
+    const long=s.threeLong>=s.threeShort;
+    bad.push(`3パットが${s.three}回。そのうち${long?s.threeLong+"回はファーストパットが3m以上":s.threeShort+"回は3m以内から"}でした。`);
+    tasks.push({w:L.putt+0.5,title:long?"ロングパットの距離感":"ショートパットの決定率",
+      why:`パットで${L.putt}打を失っています。${long?"入れにいくより、2打目を1m以内に残すことを優先しましょう。":"1〜3mを外すと、そのまま3パットにつながっています。"}`,
+      drill:long?"10m・15mから、カップを中心に半径1mの円に止める練習を各10球。":"1.5mをカップ周りの4方向から連続10球。外れたら最初からやり直し。",
+      metric:"3パット",now:s.three,to:Math.max(0,Math.floor(s.three/2))});
+  }
+  if(s.pen>=2){
+    bad.push(`ペナルティで${s.pen}打。OB・池が${s.ob}回あり、スコアを一気に崩しています。`);
+    tasks.push({w:L.pen+L.judge+1,title:"ハザードを避けるクラブ選択",
+      why:`ペナルティだけで${s.pen}打。ドライバーを持たない判断で、そのまま縮められる失点です。`,
+      drill:"ティーグラウンドで「OB・池がある側」を声に出してから打つ。危ないホールは3W／UTで刻む、と事前に決めておく。",
+      metric:"ペナルティ",now:s.pen,to:Math.max(0,s.pen-2)});
+  }
+  if(s.left+s.right>=3){
+    const side=s.left>s.right?"左":"右", sideN=Math.max(s.left,s.right);
+    if(sideN>=Math.min(s.left,s.right)+2){
+      bad.push(`ティーショットは${side}ラフへの外れが多くなっています（左ラフ${s.left}・右ラフ${s.right}）。`);
+      tasks.push({w:L.tee+0.3,title:`ティーショットの${side}ラフ`,
+        why:`曲がる方向がはっきりしているので、対策は絞れます。ティーショット起因の失点は${L.tee}打です。`,
+        drill:side==="左"?"練習場で右足前にボールを置かず、フィニッシュまで体を回し切る素振りを20回。コースではティーを打ちたい方向の左サイドに立てる。":"アドレスで右肩が前に出ていないか確認。コースではティーを右サイドに立て、左を向いて打つ。",
+        metric:"FWキープ率",now:pct(s.fw,s.fwOpp)+"%",to:Math.min(100,pct(s.fw,s.fwOpp)+15)+"%"});
+    }
+  }
+  if(s.girN>=9&&pct(s.gir,s.girN)<=25&&L.second>=3){
+    bad.push(`パーオン率${pct(s.gir,s.girN)}%。セカンド起因の失点が${L.second}打あります。`);
+    tasks.push({w:L.second,title:"セカンドショットの精度",
+      why:"フェアウェイからでもグリーンに乗らないホールが多めです。",
+      drill:"7I・UTで「グリーン中央」だけを狙う練習。ピンを狙わず、乗せる確率を上げる。",
+      metric:"パーオン",now:s.gir,to:s.gir+2});
+  }
+  if(L.approach>=3){
+    bad.push(`グリーン周りからの寄せで${L.approach}打を失っています。`);
+    tasks.push({w:L.approach,title:"グリーン周りの寄せ",
+      why:"乗らなかった後にさらに1打以上かかっているホールがあります。",
+      drill:"30yを転がし（PW）と上げ（SW）で各10球。まずは確実に乗せる方を選ぶ。",
+      metric:"リカバリー成功",now:s.scr,to:s.scr+2});
+  }
+  if(s.backN>=5&&s.frontN>=5&&s.back-s.front>=3){
+    bad.push(`後半は前半より${s.back-s.front}打多く叩いています。`);
+    tasks.push({w:(s.back-s.front)/2,title:"後半の失速",
+      why:"終盤の崩れは技術より疲労・集中の問題であることが多いです。",
+      drill:"ハーフ休憩で軽く補食と水分。後半1番ティーで素振り3回とルーティンを決め直す。",
+      metric:"後半のオーバー",now:sg(s.back),to:sg(s.back-2)});
+  }
+  if(s.carry>=2)bad.push(`ダブルボギー以上の直後のホールで${s.carry}回続けてボギー以上。ミスを引きずっています。`);
+  if(s.avg3!=null&&s.avg3>=1.2)bad.push(`パー3は平均${sg(+s.avg3.toFixed(1))}。ティーショット1打で決まるので、番手選びを見直す余地があります。`);
+  tasks.sort((a,b)=>b.w-a.w);
+  return {good,bad,tasks:tasks.slice(0,3)};
+}
+
+function tiltPanel(){
+  const rows=R.holes.map((h,i)=>{const c=courseOf(i),k=i<9?i:i-9,L=learn(c,k);
+    return `<span class="num">${i+1}番</span><span class="k">${c}${k+1}</span><span>${L.n>=3?tiltText(L):'<span class="k">データ不足</span>'}</span><span class="k num">${L.n}件</span>`}).join("");
+  return `<div class="panel"><h2>グリーンの傾き（蓄積データ）</h2>
+    <p class="note">このページを使う全員のラウンドで「どこから打って上り／下りだったか」を集計して推定しています。保存されるのは打数・パット・ピン位置・ボール位置・傾斜だけで、名前やメモは共有されません。</p>
+    <div class="tilt">${rows}</div></div>`;
+}
+function dGreen(s){
+  const dT=s.depth.short+s.depth.just+s.depth.over;
+  const slN=s.sl.up.n+s.sl.flat.n+s.sl.down.n, lnN=s.ln.hook.n+s.ln.straight.n+s.ln.slice.n;
+  if(!dT&&!slN&&!lnN)return "";
+  const row=(k,o)=>o.n?`<span class="k">${k}</span><span>${o.n}ホール${o.t?`（<span class="hl">3パット${o.t}</span>）`:""}</span><span class="x num">${(o.p/o.n).toFixed(1)}</span>`:"";
+  const mx=Math.max(1,s.depth.short,s.depth.just,s.depth.over);
+  const bar=(k,v,top)=>`<div class="bar${top?" top":""}"><span>${k}</span><div class="track"><div class="fill" style="width:${v/mx*100}%"></div></div><span class="v num">${v}回</span></div>`;
+  const big=Math.max(s.depth.short,s.depth.over);
+  return `<div class="panel"><h2>グリーン上のデータ</h2>
+    ${dT?`<span class="label">ピンに対して縦のどこに乗ったか</span><div class="bars">${bar("手前",s.depth.short,s.depth.short===big&&big>s.depth.just)}${bar("ピンと同じゾーン",s.depth.just,false)}${bar("奥",s.depth.over,s.depth.over===big&&big>s.depth.just)}</div>`:""}
+    ${slN?`<span class="label">上り・下り別　平均パット</span><div class="gtbl">${row("上り",s.sl.up)}${row("平坦",s.sl.flat)}${row("下り",s.sl.down)}</div>`:""}
+    ${lnN?`<span class="label">ライン別　平均パット</span><div class="gtbl">${row("フック",s.ln.hook)}${row("まっすぐ",s.ln.straight)}${row("スライス",s.ln.slice)}</div>`:""}
+  </div>`;
+}
+function renderReview(){
+  const v=$("viewRev"); const A=analyze();
+  if(!A){v.innerHTML=`<div class="panel"><h2>まだ入力がありません</h2><p class="note">「入力」タブで打数を入れると、ここに振り返りと課題が表示されます。</p></div>`;return}
+  const {s}=A, I=buildInsights(s), d=s.score-s.par;
+  const cats=Object.entries(s.loss).filter(([k,x])=>x>0).sort((a,b)=>b[1]-a[1]);
+  const maxL=Math.max(1,...cats.map(c=>c[1]));
+  const card=(from)=>{let h="";for(let i=from;i<from+9;i++)h+=`<div class="h">${i+1}</div>`;for(let i=from;i<from+9;i++)h+=`<div class="p">${R.holes[i].par}</div>`;
+    for(let i=from;i<from+9;i++){const x=R.holes[i];h+=`<div><span class="mark ${markCls(x)}">${x.score??"·"}</span></div>`}return h};
+  const saved=I.tasks.reduce((a,t)=>{const m=t.metric;if(m==="3パット"||m==="ペナルティ")return a+(t.now-t.to);return a+1},0);
+  const memos=R.holes.map((h,i)=>({i,m:h.memo.trim()})).filter(x=>x.m);
+  v.innerHTML=`
+  ${R.sample?`<div class="sample">サンプルのラウンドの分析です。</div>`:""}
+  <div class="panel">
+    <div class="holehead"><h2>${R.out}→${R.inn}　${s.n}ホール</h2><div class="cs num">${s.score}（${sg(d)}）</div></div>
+    <div class="sum num">
+      <div><b>${s.puttN?s.putts:"–"}</b><span>パット</span></div>
+      <div><b>${s.fwOpp?pct(s.fw,s.fwOpp)+"%":"–"}</b><span>FWキープ</span></div>
+      <div><b>${s.girN?pct(s.gir,s.girN)+"%":"–"}</b><span>パーオン</span></div>
+      <div><b>${s.pen}</b><span>ペナルティ</span></div>
+    </div>
+    <div style="overflow-x:auto"><div class="card18">${card(0)}</div></div>
+    <div style="overflow-x:auto"><div class="card18">${card(9)}</div></div>
+    <p class="note">○バーディー　□ボギー　二重□ダブルボギー以上</p>
+  </div>
+
+  <div class="panel">
+    <h2>どこで打数を失ったか</h2>
+    <p class="note">パーより多く打った${cats.reduce((a,c)=>a+c[1],0)}打を、入力内容から原因別に振り分けた推定です。</p>
+    <div class="bars">${cats.map(([k,x],j)=>`<div class="bar${j===0?" top":""}"><span>${CAT[k]}</span><div class="track"><div class="fill" style="width:${x/maxL*100}%"></div></div><span class="v num">${x}打</span></div>`).join("")||'<p class="note">オーバーはありません。</p>'}</div>
+  </div>
+
+  ${(dGreen(s))}
+  ${tiltPanel()}
+  <div class="panel">
+    <h2>振り返り</h2>
+    <ul class="lst">
+      ${I.good.map(t=>`<li class="good"><span class="ic">＋</span><span>${t}</span></li>`).join("")}
+      ${I.bad.map(t=>`<li class="bad"><span class="ic">−</span><span>${t}</span></li>`).join("")}
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>次のラウンドまでの課題</h2>
+    ${I.tasks.length?I.tasks.map((t,j)=>`<div class="task${j===0?" first":""}">
+      <div class="t"><span class="rk">課題${j+1}</span><h3>${t.title}</h3></div>
+      <p>${t.why}</p><div class="drill"><b>練習：</b>${t.drill}</div></div>`).join(""):`<p class="note">目立った課題は見つかりませんでした。入力項目（パット・ティーショット）を増やすと分析が細かくなります。</p>`}
+  </div>
+
+  ${I.tasks.length?`<div class="panel">
+    <h2>次のラウンドの目標</h2>
+    <div class="goal num">${I.tasks.map(t=>`<span>${t.metric}</span><span>${t.now}</span><span class="arrow">→</span><span class="to">${t.to}</span>`).join("")}</div>
+    ${s.n===18?`<div class="proj">達成できれば目安は <b class="num">${s.score-saved}</b>（今回 ${s.score}）</div>`:""}
+  </div>`:""}
+
+  ${memos.length?`<div class="panel"><h2>ホールメモ</h2><div class="memos">${memos.map(x=>`<div><span class="hn num">${x.i+1}番</span><span>${x.m.replace(/</g,"&lt;")}</span></div>`).join("")}</div></div>`:""}
+  `;
+}
+
+/* ---- 操作 ---- */
+function show(tab){
+  const rev=tab==="rev";
+  $("tabIn").setAttribute("aria-selected",!rev);$("tabRev").setAttribute("aria-selected",rev);
+  $("viewIn").hidden=rev;$("viewRev").hidden=!rev;
+  if(rev)renderReview();
+  window.scrollTo({top:0});
+}
+$("tabIn").onclick=()=>show("in");$("tabRev").onclick=()=>show("rev");
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button");if(!t)return;
+  const h=R.holes[R.cur];
+  if(t.dataset.gm){gmode=t.dataset.gm;renderHole();return}
+  if(t.dataset.gq){const k=t.dataset.gq;
+    if(gmode==="pin"){if(k[0]==="o")return;h.pin=h.pin===k?null:k;if(h.pin&&!h.ball)gmode="ball";}
+    else h.ball=h.ball===k?null:k;
+    save();renderHole();return}
+  if(t.dataset.h!=null){R.cur=+t.dataset.h;gmode="pin";renderInput();save();return}
+  if(t.dataset.s){
+    const f=t.dataset.s,dd=+t.dataset.d;
+    if(f==="score"){h.score=h.score==null?h.par:Math.min(15,Math.max(1,h.score+dd));}
+    else if(f==="putts"){h.putts=h.putts==null?2:Math.min(6,Math.max(0,h.putts+dd));}
+    else if(f==="par"){h.par=Math.min(6,Math.max(3,h.par+dd));if(h.par===3)h.tee=null;}
+    else h[f]=Math.min(9,Math.max(0,h[f]+dd));
+    save();renderInput();return}
+  if(t.dataset.f){const f=t.dataset.f;h[f]=h[f]===t.dataset.v?null:t.dataset.v;save();renderHole();return}
+  if(t.dataset.go){if(t.dataset.go==="rev"){show("rev");return}R.cur=Math.min(17,Math.max(0,R.cur+(+t.dataset.go)));gmode="pin";save();renderInput();
+    document.getElementById("holePanel").scrollIntoView({block:"start",behavior:"smooth"});return}
+});
+document.addEventListener("input",e=>{if(e.target.id==="memo"){R.holes[R.cur].memo=e.target.value;save()}});
+function changeCourse(){
+  const o=$("outC").value,i=$("inC").value;
+  if(o!==R.out){R.out=o;COURSES[o].forEach((p,k)=>R.holes[k].par=p)}
+  if(i!==R.inn){R.inn=i;COURSES[i].forEach((p,k)=>R.holes[k+9].par=p)}
+  save();renderInput();
+}
+$("outC").onchange=changeCourse;$("inC").onchange=changeCourse;
+$("newBtn").onclick=()=>{$("confirmBox").hidden=false};
+$("noNew").onclick=()=>{$("confirmBox").hidden=true};
+$("yesNew").onclick=()=>{R=blankRound(R.out,R.inn);save();$("confirmBox").hidden=true;renderInput()};
+$("saveRound").onclick=async()=>{
+  R.id??="r"+Date.now();
+  const played=R.holes.filter(h=>h.score!=null).length,m=$("saveMsg");
+  m.hidden=false;
+  if(!played){m.textContent="打数が入っていないので保存できません。";return}
+  const d=new Date(),date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const snap={id:R.id,date,out:R.out,inn:R.inn,holes:R.holes.map(h=>({par:h.par,score:h.score,putts:h.putts,pin:h.pin,ball:h.ball,slope:h.slope}))};
+  LOCAL=[...LOCAL.filter(r=>r.id!==R.id),snap];saveLocal();
+  if(GAS_URL){
+    $("saveRound").disabled=true;m.textContent="共有データに保存しています…";
+    try{
+      const res=await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({club:CLUB,player:PID,round:snap})});
+      const j=await res.json();
+      if(!j.ok)throw new Error(j.error||"bad");
+      m.textContent=j.updated?"共有データの自分のラウンドを今回の内容で更新しました。":`共有データに保存しました。${played}ホール分のグリーン情報が、みんなの学習に加わります。`;
+      await loadShared();
+    }catch(e){
+      m.textContent="共有データに保存できませんでした。この端末には保存してあります。電波の良い場所で、もう一度押してください。";
+    }finally{$("saveRound").disabled=false}
+  }else{
+    m.textContent="この端末に保存しました。共有の保存先が未設定のため、他の人の学習には加わりません。";
+  }
+  histNote();renderHole();
+};
+$("sampleBtn").onclick=()=>{R=sampleRound();save();renderInput()};
+renderInput();
+</script>
+
+</body></html>
