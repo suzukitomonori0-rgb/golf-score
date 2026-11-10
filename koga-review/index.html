@@ -234,6 +234,15 @@ h2{margin:0;font-size:16px;font-weight:700}
 .axb{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;border:0;background:transparent;padding:0;z-index:2}
 .axb::after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid var(--green);background:var(--card)}
 .axb:focus-visible{outline:2px solid var(--flag)}
+.gfeat{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.gtag{background:var(--flag-soft);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.glast{flex-basis:100%;font-size:12px;color:var(--muted)}
+.gstep{position:absolute;pointer-events:none;z-index:1;border-color:var(--flag);border-style:dashed;border-width:0}
+.gstep.h{left:6%;right:6%;top:50%;border-top-width:3px}
+.gstep.v{top:6%;bottom:6%;left:50%;border-left-width:3px}
+.gstepl{position:absolute;pointer-events:none;z-index:2;font-size:10px;font-weight:700;color:var(--flag);background:var(--card);border-radius:4px;padding:0 4px;white-space:nowrap}
+.gstepl.h{left:50%;top:calc(50% + 40px);transform:translateX(-50%)}
+.gstepl.v{top:6%;left:calc(50% + 8px)}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -544,6 +553,7 @@ function renderHole(){
   const cc=courseOf(i),ck=i<9?i:i-9;
   const rc=h.pin?recommend(cc,ck,h.pin):null;
   const off=!!(h.ball&&h.ball[0]==="o");
+  const gn=greenNotes(cc,ck);
   if(gmode==="chip"&&!off)gmode="ball";
   $("holePanel").innerHTML=`
     <div class="holehead"><div class="hgrp"><div class="cs">${courseOf(i)}</div><div class="hn num">${i+1}番<span class="hpar">パー${h.par}</span></div></div><div class="hr"><div class="run">${runText(i)}</div></div></div>
@@ -553,7 +563,8 @@ function renderHole(){
     :`<div class="grp"><span class="label">ティーショット</span>${chipRow("tee",TEE,h.tee)}</div>`}
     <div class="grp"><span class="label">グリーン（上が奥）</span>
       <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button>${off?`<button data-gm="chip" aria-pressed="${gmode==="chip"}">寄せた後</button>`:""}</div>
-      ${greenPad(h,rc)}
+      ${gnBox(gn)}
+      ${greenPad(h,rc,gn)}
       <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${QN[h.chip]}</span>`:""}</div>
       ${recBox(h,rc)}
     </div>
@@ -563,11 +574,33 @@ function renderHole(){
     <div class="steps">${stepper("score","打数",h.score,scoreSub(h))}${""}${stepper("putts","パット",h.putts)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
-    <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
+    <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：二段グリーンで奥が高い／受けグリーン／右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
     <div class="nav">${pos===0?"<span></span>":`<button class="btn" data-go="-1">← ${ord[pos-1]+1}番</button>`}
     ${pos===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${ord[pos+1]+1}番へ →</button>`}</div>`;
 }
-function greenPad(h,rc){
+// 過去のメモ（このスマホに保存したラウンド）からグリーンの特徴を読み取る
+function greenNotes(c,k){
+  const ms=LOCAL.flatMap(r=>{const i=r.out===c?k:r.inn===c?9+k:-1;const h=i<0||!r.holes?null:r.holes[i];return h&&h.memo?[h.memo]:[]});
+  if(!ms.length)return null;
+  const t=ms.join("／"),has=re=>re.test(t);
+  const f={tags:[],step:null,dir:null};
+  if(has(/[二2２]段|[三3３]段|段がある|段差/)){f.step=has(/[三3３]段/)?"三段":"二段";}
+  if(has(/奥(が|の方が)?高/))f.dir="B";else if(has(/手前(が|の方が)?高/))f.dir="F";else if(has(/左(が|の方が)?高/))f.dir="L";else if(has(/右(が|の方が)?高/))f.dir="R";
+  if(f.step)f.tags.push(f.step+"グリーン"+(f.dir?`（${{B:"奥",F:"手前",L:"左",R:"右"}[f.dir]}が高い）`:""));
+  else if(f.dir)f.tags.push({B:"奥",F:"手前",L:"左",R:"右"}[f.dir]+"が高い");
+  if(has(/受け/))f.tags.push("受けグリーン");
+  if(has(/砲台/))f.tags.push("砲台グリーン");
+  if(has(/速い|速かった|高速/))f.tags.push("速い");
+  if(has(/重い|遅い/))f.tags.push("重い");
+  if(has(/芝目/))f.tags.push("芝目が強い");
+  f.last=ms[ms.length-1];
+  return f.tags.length||f.last?f:null;
+}
+function gnBox(f){
+  if(!f)return "";
+  return `<div class="gfeat">${f.tags.map(t=>`<span class="gtag">${t}</span>`).join("")}${f.last?`<span class="glast">前回のメモ：${f.last.replace(/</g,"&lt;").slice(0,60)}</span>`:""}</div>`;
+}
+function greenPad(h,rc,gn){
   const recQ=k=>!!(rc&&rc.recs&&rc.recs.includes(k)),avQ=k=>!!(rc&&rc.avoid&&rc.avoid.includes(k)),pm=gmode==="pin";
   const line=n=>n===1?"2px solid var(--card)":(n<3?"1px dashed var(--line)":"0");
   let cells="";
@@ -581,7 +614,10 @@ function greenPad(h,rc){
   if(h.ball&&h.ball[0]!=="o")marks+=mk(h.ball,'<span class="bl"></span>','mball');
   if(h.ball&&h.ball[0]==="o"&&h.chip)marks+=mk(h.chip,'<span class="cp">寄</span>','mchip');
   const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode!=="ball"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
-  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green g16">${cells}</div>${labels}<button class="cbtn" data-gq="C" aria-label="センター"><span>センター</span></button>${Object.keys(AX).map(k=>`<button class="axb" data-gq="${k}" aria-label="${QN[k]}" style="left:${AX[k][0]}%;top:${AX[k][1]}%"></button>`).join("")}${marks}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>
+    let step="";
+  if(gn&&gn.step){const v=gn.dir==="L"||gn.dir==="R";const hi=gn.dir?{B:"奥",F:"手前",L:"左",R:"右"}[gn.dir]+"が高い":"段";
+    step=`<span class="gstep ${v?"v":"h"}"></span><span class="gstepl ${v?"v":"h"}">${gn.step}・${hi}</span>`;}
+  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green g16">${cells}</div>${step}${labels}<button class="cbtn" data-gq="C" aria-label="センター"><span>センター</span></button>${Object.keys(AX).map(k=>`<button class="axb" data-gq="${k}" aria-label="${QN[k]}" style="left:${AX[k][0]}%;top:${AX[k][1]}%"></button>`).join("")}${marks}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>
   <p class="note gnote">${pm?"ピンが切ってある場所をタップ":gmode==="chip"?"寄せた後、パットを打った場所をタップ":"ボールが止まった場所をタップ"}（白い小さな丸は真上・真下・真左・真右）</p>`;
 }
 function recBox(h,rc){
@@ -1027,7 +1063,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2200";
+const APP_VERSION="2026.11.10-2224";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
