@@ -371,7 +371,7 @@ const WIND=[["follow","フォロー"],["none","無風"],["against","アゲイン
 const WINDN={follow:"フォロー",none:"無風",against:"アゲインスト"};
 const DIST=[["short","ショート"],["just","ちょうど"],["over","オーバー"]];
 const DISTN={short:"ショート",just:"ちょうど",over:"オーバー"};
-const FIRST=[["s","<b>〜2歩</b><small>約1m</small>"],["m","<b>3〜5歩</b><small>約3m</small>"],["l","<b>6〜10歩</b><small>約5m</small>"],["xl","<b>11歩〜</b><small>7m〜</small>"]];
+const FIRST=[["s","<b>〜2歩</b><small>1.5m以内</small>"],["m","<b>3〜5歩</b><small>約3m</small>"],["l","<b>6〜10歩</b><small>約5m</small>"],["xl","<b>11歩〜</b><small>7m〜</small>"]];
 const CAUSE=[["tee","ティーショット"],["second","セカンド"],["approach","アプローチ"],["putt","パット"],["judge","判断ミス"]];
 const CAT={tee:"ティーショット",second:"セカンド",approach:"アプローチ",putt:"パット",pen:"ペナルティ",judge:"判断ミス"};
 const KEY="furukawa-review-v1";
@@ -1066,7 +1066,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2234";
+const APP_VERSION="2026.11.10-2235";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
