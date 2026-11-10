@@ -231,6 +231,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .ql em{font-style:normal;font-size:10px;font-weight:900;color:var(--flag)}
 .cbtn{z-index:2}
 .gnote{text-align:center;margin:0}
+.axb{position:absolute;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;border:1.5px solid var(--green);background:var(--card);padding:0;z-index:2;opacity:.9}
+.axb:focus-visible{outline:2px solid var(--flag)}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -369,7 +371,10 @@ const base=v=>typeof v==="string"?v.replace(/x$/,""):v;
 let gmode="pin";
 const DR={F:0,C:1,B:2},SR={L:0,C:1,R:2};
 // 位置の数値化（奥ほど大きい／右ほど大きい）。区画：奥3・センター2・手前1、ピン用の細かい区画 P{行}{列}（行0=奥〜3=手前、列0=左〜3=右）
-const dRank=q=>q==="C"?2:q[0]==="P"?3.5-(+q[1]):(q[0]==="B"?3:1),sRank=q=>q==="C"?2:q[0]==="P"?(+q[2])+0.5:(q[1]==="R"?3:1);
+// 真上・真下・真左・真右の位置（グリーン上の％座標）
+const AX={V0:[50,10],V1:[50,26],V2:[50,74],V3:[50,90],H0:[10,50],H1:[26,50],H2:[74,50],H3:[90,50]};
+Object.assign(QN,{V0:"真上（奥側）",V1:"真上（センター寄り）",V2:"真下（センター寄り）",V3:"真下（手前側）",H0:"真左（外側）",H1:"真左（センター寄り）",H2:"真右（センター寄り）",H3:"真右（外側）"});
+const dRank=q=>q==="C"?2:AX[q]?4-AX[q][1]/25:q[0]==="P"?3.5-(+q[1]):(q[0]==="B"?3:1),sRank=q=>q==="C"?2:AX[q]?AX[q][0]/25:q[0]==="P"?(+q[2])+0.5:(q[1]==="R"?3:1);
 const sg3=v=>v>0.75?1:v<-0.75?-1:0;
 const quadOf=k=>!k||k[0]!=="P"?k:((+k[1])<2?"B":"F")+((+k[2])<2?"L":"R");
 for(let r=0;r<4;r++)for(let c=0;c<4;c++)QN["P"+r+c]=`${r<2?"奥":"手前"}${c<2?"左":"右"}の${r%2?"手前":"奥"}${c%2?"右":"左"}寄り`;
@@ -436,11 +441,10 @@ function recommend(c,k,pin){
   if(L.n<3)return {L,none:true};
   const dH=L.fb>=1?"B":L.fb<=-1?"F":null,sH=L.lr>=1?"R":L.lr<=-1?"L":null;
   const lowD=dH?(dH==="B"?"F":"B"):null,lowS=sH?(sH==="R"?"L":"R"):null;
-  let recs;const pq=quadOf(pin);
-  if(pq==="C"){
-    const d=lowD||"F",ss=lowS?[lowS]:["L","R"];
-    recs=ss.map(x=>d+x);
-  }else recs=[(lowD||pq[0])+(lowS||pq[1])];
+  // ピンの縦・横の位置（真ん中の線上なら C）
+  const pd=dRank(pin)>2.25?"B":dRank(pin)<1.75?"F":"C",ps=sRank(pin)>2.25?"R":sRank(pin)<1.75?"L":"C";
+  const d=lowD||(pd==="C"?"F":pd),ss=lowS?[lowS]:(ps==="C"?["L","R"]:[ps]);
+  let recs=ss.map(x=>d+x);
   let avoid=(dH||sH)?recs.map(r=>(r[0]==="F"?"B":"F")+(r[1]==="L"?"R":"L")).filter(a=>!recs.includes(a)):[];
   const low=[dH?(dH==="B"?"手前":"奥"):"",sH?(sH==="R"?"左":"右"):""].filter(Boolean).join("・");
   return {L,recs,avoid,low};
@@ -569,22 +573,22 @@ function greenPad(h,rc){
   for(let r=0;r<4;r++)for(let c=0;c<4;c++){const k="P"+r+c,q=quadOf(k);
     cells+=`<button class="gc${recQ(q)?" rec":""}${avQ(q)?" avoid":""}" data-gq="${k}" aria-label="${QN[k]}" style="border-right:${line(c)};border-bottom:${line(r)}"></button>`}
   const POS={BL:[25,25],BR:[75,25],FL:[25,75],FR:[75,75],C:[50,50]};
-  const at=k=>!k?null:k[0]==="P"?[((+k[2])+.5)*25,((+k[1])+.5)*25]:(POS[k]||null);
+  const at=k=>!k?null:AX[k]?AX[k]:k[0]==="P"?[((+k[2])+.5)*25,((+k[1])+.5)*25]:(POS[k]||null);
   const mk=(k,html,cls)=>{const p=at(k);return p?`<span class="mk ${cls}" style="left:${p[0]}%;top:${p[1]}%">${html}</span>`:""};
   const labels=pm?"":["BL","BR","FL","FR"].map(q=>`<span class="ql" style="left:${POS[q][0]}%;top:${POS[q][1]+(q[0]==="B"?-12:12)}%">${recQ(q)?"<em>狙い目</em>":""}${QN[q]}</span>`).join("");
   let marks=mk(h.pin,'<span class="fl">⚑</span>','mflag');
   if(h.ball&&h.ball[0]!=="o")marks+=mk(h.ball,'<span class="bl"></span>','mball');
   if(h.ball&&h.ball[0]==="o"&&h.chip)marks+=mk(h.chip,'<span class="cp">寄</span>','mchip');
   const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode!=="ball"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
-  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green g16">${cells}</div>${labels}<button class="cbtn" data-gq="C" aria-label="センター"><span>センター</span></button>${marks}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>
-  <p class="note gnote">${pm?"ピンが切ってある場所をタップ":gmode==="chip"?"寄せた後、パットを打った場所をタップ":"ボールが止まった場所をタップ"}（1区画をさらに4つに分けています）</p>`;
+  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green g16">${cells}</div>${labels}<button class="cbtn" data-gq="C" aria-label="センター"><span>センター</span></button>${Object.keys(AX).map(k=>`<button class="axb" data-gq="${k}" aria-label="${QN[k]}" style="left:${AX[k][0]}%;top:${AX[k][1]}%"></button>`).join("")}${marks}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>
+  <p class="note gnote">${pm?"ピンが切ってある場所をタップ":gmode==="chip"?"寄せた後、パットを打った場所をタップ":"ボールが止まった場所をタップ"}（白い小さな丸は真上・真下・真左・真右）</p>`;
 }
 function recBox(h,rc){
   const i=R.cur,cc=courseOf(i),ck=i<9?i:i-9;
   if(!h.pin)return "";
   if(rc.none)return "";
   const st=Object.entries(rc.L.st).filter(([k,o])=>o.n>=2).sort((a,b)=>a[1].p/a[1].n-b[1].p/b[1].n).slice(0,3);
-  return `<div class="recbox"><b>狙い目：${rc.recs.map(k=>QN[k]).join("・")}${(rc.recs.includes(quadOf(h.pin))||h.pin==="C")&&rc.low?`（ピンより${rc.low}側）`:""}</b>
+  return `<div class="recbox"><b>狙い目：${rc.recs.map(k=>QN[k]).join("・")}${rc.low?`（ピンより${rc.low}側）`:""}</b>
     <span>このグリーンは${tiltText(rc.L)}傾向です。ここに止めれば上りのパットが残ります。${rc.avoid.length?`${rc.avoid.map(k=>QN[k]).join("・")}に乗ると下りになりやすいです。`:""}</span>
     ${st.length?`<span class="sub">過去の平均パット：${st.map(([k,o])=>`${k} ${(o.p/o.n).toFixed(1)}（${o.n}回）`).join("／")}</span>`:""}
     <span class="sub">傾斜データ ${rc.L.n}件から推定</span></div>`;
@@ -1022,7 +1026,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2155";
+const APP_VERSION="2026.11.10-2158";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
