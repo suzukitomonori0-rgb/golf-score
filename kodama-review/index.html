@@ -179,6 +179,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .advice{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--flag);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
 .advice ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;font-size:14px}
 .advice b{font-variant-numeric:tabular-nums}
+.startsel{display:flex;gap:8px;flex-wrap:wrap}
+.startsel .chip{padding:8px 14px;font-size:14px}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -244,6 +246,7 @@ h2{margin:0;font-size:16px;font-weight:700}
       <p class="note">パーはコース情報どおり（各36）。ティー変更などで違う場合はホールごとに修正できます。</p>
     </div>
 
+    <div class="panel" id="startPanel" hidden></div>
     <div class="advice" id="advice" hidden></div>
     <div class="panel" id="holePanel"></div>
 
@@ -347,7 +350,7 @@ function recommend(c,k,pin){
 }
 
 function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",wind:null,club:null,dist:null,pin:null,ball:null,slope:null,line:null}}
-function blankRound(out="西",inn="南"){return {id:"r"+Date.now(),out,inn,cur:0,sample:false,holes:[...COURSES[out],...COURSES[inn]].map(blankHole)}}
+function blankRound(out="西",inn="南"){return {id:"r"+Date.now(),out,inn,cur:0,start:0,sample:false,holes:[...COURSES[out],...COURSES[inn]].map(blankHole)}}
 function sampleRound(){
   const r=blankRound("西","南");r.sample=true;
   const d=[[6,2,"right",0,0,"l"],[4,2,"fw",0,0,"xl"],[5,3,null,0,1,"xl",null,"バンカーから出すだけ。その後3パット"],[7,2,"ob",2,0,"l","tee","ドライバーを右OB"],
@@ -370,10 +373,22 @@ function markCls(h){if(h.score==null)return "e";const d=h.score-h.par;return d<=
 function gir(h){return h.score!=null&&h.putts!=null&&(h.score-h.putts)<=h.par-2}
 function courseOf(i){return i<9?R.out:R.inn}
 
+function ORDER(){const st=R.start===9?9:0;return Array.from({length:18},(_,k)=>(st+k)%18)}
+function renderStart(){
+  const el=$("startPanel");if(!el)return;
+  const fresh=R.holes.every(h=>h.score==null);
+  if(!fresh){el.hidden=true;return}
+  const st=R.start===9?9:0;
+  el.innerHTML=`<span class="label">スタートホール</span><div class="startsel">
+    <button class="chip" data-start="0" aria-pressed="${st===0}">1番から（${R.out}）</button>
+    <button class="chip" data-start="9" aria-pressed="${st===9}">10番から（${R.inn}）</button></div>
+    <p class="note">最初の打数を入れるまでは変更できます。</p>`;
+  el.hidden=false;
+}
 const ovr=d=>d>0?"+"+d:d===0?"±0":""+d;
 const RES={"-3":"アルバトロス","-2":"イーグル","-1":"バーディー","0":"パー","1":"ボギー","2":"ダブルボギー","3":"トリプルボギー"};
 function runText(i){
-  let d=0,n=0;for(let k=0;k<=i;k++){const h=R.holes[k];if(h.score!=null){d+=h.score-h.par;n++}}
+  const o=ORDER();let d=0,n=0;for(const k of o.slice(0,o.indexOf(i)+1)){const h=R.holes[k];if(h.score!=null){d+=h.score-h.par;n++}}
   const h=R.holes[i];
   const cls=d>0?"pos":d<0?"neg":"";
   if(h.score!=null){const x=h.score-h.par;return `<span class="res">${RES[x]??(x>0?"+"+x:x)}</span><span>ここまで <b class="${cls} num">${ovr(d)}</b></span>`}
@@ -403,7 +418,8 @@ function stepper(field,label,val){
   return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div></div>`;
 }
 function renderHole(){
-  renderAdvice();
+  renderStart();renderAdvice();
+  const ord=ORDER(),pos=ord.indexOf(R.cur);
   const i=R.cur,h=R.holes[i],p3=h.par===3;
   const g=gir(h);
   let auto=[];
@@ -432,8 +448,8 @@ function renderHole(){
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
     <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
-    <div class="nav">${i===0?"<span></span>":`<button class="btn" data-go="-1">← ${i}番</button>`}
-    ${i===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${i+2}番へ →</button>`}</div>`;
+    <div class="nav">${pos===0?"<span></span>":`<button class="btn" data-go="-1">← ${ord[pos-1]+1}番</button>`}
+    ${pos===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${ord[pos+1]+1}番へ →</button>`}</div>`;
 }
 function greenPad(h,rc){
   const isRec=k=>!!(rc&&rc.recs&&rc.recs.includes(k)),isAv=k=>!!(rc&&rc.avoid&&rc.avoid.includes(k));
@@ -549,10 +565,10 @@ function analyze(){
   H.forEach((h,k)=>{
     const d=h.score-h.par; s.score+=h.score;s.par+=h.par;
     s["par"+h.par]?.push(d);
-    if(h.i<9){s.front+=d;s.frontN++}else{s.back+=d;s.backN++}
+    if((h.i<9)===(R.start!==9)){s.front+=d;s.frontN++}else{s.back+=d;s.backN++}
     if(d<0)s.birdie++; if(d>=2)s.bigs++;
-    const prev=R.holes[h.i-1];
-    if(h.i>0&&h.i!==9&&prev&&prev.score!=null&&prev.score-prev.par>=2&&d>=1)s.carry++;
+    const oo=ORDER(),pp=oo.indexOf(h.i),prev=pp>0?R.holes[oo[pp-1]]:null;
+    if(pp>0&&pp!==9&&prev&&prev.score!=null&&prev.score-prev.par>=2&&d>=1)s.carry++;
     if(h.putts!=null){s.putts+=h.putts;s.puttN++;
       if(h.putts>=3){s.three++; if(h.first==="xl"||h.first==="l")s.threeLong++; if(h.first==="s"||h.first==="m")s.threeShort++;}
       s.girN++; const g=gir(h); if(g)s.gir++; else {s.scrOpp++; if(d<=0)s.scr++;}}
@@ -731,7 +747,7 @@ function dGreen(s){
 const HK=["par","score","putts","pin","ball","slope"];
 function isSaved(){return realRounds().some(r=>String(r.id)===String(R.id)&&Array.isArray(r.holes)&&r.holes.length===18&&r.holes.every((h,i)=>HK.every(k=>(h[k]??null)===(R.holes[i][k]??null))))}
 function finishPanel(s){
-  const miss=R.holes.map((h,i)=>h.score==null?i:-1).filter(i=>i>=0);
+  const miss=ORDER().filter(i=>R.holes[i].score==null);
   if(miss.length===18)return "";
   if(miss.length)return `<div class="panel"><h2>まだ入力していないホール</h2>
     <p class="note">タップするとそのホールの入力に戻ります。途中で閉じても、入力した内容はこのスマホに残っています。</p>
@@ -820,6 +836,7 @@ document.addEventListener("click",e=>{
   if(t.dataset.jump!=null){R.cur=+t.dataset.jump;gmode="pin";save();show("in");renderInput();return}
   if(t.dataset.revsave){$("saveRound").click();return}
   if(t.dataset.revnew){show("in");$("confirmBox").hidden=false;$("confirmBox").scrollIntoView({block:"center"});return}
+  if(t.dataset.start!=null){R.start=+t.dataset.start;R.cur=R.start;gmode="pin";save();renderInput();return}
   if(t.dataset.gm){gmode=t.dataset.gm;renderHole();return}
   if(t.dataset.gq){const k=t.dataset.gq;
     if(gmode==="pin"){if(k[0]==="o")return;h.pin=h.pin===k?null:k;if(h.pin&&!h.ball)gmode="ball";}
@@ -834,7 +851,7 @@ document.addEventListener("click",e=>{
     else h[f]=Math.min(9,Math.max(0,h[f]+dd));
     save();renderInput();return}
   if(t.dataset.f){const f=t.dataset.f;h[f]=h[f]===t.dataset.v?null:t.dataset.v;save();renderHole();return}
-  if(t.dataset.go){if(t.dataset.go==="rev"){show("rev");return}R.cur=Math.min(17,Math.max(0,R.cur+(+t.dataset.go)));gmode="pin";save();renderInput();
+  if(t.dataset.go){if(t.dataset.go==="rev"){show("rev");return}{const o=ORDER();R.cur=o[Math.min(17,Math.max(0,o.indexOf(R.cur)+(+t.dataset.go)))]}gmode="pin";save();renderInput();
     window.scrollTo({top:0,left:0,behavior:"instant"});return}
 });
 document.addEventListener("input",e=>{if(e.target.id==="memo"){R.holes[R.cur].memo=e.target.value;save()}});
@@ -878,12 +895,12 @@ $("saveRound").onclick=async()=>{
 
 (()=>{const n=R.holes.filter(h=>h.score!=null).length;
   if(!R.sample&&n>0&&n<18){
-    const nx=R.holes.findIndex(h=>h.score==null);if(nx>=0)R.cur=nx;
+    const nx=ORDER().find(j=>R.holes[j].score==null);if(nx!=null)R.cur=nx;
     const el=$("resumeNote");el.textContent=`前回の続きから再開しました（${n}ホール入力済み）。${R.cur+1}番から入力できます。`;el.hidden=false;}
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1920";
+const APP_VERSION="2026.11.10-1924";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
