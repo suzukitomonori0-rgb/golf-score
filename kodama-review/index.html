@@ -243,6 +243,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .gstepl{position:absolute;pointer-events:none;z-index:2;font-size:10px;font-weight:700;color:var(--flag);background:var(--card);border-radius:4px;padding:0 4px;white-space:nowrap}
 .gstepl.h{left:50%;top:calc(50% + 40px);transform:translateX(-50%)}
 .gstepl.v{top:6%;left:calc(50% + 8px)}
+.tile b{font-size:13px;font-weight:700}
+.tile small{font-size:10.5px;color:inherit;opacity:.75}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -376,7 +378,7 @@ const WIND=[["follow","フォロー"],["none","無風"],["against","アゲイン
 const WINDN={follow:"フォロー",none:"無風",against:"アゲインスト"};
 const DIST=[["short","ショート"],["just","ちょうど"],["over","オーバー"]];
 const DISTN={short:"ショート",just:"ちょうど",over:"オーバー"};
-const FIRST=[["s","〜2歩"],["m","3〜5歩"],["l","6〜10歩"],["xl","11歩〜"]];
+const FIRST=[["s","<b>〜2歩</b><small>約1m</small>"],["m","<b>3〜5歩</b><small>約3m</small>"],["l","<b>6〜10歩</b><small>約5m</small>"],["xl","<b>11歩〜</b><small>7m〜</small>"]];
 const CAUSE=[["tee","ティーショット"],["second","セカンド"],["approach","アプローチ"],["putt","パット"],["judge","判断ミス"]];
 const CAT={tee:"ティーショット",second:"セカンド",approach:"アプローチ",putt:"パット",pen:"ペナルティ",judge:"判断ミス"};
 const KEY="kodama-review-v3";
@@ -542,7 +544,7 @@ function renderStrip(){
 function chipRow(field,opts,val,dis){
   return `<div class="chips">${opts.map(([k,l])=>`<button class="chip" data-f="${field}" data-v="${k}" aria-pressed="${val===k}"${dis?" disabled":""}>${l}</button>`).join("")}</div>`;
 }
-function tileRow(field,opts,val){return `<div class="tiles">${opts.map(([k,l])=>`<button class="tile" data-f="${field}" data-v="${k}" aria-pressed="${val===k}">${l}</button>`).join("")}</div>`}
+function tileRow(field,opts,val,n){return `<div class="tiles"${n?` style="grid-template-columns:repeat(${n},minmax(0,1fr))"`:""}>${opts.map(([k,l])=>`<button class="tile" data-f="${field}" data-v="${k}" aria-pressed="${val===k}">${l}</button>`).join("")}</div>`}
 function stepper(field,label,val,sub){
   return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
 }
@@ -578,7 +580,7 @@ function renderHole(){
       <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${QN[h.chip]}</span>`:""}</div>
       ${recBox(h,rc)}
     </div>
-    <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${chipRow("first",FIRST,h.first)}</div>
+    <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${tileRow("first",FIRST,h.first,4)}</div>
     <div class="grp"><span class="label">上り・下り</span>${tileRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${tileRow("line",LINE,h.line)}</div>
     <div class="steps">${stepper("score","打数",h.score,scoreSub(h))}${""}${stepper("putts","パット",h.putts)}</div>
@@ -1075,7 +1077,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2230";
+const APP_VERSION="2026.11.10-2234";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
