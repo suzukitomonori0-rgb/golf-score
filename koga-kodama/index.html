@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#C2332F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="古河児玉">
+<meta name="apple-mobile-web-app-title" content="週末ゴルフ">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <style>:root{color-scheme:light}html,body{-webkit-text-size-adjust:100%}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px)}</style>
-<title>古河 児玉ルール</title>
+<title>古河 週末ゴルフ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -383,7 +383,7 @@ function go(i){S.cur=Math.max(0,Math.min(17,i));save();render();window.scrollTo(
 function renderHeader(){
   const ord=order();
   const chips=ord.map((h,i)=>`<button class="chipH${S.holes[h].done?' done':''}${i===S.cur&&S.view==='hole'?' cur':''}${i===9?' turn':''}" data-go="${i}" aria-label="${dno(h)}番ホール">${dno(h)}</button>`).join('');
-  return `<header><div class="wrap"><div class="hd"><h1><small>KOGA · 児玉ルール · ${CN(S.front)}スタート</small>古河ゴルフリンクス</h1>
+  return `<header><div class="wrap"><div class="hd"><h1><small>KOGA · 週末ゴルフルール · ${CN(S.front)}スタート</small>古河ゴルフリンクス</h1>
   <button class="hbtn" data-modal="rules">ルール</button><button class="hbtn" data-modal="settings">設定</button></div>
   <div class="strip" id="strip">${chips}</div></div></header>`;
 }
