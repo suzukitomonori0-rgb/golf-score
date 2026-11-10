@@ -48,8 +48,9 @@ h1{margin:0;font-size:20px;font-weight:900;letter-spacing:.02em;text-wrap:balanc
 .total{text-align:right;line-height:1.1}
 .total b{font-size:34px;font-weight:900}
 .total small{display:block;font-size:12px;color:var(--muted)}
-.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px}
-.tabs button{border:0;background:none;padding:8px;border-radius:8px;font-weight:700;color:var(--muted)}
+.titlerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tabs{display:inline-grid;grid-template-columns:auto auto;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:2px}
+.tabs button{border:0;background:none;padding:5px 12px;font-size:13px;border-radius:7px;white-space:nowrap;font-weight:700;color:var(--muted)}
 .tabs button[aria-selected="true"]{background:var(--green);color:var(--paper)}
 
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px}
@@ -191,7 +192,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .glegend{flex-wrap:wrap;gap:4px 14px}
 .glegend>span{white-space:nowrap}
 .clubrow{display:flex;align-items:center;gap:10px}
-.helpbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;color:var(--green)}
+.club{white-space:nowrap}
+.helpbtn{white-space:nowrap;flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;color:var(--green)}
 .help h3{margin:6px 0 0;font-size:14px;font-weight:700;color:var(--green)}
 .help ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .help b{font-weight:700}
@@ -201,7 +203,9 @@ h2{margin:0;font-size:16px;font-weight:700}
 .hn2{aspect-ratio:1;max-width:36px;width:100%;justify-self:center;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;padding:0;color:var(--muted)}
 .hn2.done{background:var(--green-soft);border-color:var(--green-soft);color:var(--ink)}
 .hn2.cur{background:var(--green);border-color:var(--green);color:var(--paper)}
-@media (max-width:340px){.hrow{grid-template-columns:28px repeat(9,1fr);gap:3px}.hn2{font-size:12px}.hlab{font-size:10px}}
+@media (max-width:340px){
+  .club{font-size:10px;letter-spacing:.06em}
+  .clubrow{gap:6px}.hrow{grid-template-columns:28px repeat(9,1fr);gap:3px}.hn2{font-size:12px}.hlab{font-size:10px}}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -246,13 +250,11 @@ h2{margin:0;font-size:16px;font-weight:700}
     <div class="toprow">
       <div>
         <div class="clubrow"><div class="club">KOGA GOLF LINKS</div><button class="helpbtn" id="helpBtn">使い方</button></div>
-        <h1>古河GL攻略</h1>
+        <div class="titlerow"><h1>古河GL攻略</h1>
+          <div class="tabs" role="tablist"><button role="tab" id="tabIn" aria-selected="true">入力</button><button role="tab" id="tabRev" aria-selected="false">振り返り</button></div>
+        </div>
       </div>
       <div class="total"><b class="num" id="tot">0</b><small id="totSub">PAR 72</small></div>
-    </div>
-    <div class="tabs" role="tablist">
-      <button role="tab" id="tabIn" aria-selected="true">入力</button>
-      <button role="tab" id="tabRev" aria-selected="false">振り返り</button>
     </div>
   </header>
 
@@ -974,7 +976,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2053";
+const APP_VERSION="2026.11.10-2055";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
