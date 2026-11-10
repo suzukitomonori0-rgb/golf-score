@@ -389,8 +389,8 @@ let gmode="pin";
 const DR={F:0,C:1,B:2},SR={L:0,C:1,R:2};
 // 位置の数値化（奥ほど大きい／右ほど大きい）。区画：奥3・センター2・手前1、ピン用の細かい区画 P{行}{列}（行0=奥〜3=手前、列0=左〜3=右）
 // 真上・真下・真左・真右の位置（グリーン上の％座標）
-const AX={V0:[50,10],V1:[50,26],V2:[50,74],V3:[50,90],H0:[10,50],H1:[26,50],H2:[74,50],H3:[90,50]};
-Object.assign(QN,{V0:"真上（奥側）",V1:"真上（センター寄り）",V2:"真下（センター寄り）",V3:"真下（手前側）",H0:"真左（外側）",H1:"真左（センター寄り）",H2:"真右（センター寄り）",H3:"真右（外側）"});
+const AX={V0:[50,10],V1:[50,25],V2:[50,75],V3:[50,90],H0:[10,50],H1:[25,50],H2:[75,50],H3:[90,50],X0:[25,25],X1:[75,25],X2:[25,75],X3:[75,75]};
+Object.assign(QN,{V0:"真上（奥側）",V1:"真上（センター寄り）",V2:"真下（センター寄り）",V3:"真下（手前側）",H0:"真左（外側）",H1:"真左（センター寄り）",H2:"真右（センター寄り）",H3:"真右（外側）",X0:"奥左の真ん中",X1:"奥右の真ん中",X2:"手前左の真ん中",X3:"手前右の真ん中"});
 const dRank=q=>q==="C"?2:AX[q]?4-AX[q][1]/25:q[0]==="P"?3.5-(+q[1]):(q[0]==="B"?3:1),sRank=q=>q==="C"?2:AX[q]?AX[q][0]/25:q[0]==="P"?(+q[2])+0.5:(q[1]==="R"?3:1);
 const sg3=v=>v>0.75?1:v<-0.75?-1:0;
 const quadOf=k=>!k||k[0]!=="P"?k:((+k[1])<2?"B":"F")+((+k[2])<2?"L":"R");
@@ -626,7 +626,7 @@ function greenPad(h,rc,gn){
   if(gn&&gn.step){const v=gn.dir==="L"||gn.dir==="R";const hi=gn.dir?{B:"奥",F:"手前",L:"左",R:"右"}[gn.dir]+"が高い":"段";
     step=`<span class="gstep ${v?"v":"h"}"></span><span class="gstepl ${v?"v":"h"}">${gn.step}・${hi}</span>`;}
   return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green g16">${cells}</div>${step}${labels}<button class="cbtn" data-gq="C" aria-label="センター"><span>センター</span></button>${Object.keys(AX).map(k=>`<button class="axb" data-gq="${k}" aria-label="${QN[k]}" style="left:${AX[k][0]}%;top:${AX[k][1]}%"></button>`).join("")}${marks}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>
-  <p class="note gnote">${pm?"ピンが切ってある場所をタップ":gmode==="chip"?"寄せた後、パットを打った場所をタップ":"ボールが止まった場所をタップ"}（白い小さな丸は真上・真下・真左・真右）</p>`;
+  <p class="note gnote">${pm?"ピンが切ってある場所をタップ":gmode==="chip"?"寄せた後、パットを打った場所をタップ":"ボールが止まった場所をタップ"}（白い小さな丸は線が交わる点）</p>`;
 }
 function recBox(h,rc){
   const i=R.cur,cc=courseOf(i),ck=i<9?i:i-9;
@@ -1074,7 +1074,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2224";
+const APP_VERSION="2026.11.10-2226";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
