@@ -481,8 +481,8 @@ function greenPad(h,rc){
 }
 function recBox(h,rc){
   const i=R.cur,cc=courseOf(i),ck=i<9?i:i-9;
-  if(!h.pin){const L=learn(cc,ck);return `<div class="recbox"><span class="sub">${L.rounds?`このグリーンの蓄積 ${L.rounds}回分。ピン位置を入れると、狙い目の区画を表示します。`:"このホールの蓄積データはまだありません。ラウンドを保存するたびに学習します。"}</span></div>`}
-  if(rc.none)return `<div class="recbox"><span class="sub">傾斜が分かるデータがまだ${rc.L.n}件です。3件以上たまると落としどころを提案します。</span></div>`;
+  if(!h.pin)return "";
+  if(rc.none)return "";
   const st=Object.entries(rc.L.st).filter(([k,o])=>o.n>=2).sort((a,b)=>a[1].p/a[1].n-b[1].p/b[1].n).slice(0,3);
   return `<div class="recbox"><b>狙い目：${rc.recs.map(k=>QN[k]).join("・")}${(rc.recs.includes(h.pin)||h.pin==="C")&&rc.low?`（ピンより${rc.low}側）`:""}</b>
     <span>このグリーンは${tiltText(rc.L)}傾向です。ここに止めれば上りのパットが残ります。${rc.avoid.length?`${rc.avoid.map(k=>QN[k]).join("・")}に乗ると下りになりやすいです。`:""}</span>
@@ -923,7 +923,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2023";
+const APP_VERSION="2026.11.10-2026";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
