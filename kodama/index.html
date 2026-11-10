@@ -136,6 +136,11 @@ td.hcell{background:color-mix(in srgb,var(--green) 12%,transparent)}
 .md.g{background:var(--gold)}.md.s{background:var(--silver)}.md.b{background:var(--bronze)}.md.i{background:var(--iron)}.md.d{background:var(--diamond)}
 .md.off{background:transparent;border:1.5px solid var(--line)}
 .bcap{margin-top:3px;font-size:9.5px;font-weight:900;color:#fff;background:var(--lose);border-radius:999px;padding:0 6px;display:inline-block;white-space:nowrap}
+.popb{position:fixed;z-index:30;pointer-events:none;background:var(--win);color:#fff;font-weight:900;font-size:15px;padding:7px 14px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap;transition:opacity .35s,transform .35s}
+.popb::after{content:"";position:absolute;left:var(--ax,50%);bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:inherit;border-top-color:var(--win)}
+.popb.neg{background:var(--lose);color:#fff!important}.popb.neg::after{border-top-color:var(--lose)}
+.popb.out{opacity:0;transform:translateY(-10px)}
+@media (prefers-reduced-motion:no-preference){.popb{animation:popin .25s ease-out}@keyframes popin{from{transform:scale(.6) translateY(8px);opacity:0}}}
 /* tab bar */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
   display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
@@ -550,6 +555,13 @@ function renderModal(){
   </div></div>`;
 }
 
+function pop(rc,text,neg){
+  const el=document.createElement('div');el.className='popb'+(neg?' neg':'');el.textContent=text;
+  document.body.appendChild(el);
+  const w=el.offsetWidth,x=Math.max(8,Math.min(innerWidth-w-8,rc.left+rc.width/2-w/2));
+  el.style.left=x+'px';el.style.setProperty('--ax',Math.max(14,Math.min(w-14,rc.left+rc.width/2-x))+'px');el.style.top=Math.max(8,rc.top-el.offsetHeight-8)+'px';
+  setTimeout(()=>el.classList.add('out'),1100);setTimeout(()=>el.remove(),1500);
+}
 function render(){
   const C=compute();
   document.getElementById('app').innerHTML=renderHeader()+(S.view==='sum'?renderSum(C):S.view==='hist'?renderHist():renderHole(C))+
@@ -578,11 +590,11 @@ app.addEventListener('click',e=>{
     HIST=HIST.filter(x=>x.id!==+d.hdel);saveHist();histId=null;delArm=false;render();window.scrollTo(0,0);return}
   if(d.go!==undefined){S.view='hole';go(+d.go);return}
   const h=hole(),H=S.holes[h];
-  if(d.oly){const[i,k]=d.oly.split(':');H.oly[+i]=H.oly[+i]===k?'':k;save();render();return}
-  if(d.sao){const[i,k]=d.sao.split(':');if(!H.sao)H.sao=Array(MAXP).fill('');H.sao[+i]=H.sao[+i]===k?'':k;save();render();return}
-  if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();render();return}
-  if(d.np!==undefined){H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();render();return}
-  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);const on=!H.miss[i];H.miss=H.miss.map(()=>false);H.miss[i]=on;save();render();return}
+  if(d.oly){const[i,k]=d.oly.split(':');const on=H.oly[+i]!==k;H.oly[+i]=on?k:'';save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,`ナイス${MED[k].n}！ +${MED[k].pt}点`);return}
+  if(d.sao){const[i,k]=d.sao.split(':');if(!H.sao)H.sao=Array(MAXP).fill('');const on=H.sao[+i]!==k;H.sao[+i]=on?k:'';save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,k==='ok'?'サオ成功！ナイス +3点':'残念… -3点',k!=='ok');return}
+  if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();const rc=t.getBoundingClientRect();render();if(H.sand[i])pop(rc,'ナイス砂イチ！ +3点');return}
+  if(d.np!==undefined){const was=H.np;H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();const rc=t.getBoundingClientRect();render();if(H.np>=0&&was!==H.np){const npP=(()=>{let k=0;for(const x of order()){if(x===h)break;const q=compute().npr[x];if(q)k=q.c||0}return k})();pop(rc,`ナイスニアピン！ +${3*(1+npP)}点`)}return}
+  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);const on=!H.miss[i];H.miss=H.miss.map(()=>false);H.miss[i]=on;save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,'消防隊！ +1点');return}
   if(d.confirm){const par=COURSE[h].p;for(let i=0;i<MAXP;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
     if(S.cur<17)go(S.cur+1);else setView('sum');return}
   if(d.undo){H.done=false;save();render();return}
