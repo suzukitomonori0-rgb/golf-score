@@ -195,6 +195,13 @@ h2{margin:0;font-size:16px;font-weight:700}
 .help h3{margin:6px 0 0;font-size:14px;font-weight:700;color:var(--green)}
 .help ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .help b{font-weight:700}
+.hnav{display:flex;flex-direction:column;gap:6px}
+.hrow{display:grid;grid-template-columns:34px repeat(9,1fr);gap:4px;align-items:center}
+.hlab{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.hn2{aspect-ratio:1;max-width:36px;width:100%;justify-self:center;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;padding:0;color:var(--muted)}
+.hn2.done{background:var(--green-soft);border-color:var(--green-soft);color:var(--ink)}
+.hn2.cur{background:var(--green);border-color:var(--green);color:var(--paper)}
+@media (max-width:340px){.hrow{grid-template-columns:28px repeat(9,1fr);gap:3px}.hn2{font-size:12px}.hlab{font-size:10px}}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -260,6 +267,7 @@ h2{margin:0;font-size:16px;font-weight:700}
       <p class="note">パーはコース情報どおり（各36）です。</p>
     </div>
 
+    <nav class="hnav" id="hnav" aria-label="ホールを選ぶ"></nav>
     <div class="panel" id="startPanel" hidden></div>
     <div class="advice" id="advice" hidden></div>
     <div class="panel" id="holePanel"></div>
@@ -433,6 +441,12 @@ function courseOf(i){return i<9?R.out:R.inn}
 
 function ORDER(){const st=(Object.keys(COURSES).length<=2&&R.start===9)?9:0;return Array.from({length:18},(_,k)=>(st+k)%18)}
 const cn=c=>c==="OUT"||c==="IN"?c:c+"コース";
+function renderHnav(){
+  const el=$("hnav");if(!el)return;
+  const o=ORDER(),many=Object.keys(COURSES).length>2;
+  el.innerHTML=[o.slice(0,9),o.slice(9)].map(row=>`<div class="hrow"><span class="hlab">${many?courseOf(row[0]):(row[0]<9?"OUT":"IN")}</span>${row.map(i=>{const h=R.holes[i];
+    return `<button class="hn2${i===R.cur?" cur":""}${h.score!=null?" done":""}" data-h="${i}" aria-label="${courseOf(i)} ${many?(i<9?i+1:i-8):i+1}番">${many?(i<9?i+1:i-8):i+1}</button>`}).join("")}</div>`).join("");
+}
 function renderStart(){
   const el=$("startPanel");if(!el)return;
   if(Object.keys(COURSES).length>2){el.hidden=true;return}
@@ -483,7 +497,7 @@ function scoreSub(h){
   return `<span class="${x>0?"pos":x<0?"neg":"even"}">${name}</span>`;
 }
 function renderHole(){
-  renderStart();renderAdvice();
+  renderHnav();renderStart();renderAdvice();
   const ord=ORDER(),pos=ord.indexOf(R.cur);
   const i=R.cur,h=R.holes[i],p3=h.par===3;
   const g=gir(h);
@@ -971,7 +985,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2049";
+const APP_VERSION="2026.11.10-2051";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
