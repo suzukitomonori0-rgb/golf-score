@@ -74,7 +74,9 @@ select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--li
 
 /* ホール入力 */
 .holehead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.holehead .hn{font-size:30px;font-weight:900;line-height:1}
+.holehead .hn{font-size:26px;font-weight:900;line-height:1.1;display:flex;gap:10px;align-items:baseline;white-space:nowrap}
+.hgrp{display:flex;flex-direction:column;gap:2px}
+.holehead .hpar{font-size:26px;font-weight:900}
 .holehead .hn small{font-size:14px;font-weight:700;margin-left:2px}
 .holehead .cs{font-size:13px;color:var(--muted)}
 .steps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
@@ -486,7 +488,7 @@ function renderHole(){
   const off=!!(h.ball&&h.ball[0]==="o");
   if(gmode==="chip"&&!off)gmode="ball";
   $("holePanel").innerHTML=`
-    <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="hr"><div class="cs">${courseOf(i)}・パー${h.par}</div><div class="run">${runText(i)}</div></div></div>
+    <div class="holehead"><div class="hgrp"><div class="cs">${courseOf(i)}</div><div class="hn num">${i+1}番<span class="hpar">パー${h.par}</span></div></div><div class="hr"><div class="run">${runText(i)}</div></div></div>
     ${p3?`<div class="grp"><span class="label">風</span>${chipRow("wind",WIND,h.wind)}</div>
     <div class="grp"><span class="label">ティーショットの番手</span>${chipRow("club",CLUBS,h.club)}</div>
     <div class="grp"><span class="label">ピンに対して縦の距離</span>${chipRow("dist",DIST,h.dist)}</div>`
@@ -958,7 +960,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2036";
+const APP_VERSION="2026.11.10-2041";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
