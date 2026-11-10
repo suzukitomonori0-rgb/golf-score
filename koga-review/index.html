@@ -41,7 +41,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
 .num{font-variant-numeric:tabular-nums}
 
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);padding-block:14px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+header{position:relative;background:var(--paper);padding-block:14px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
 .toprow{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
 .club{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500}
 h1{margin:0;font-size:20px;font-weight:900;letter-spacing:.02em;text-wrap:balance}
@@ -974,7 +974,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2051";
+const APP_VERSION="2026.11.10-2053";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
