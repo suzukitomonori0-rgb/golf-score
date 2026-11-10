@@ -165,6 +165,14 @@ h2{margin:0;font-size:16px;font-weight:700}
 .tilt .k{color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.bar .fill{transition:width .4s ease}}
 @media (max-width:380px){.sum{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:78px 1fr 32px}}
+.hr{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.run{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--muted);flex-wrap:wrap;justify-content:flex-end}
+.run b{font-size:22px;font-weight:900;color:var(--ink)}
+.run .res{font-weight:700;color:var(--ink)}
+.total small{white-space:nowrap}
+.toprow>div:first-child{min-width:0}
+.pos{color:var(--over)!important}.neg{color:var(--under)!important}
+.holehead{align-items:flex-start}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -190,6 +198,7 @@ h2{margin:0;font-size:16px;font-weight:700}
   h1{font-size:18px}
 }
 @media (max-width:340px){
+  h1{font-size:16px}
   .stp button{width:24px;height:24px;font-size:14px}
   .stp .v{min-width:20px;font-size:19px}
   .stp .row{gap:2px}
@@ -221,10 +230,6 @@ h2{margin:0;font-size:16px;font-weight:700}
   <section id="viewIn" class="wrap" style="gap:16px">
     <div id="sampleNote" class="sample">サンプルのラウンドを表示しています。「新しいラウンド」で白紙から入力できます。</div>
     <div id="resumeNote" class="sample resume" hidden></div>
-    <div class="panel">
-      <p class="note">18ホール・パー72（OUT 36／IN 36）。パーはコース情報どおりです。違う場合はホールごとに修正できます。</p>
-      <div class="strip" id="strip"></div>
-    </div>
 
     <div class="panel" id="holePanel"></div>
 
@@ -346,14 +351,25 @@ function markCls(h){if(h.score==null)return "e";const d=h.score-h.par;return d<=
 function gir(h){return h.score!=null&&h.putts!=null&&(h.score-h.putts)<=h.par-2}
 function courseOf(i){return i<9?R.out:R.inn}
 
+const ovr=d=>d>0?"+"+d:d===0?"±0":""+d;
+const RES={"-3":"アルバトロス","-2":"イーグル","-1":"バーディー","0":"パー","1":"ボギー","2":"ダブルボギー","3":"トリプルボギー"};
+function runText(i){
+  let d=0,n=0;for(let k=0;k<=i;k++){const h=R.holes[k];if(h.score!=null){d+=h.score-h.par;n++}}
+  const h=R.holes[i];
+  const cls=d>0?"pos":d<0?"neg":"";
+  if(h.score!=null){const x=h.score-h.par;return `<span class="res">${RES[x]??(x>0?"+"+x:x)}</span><span>ここまで <b class="${cls} num">${ovr(d)}</b></span>`}
+  return n?`<span>前のホールまで <b class="${cls} num">${ovr(d)}</b></span>`:"";
+}
 function renderHeader(){
   const played=R.holes.filter(h=>h.score!=null);
   const tot=played.reduce((a,h)=>a+h.score,0), par=played.reduce((a,h)=>a+h.par,0);
-  $("tot").textContent=played.length?tot:"–";
   const d=tot-par;
-  $("totSub").textContent=played.length?`${played.length}H ${d>0?"+"+d:d===0?"E":d}`:`PAR ${R.holes.reduce((a,h)=>a+h.par,0)}`;
+  $("tot").textContent=played.length?ovr(d):"±0";
+  $("tot").className="num "+(d>0?"pos":d<0?"neg":"");
+  $("totSub").textContent=played.length?`${played.length}H終了・${tot}打`:`PAR ${R.holes.reduce((a,h)=>a+h.par,0)}`;
 }
 function renderStrip(){
+  if(!$("strip"))return;
   let html='<div class="side">OUT</div>';
   R.holes.forEach((h,i)=>{
     if(i===9)html+='<div class="side">IN</div>';
@@ -377,7 +393,7 @@ function renderHole(){
   const cc=courseOf(i),ck=i<9?i:i-9;
   const rc=h.pin?recommend(cc,ck,h.pin):null;
   $("holePanel").innerHTML=`
-    <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="cs">${courseOf(i)}・パー${h.par}</div></div>
+    <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="hr"><div class="cs">${courseOf(i)}・パー${h.par}</div><div class="run">${runText(i)}</div></div></div>
     <div class="steps">${stepper("par","パー",h.par)}${stepper("score","打数",h.score)}${stepper("putts","パット",h.putts)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><span class="label">ティーショット${p3?"（パー3は対象外）":""}</span>${chipRow("tee",TEE,h.tee,p3)}</div>
@@ -766,7 +782,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1856";
+const APP_VERSION="2026.11.10-1859";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
