@@ -247,8 +247,8 @@ h2{margin:0;font-size:16px;font-weight:700}
     <div id="resumeNote" class="sample resume" hidden></div>
     <div class="panel">
       <div class="courses">
-        <label for="outC">OUT（前半）<select id="outC"></select></label>
-        <label for="inC">IN（後半）<select id="inC"></select></label>
+        <label for="outC">スタートコース<select id="outC"></select></label>
+        <label for="inC">2つ目のコース<select id="inC"></select></label>
       </div>
       <p class="note">パーはコース情報どおり（各36）です。</p>
     </div>
@@ -386,10 +386,11 @@ function markCls(h){if(h.score==null)return "e";const d=h.score-h.par;return d<=
 function gir(h){return h.score!=null&&h.putts!=null&&(h.score-h.putts)<=h.par-2}
 function courseOf(i){return i<9?R.out:R.inn}
 
-function ORDER(){const st=R.start===9?9:0;return Array.from({length:18},(_,k)=>(st+k)%18)}
+function ORDER(){const st=(Object.keys(COURSES).length<=2&&R.start===9)?9:0;return Array.from({length:18},(_,k)=>(st+k)%18)}
 const cn=c=>c==="OUT"||c==="IN"?c:c+"コース";
 function renderStart(){
   const el=$("startPanel");if(!el)return;
+  if(Object.keys(COURSES).length>2){el.hidden=true;return}
   const fresh=R.holes.every(h=>h.score==null);
   if(!fresh){el.hidden=true;return}
   const st=R.start===9?9:0;
@@ -879,7 +880,9 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("input",e=>{if(e.target.id==="memo"){R.holes[R.cur].memo=e.target.value;save()}});
 function changeCourse(){
-  const o=$("outC").value,i=$("inC").value;
+  let o=$("outC").value,i=$("inC").value;
+  // 同じコースを両方に選んだら、もう一方と入れ替える
+  if(o===i){if(o!==R.out)i=R.out;else o=R.inn;}
   if(o!==R.out){R.out=o;COURSES[o].forEach((p,k)=>R.holes[k].par=p)}
   if(i!==R.inn){R.inn=i;COURSES[i].forEach((p,k)=>R.holes[k+9].par=p)}
   save();renderInput();
@@ -923,7 +926,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2030";
+const APP_VERSION="2026.11.10-2033";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
