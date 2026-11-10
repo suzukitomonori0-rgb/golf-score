@@ -231,7 +231,7 @@ h2{margin:0;font-size:16px;font-weight:700}
   <header>
     <div class="toprow">
       <div>
-        <div class="club">FURUKAWA GOLF LINKS</div>
+        <div class="club">KOGA GOLF LINKS</div>
         <h1>古河GL攻略</h1>
       </div>
       <div class="total"><b class="num" id="tot">0</b><small id="totSub">PAR 72</small></div>
@@ -915,7 +915,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2026";
+const APP_VERSION="2026.11.10-2030";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
