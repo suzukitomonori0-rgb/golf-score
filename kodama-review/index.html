@@ -231,7 +231,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .ql em{font-style:normal;font-size:10px;font-weight:900;color:var(--flag)}
 .cbtn{z-index:2}
 .gnote{text-align:center;margin:0}
-.axb{position:absolute;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;border:1.5px solid var(--green);background:var(--card);padding:0;z-index:2;opacity:.9}
+.axb{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;border:0;background:transparent;padding:0;z-index:2}
+.axb::after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid var(--green);background:var(--card)}
 .axb:focus-visible{outline:2px solid var(--flag)}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
@@ -1037,7 +1038,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2158";
+const APP_VERSION="2026.11.10-2200";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
