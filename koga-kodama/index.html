@@ -208,6 +208,13 @@ button.x{border:0;background:var(--sunk);border-radius:999px;width:36px;height:3
 .mbox b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .mbox small{font-size:10px;color:var(--muted);white-space:nowrap}
 .mbox+.carry{margin-left:8px}
+.bcap0{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted);line-height:1.2}
+.bcap0+.board{margin-top:3px}
+.live{width:6px;height:6px;border-radius:50%;background:var(--win);display:inline-block}
+@media (prefers-reduced-motion:no-preference){.live{animation:blink 2s ease-in-out infinite}@keyframes blink{50%{opacity:.25}}}
+.holehead{padding-block:2px 2px!important}
+.plist{gap:4px!important}
+.pc{padding-block:7px!important}
 /* compact hole screen */
 .holehead .carry{font-size:10px;line-height:1.1}
 .holehead .carry b{font-size:20px}
@@ -441,7 +448,7 @@ function renderHole(C){
 
   const sb=[...ps].sort((a,b)=>C.bal[b]-C.bal[a]);
   const MKS=S.count===3?['g','s','b']:['g','s','b','i'];
-  const board=`<div class="board">${sb.map((i,k)=>{const m=C.med[i];
+  const board=`<div class="bcap0"><span class="live"></span>リアルタイム得点状況</div><div class="board">${sb.map((i,k)=>{const m=C.med[i];
     return `<div class="bd${k===0&&C.bal[i]>0?' top':''}"><div class="bn">${esc(S.players[i].name)}</div><div class="bv ${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${C.bal[i]>0?'+':''}${C.bal[i]}</div>
       <div class="bm">${MKS.map(x=>`<i class="md ${x}${m[x]?'':' off'}">${m[x]||''}</i>`).join('')}${m.d?`<i class="md d">${m.d}</i>`:''}</div>${overCap(C,i)?'<div class="bcap">上限突破</div>':''}</div>`}).join('')}</div>`;
   const M=C.match;
