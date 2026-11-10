@@ -181,6 +181,9 @@ h2{margin:0;font-size:16px;font-weight:700}
 .advice b{font-variant-numeric:tabular-nums}
 .startsel{display:flex;gap:8px;flex-wrap:wrap}
 .startsel .chip{padding:8px 14px;font-size:14px}
+.stp .sub{font-size:13px;font-weight:700;min-height:1.4em;line-height:1.4}
+.stp .sub .hint{font-weight:400;color:var(--muted);font-size:11px}
+.stp .sub .even{color:var(--green)}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -408,8 +411,13 @@ function renderStrip(){
 function chipRow(field,opts,val,dis){
   return `<div class="chips">${opts.map(([k,l])=>`<button class="chip" data-f="${field}" data-v="${k}" aria-pressed="${val===k}"${dis?" disabled":""}>${l}</button>`).join("")}</div>`;
 }
-function stepper(field,label,val){
-  return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div></div>`;
+function stepper(field,label,val,sub){
+  return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
+}
+function scoreSub(h){
+  if(h.score==null)return `<span class="hint">＋でパー（${h.par}）から</span>`;
+  const x=h.score-h.par,name=RES[x]??(x>0?`+${x}`:`${x}`);
+  return `<span class="${x>0?"pos":x<0?"neg":"even"}">${name}</span>`;
 }
 function renderHole(){
   renderStart();renderAdvice();
@@ -438,7 +446,7 @@ function renderHole(){
     <div class="mini"><div class="grp"><span class="label">上り・下り</span>${chipRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${chipRow("line",LINE,h.line)}</div></div>
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
-    <div class="steps">${stepper("score","打数",h.score)}${stepper("putts","パット",h.putts)}</div>
+    <div class="steps">${stepper("score","打数",h.score,scoreSub(h))}${""}${stepper("putts","パット",h.putts)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
     <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
@@ -893,7 +901,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1959";
+const APP_VERSION="2026.11.10-2000";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
