@@ -437,7 +437,7 @@ function renderHole(C){
     return `<div class="bd${k===0&&C.bal[i]>0?' top':''}"><div class="bn">${esc(S.players[i].name)}</div><div class="bv ${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${C.bal[i]>0?'+':''}${C.bal[i]}</div>
       <div class="bm">${MKS.map(x=>`<i class="md ${x}${m[x]?'':' off'}">${m[x]||''}</i>`).join('')}${m.d?`<i class="md d">${m.d}</i>`:''}</div>${overCap(C,i)?'<div class="bcap">上限突破</div>':''}</div>`}).join('')}</div>`;
   const M=C.match;
-  const mt=M?`<div class="mbox"><span class="mt">マッチ</span><b>${M.closed||M.played===18?(M.lead<0?'引分':esc(S.players[M.lead].name)+' 勝ち'):M.played===0?'開始前':M.up===0?'AS':esc(S.players[M.lead].name)+' '+Math.abs(M.up)+'UP'}</b><small>${M.closed&&M.closed.left>0?`${Math.abs(M.up)}&${M.closed.left}`:M.closed?`${Math.abs(M.up)}UP`:M.played===18||M.played===0?'':`残り${M.left}${Math.abs(M.up)===M.left?'・ドーミー':''}`}</small></div>`:'';
+  const mt=M&&M.played>0?`<div class="mbox"><span class="mt">マッチ</span><b>${M.closed||M.played===18?(M.lead<0?'引分':esc(S.players[M.lead].name)+' 勝ち'):M.played===0?'開始前':M.up===0?'AS':esc(S.players[M.lead].name)+' '+Math.abs(M.up)+'UP'}</b><small>${M.closed&&M.closed.left>0?`${Math.abs(M.up)}&${M.closed.left}`:M.closed?`${Math.abs(M.up)}UP`:M.played===18||M.played===0?'':`残り${M.left}${Math.abs(M.up)===M.left?'・ドーミー':''}`}</small></div>`:'';
   return `<main class="wrap">${board}
     <div class="holehead"><div class="bigno">${hn(h)}</div>
       <div class="hmeta"><span class="lbl">${S.cur+1}ホール目 / ${CN(cOf(h))}コース</span>
