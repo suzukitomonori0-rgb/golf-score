@@ -351,9 +351,12 @@ const CAUSE=[["tee","ティーショット"],["second","セカンド"],["approac
 const CAT={tee:"ティーショット",second:"セカンド",approach:"アプローチ",putt:"パット",pen:"ペナルティ",judge:"判断ミス"};
 const KEY="kodama-review-v3";
 const QN={C:"センター",BL:"奥左",BR:"奥右",FL:"手前左",FR:"手前右",oB:"奥にこぼれ",oF:"手前に外れ",oL:"左に外れ",oR:"右に外れ"};
-const ico=d=>`<svg class="ico" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-const SLOPE=[["up",ico("M2 13L13 4M8 4H13V9")+"上り"],["flat",ico("M2 8H14M10 4L14 8L10 12")+"平坦"],["down",ico("M2 4L13 13M8 13H13V8")+"下り"]];
-const LINE=[["hook",ico("M10 15C10 8 8 4 3 3M3 3L7 2M3 3L4 7")+"フック"],["straight",ico("M8 15V2M4 6L8 2L12 6")+"まっすぐ"],["slice",ico("M6 15C6 8 8 4 13 3M13 3L9 2M13 3L12 7")+"スライス"]];
+const ico=(d,b)=>`<svg class="ico" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="${b?3.2:2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const IU="M2 13L13 4M8 4H13V9",IF="M2 8H14M10 4L14 8L10 12",ID="M2 4L13 13M8 13H13V8",IH="M10 15C10 8 8 4 3 3M3 3L7 2M3 3L4 7",IS="M8 15V2M4 6L8 2L12 6",IL="M6 15C6 8 8 4 13 3M13 3L9 2M13 3L12 7";
+const SLOPE=[["upx",ico(IU,1)+"激上り"],["up",ico(IU)+"上り"],["flat",ico(IF)+"平坦"],["down",ico(ID)+"下り"],["downx",ico(ID,1)+"激下り"]];
+const LINE=[["hookx",ico(IH,1)+"激フック"],["hook",ico(IH)+"フック"],["straight",ico(IS)+"まっすぐ"],["slice",ico(IL)+"スライス"],["slicex",ico(IL,1)+"激スライス"]];
+// 「激〜」は集計では同じ向きとして扱う
+const base=v=>typeof v==="string"?v.replace(/x$/,""):v;
 let gmode="pin";
 const DR={F:0,C:1,B:2},SR={L:0,C:1,R:2};
 const dRank=q=>q==="C"?1:DR[q[0]],sRank=q=>q==="C"?1:SR[q[1]];
@@ -401,8 +404,9 @@ function learn(c,k){
     if(!r.pin||!r.ball)return;
     if(r.putts!=null){const rel=relOf(r);(st[rel]??={n:0,p:0,t:0});st[rel].n++;st[rel].p+=r.putts;if(r.putts>=3)st[rel].t++}
     const pp=putPos(r);
-    if(!pp||r.pin===pp||!r.slope||r.slope==="flat")return;
-    const sgn=r.slope==="up"?1:-1,ddv=Math.sign(dRank(r.pin)-dRank(pp)),dsv=Math.sign(sRank(r.pin)-sRank(pp)),w=ddv&&dsv?0.5:1;
+    const sl=base(r.slope);
+    if(!pp||r.pin===pp||!sl||sl==="flat")return;
+    const sgn=(sl==="up"?1:-1)*(/x$/.test(r.slope)?1.5:1),ddv=Math.sign(dRank(r.pin)-dRank(pp)),dsv=Math.sign(sRank(r.pin)-sRank(pp)),w=ddv&&dsv?0.5:1;
     if(ddv)fb+=w*sgn*ddv;
     if(dsv)lr+=w*sgn*dsv;
     n++;});
@@ -666,8 +670,8 @@ function analyze(){
       if(h.putts>=3){s.three++; if(h.first==="xl"||h.first==="l")s.threeLong++; if(h.first==="s"||h.first==="m")s.threeShort++;}
       s.girN++; const g=gir(h); if(g)s.gir++; else {s.scrOpp++; if(d<=0)s.scr++;}}
     if(h.putts!=null){
-      if(h.slope){const o=s.sl[h.slope];o.n++;o.p+=h.putts;if(h.putts>=3){o.t++;if(h.slope==="down")s.threeDown++}}
-      if(h.line){const o=s.ln[h.line];o.n++;o.p+=h.putts;if(h.putts>=3)o.t++}}
+      if(h.slope){const o=s.sl[base(h.slope)];o.n++;o.p+=h.putts;if(h.putts>=3){o.t++;if(base(h.slope)==="down")s.threeDown++}}
+      if(h.line){const o=s.ln[base(h.line)];o.n++;o.p+=h.putts;if(h.putts>=3)o.t++}}
     if(h.pin&&h.ball){
       if(h.ball==="oF")s.depth.short++; else if(h.ball==="oB")s.depth.over++;
       else if(h.ball==="oL"||h.ball==="oR")s.sideMiss++;
@@ -996,7 +1000,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2146";
+const APP_VERSION="2026.11.10-2147";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
