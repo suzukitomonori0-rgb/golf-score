@@ -184,6 +184,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .stp .sub{font-size:13px;font-weight:700;min-height:1.4em;line-height:1.4}
 .stp .sub .hint{font-weight:400;color:var(--muted);font-size:11px}
 .stp .sub .even{color:var(--green)}
+.cp{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:3px;background:var(--ink);color:var(--card);font-size:10px;font-weight:700;line-height:1}
+.chipafter{background:var(--paper);border-radius:10px;padding:10px}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -273,6 +275,7 @@ h2{margin:0;font-size:16px;font-weight:700}
 const COURSES={"西":[5,4,3,4,4,4,5,4,3],"南":[4,5,4,3,4,4,4,3,5],"東":[4,4,4,3,5,3,5,4,4]};
 const TEE=[["fw","FWキープ"],["left","左ラフ"],["right","右ラフ"],["ob","OB・池"]];
 const CLUBS=["5W","4UT","5UT","6UT","6I","7I","8I","9I","PW","48°","52°","58°"].map(c=>[c,c]);
+const CHIPQ=[["BL","奥左"],["BR","奥右"],["C","センター"],["FL","手前左"],["FR","手前右"]];
 const WIND=[["follow","フォロー"],["none","無風"],["against","アゲインスト"]];
 const WINDN={follow:"フォロー",none:"無風",against:"アゲインスト"};
 const DIST=[["short","ショート"],["just","ちょうど"],["over","オーバー"]];
@@ -321,13 +324,18 @@ function relOf(r){
   if(dRank(r.pin)!==dRank(r.ball))return dRank(r.ball)<dRank(r.pin)?"ピンより手前":"ピンより奥";
   return "ピンの横";
 }
+// パットを打った位置：乗ったならその区画、外したなら寄せた後の区画
+function putPos(r){if(!r.ball)return null;return r.ball[0]!=="o"?r.ball:(r.chip||null)}
+// 共有データでは「外れ方>寄せた後」を1つの欄に入れて送る（例 oF>BL）
+function normRound(r){return {...r,holes:r.holes.map(h=>{if(h&&typeof h.ball==="string"&&h.ball.includes(">")){const [a,b]=h.ball.split(">");return {...h,ball:a,chip:b}}return h})}}
 function learn(c,k){
   const recs=recordsFor(c,k);let fb=0,lr=0,n=0;const st={};
   recs.forEach(r=>{
     if(!r.pin||!r.ball)return;
     if(r.putts!=null){const rel=relOf(r);(st[rel]??={n:0,p:0,t:0});st[rel].n++;st[rel].p+=r.putts;if(r.putts>=3)st[rel].t++}
-    if(r.ball[0]==="o"||r.pin===r.ball||!r.slope||r.slope==="flat")return;
-    const sgn=r.slope==="up"?1:-1,ddv=Math.sign(dRank(r.pin)-dRank(r.ball)),dsv=Math.sign(sRank(r.pin)-sRank(r.ball)),w=ddv&&dsv?0.5:1;
+    const pp=putPos(r);
+    if(!pp||r.pin===pp||!r.slope||r.slope==="flat")return;
+    const sgn=r.slope==="up"?1:-1,ddv=Math.sign(dRank(r.pin)-dRank(pp)),dsv=Math.sign(sRank(r.pin)-sRank(pp)),w=ddv&&dsv?0.5:1;
     if(ddv)fb+=w*sgn*ddv;
     if(dsv)lr+=w*sgn*dsv;
     n++;});
@@ -352,7 +360,7 @@ function recommend(c,k,pin){
   return {L,recs,avoid,low};
 }
 
-function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",wind:null,club:null,dist:null,pin:null,ball:null,slope:null,line:null}}
+function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",chip:null,wind:null,club:null,dist:null,pin:null,ball:null,slope:null,line:null}}
 function blankRound(out="西",inn="南"){return {id:"r"+Date.now(),out,inn,cur:0,start:0,sample:false,holes:[...COURSES[out],...COURSES[inn]].map(blankHole)}}
 function sampleRound(){
   const r=blankRound("西","南");r.sample=true;
@@ -437,6 +445,7 @@ function renderHole(){
     if(h.putts>=3)auto.push("3パット");}
   const cc=courseOf(i),ck=i<9?i:i-9;
   const rc=h.pin?recommend(cc,ck,h.pin):null;
+  const off=!!(h.ball&&h.ball[0]==="o");
   $("holePanel").innerHTML=`
     <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="hr"><div class="cs">${courseOf(i)}コース ${i<9?i+1:i-8}番・パー${h.par}</div><div class="run">${runText(i)}</div></div></div>
     ${p3?`<div class="grp"><span class="label">風</span>${chipRow("wind",WIND,h.wind)}</div>
@@ -446,7 +455,8 @@ function renderHole(){
     <div class="grp"><span class="label">グリーン（上が奥）</span>
       <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button></div>
       ${greenPad(h,rc)}
-      <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span></div>
+      <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${QN[h.chip]}</span>`:""}</div>
+      ${off?`<div class="grp chipafter"><span class="label">寄せた後の位置（パットを打った場所）</span>${chipRow("chip",CHIPQ,h.chip)}</div>`:""}
       ${recBox(h,rc)}
     </div>
     <div class="grp"><span class="label">ファーストパット（カップまでの距離）</span>${chipRow("first",FIRST,h.first)}</div>
@@ -462,9 +472,9 @@ function renderHole(){
 }
 function greenPad(h,rc){
   const isRec=k=>!!(rc&&rc.recs&&rc.recs.includes(k)),isAv=k=>!!(rc&&rc.avoid&&rc.avoid.includes(k));
-  const q=k=>`<button class="q${isRec(k)?" rec":""}${isAv(k)?" avoid":""}" data-gq="${k}" aria-label="${QN[k]}">${isRec(k)?"<em>狙い目</em>":""}<span class="ic">${h.pin===k?'<span class="fl">⚑</span>':""}${h.ball===k?'<span class="bl"></span>':""}</span>${QN[k]}</button>`;
+  const q=k=>`<button class="q${isRec(k)?" rec":""}${isAv(k)?" avoid":""}" data-gq="${k}" aria-label="${QN[k]}">${isRec(k)?"<em>狙い目</em>":""}<span class="ic">${h.pin===k?'<span class="fl">⚑</span>':""}${h.ball===k?'<span class="bl"></span>':""}${h.ball&&h.ball[0]==="o"&&h.chip===k?'<span class="cp">寄</span>':""}</span>${QN[k]}</button>`;
   const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode==="pin"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
-  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green">${q("BL")}${q("BR")}${q("FL")}${q("FR")}</div><button class="cbtn" data-gq="C" aria-label="センター">${h.pin==="C"?'<span class="fl">⚑</span>':""}${h.ball==="C"?'<span class="bl"></span>':""}<span>センター</span></button></div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>`;
+  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green">${q("BL")}${q("BR")}${q("FL")}${q("FR")}</div><button class="cbtn" data-gq="C" aria-label="センター">${h.pin==="C"?'<span class="fl">⚑</span>':""}${h.ball==="C"?'<span class="bl"></span>':""}${h.ball&&h.ball[0]==="o"&&h.chip==="C"?'<span class="cp">寄</span>':""}<span>センター</span></button></div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>`;
 }
 function recBox(h,rc){
   const i=R.cur,cc=courseOf(i),ck=i<9?i:i-9;
@@ -502,7 +512,7 @@ async function loadShared(){
     const res=await fetch(GAS_URL+"?club="+CLUB,{signal:ctl.signal});
     const j=await res.json();
     if(!j.ok)throw new Error("bad");
-    SHARED=(j.rounds||[]).filter(r=>r&&Array.isArray(r.holes));PLAYERS=j.players||0;DBSTATE="ok";
+    SHARED=(j.rounds||[]).filter(r=>r&&Array.isArray(r.holes)).map(normRound);PLAYERS=j.players||0;DBSTATE="ok";
   }catch(e){SHARED=null;DBSTATE="slow"}
   finally{clearTimeout(t)}
   refreshShared();
@@ -881,7 +891,7 @@ $("saveRound").onclick=async()=>{
   m.hidden=false;
   if(!played){m.textContent="打数が入っていないので保存できません。";return}
   const d=new Date(),date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-  const snap={id:R.id,date,out:R.out,inn:R.inn,holes:R.holes.map(h=>({par:h.par,score:h.score,putts:h.putts,pin:h.pin,ball:h.ball,slope:h.slope}))};
+  const snap={id:R.id,date,out:R.out,inn:R.inn,holes:R.holes.map(h=>({par:h.par,score:h.score,putts:h.putts,pin:h.pin,ball:h.ball&&h.ball[0]==="o"&&h.chip?h.ball+">"+h.chip:h.ball,slope:h.slope}))};
   const full={...snap,holes:R.holes.map(h=>({...h}))};
   LOCAL=[...LOCAL.filter(r=>r.id!==R.id),full];saveLocal();
   if(GAS_URL){
@@ -909,7 +919,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2000";
+const APP_VERSION="2026.11.10-2009";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
