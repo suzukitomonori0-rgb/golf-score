@@ -475,7 +475,7 @@ function renderModal(){
   const f=S.roster.map((p,k)=>p.on&&GUESTS.includes(p.key)?`<div class="field" style="grid-template-columns:72px 1fr"><div style="font-weight:700;color:var(--muted)">${esc(p.key)}</div><input class="inp" id="rn${k}" data-rname="${k}" value="${esc(p.name===p.key?'':p.name)}" placeholder="名前を入力" autocomplete="off" aria-label="${esc(p.key)}の名前"></div>`:'').join('');
   return `<div class="ov" data-close="1"><div class="sheet" role="dialog" aria-label="設定"><header><h2>設定</h2><button class="x" data-close="1" aria-label="閉じる">×</button></header>
     <div class="lab">参加者（タップで選択）</div><div class="chips">${S.roster.map((p,k)=>`<button class="chip sand" style="font-size:15px;padding:6px 16px" aria-pressed="${p.on}" data-pick="${k}"${locked?' disabled':''}>${esc(pname(p))}</button>`).join('')}</div>
-    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜4人を選択（現在${S.count}人）。4人選んでいるときは、誰かを外してから選んでください。ゲストは選ぶと名前を入力できます。`}</div>
+    <div class="hint">${locked?'スコア入力中は参加者を変更できません。終了またはリセット後に変更できます。':`2〜4人を選択（現在${S.count}人）。4人選んでいるときに別の人を押すと、一番前に選んだ人と入れ替わります。ゲストは選ぶと名前を入力できます。`}</div>
     ${f?`<div class="lab">ゲストの名前</div>${f}`:''}
     <div class="lab">コース</div>${locked?`<div class="hint">前半 ${CN(S.front)}・後半 ${CN(S.back)}（スコア入力中は変更できません）</div>`:`<div><div style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">前半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.front===k?'on':''}" data-front="${k}">${CN(k)}</button>`).join('')}</div></div><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">後半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.back===k?'on':''}" data-back="${k}">${CN(k)}</button>`).join('')}</div></div></div><div class="hint">前半と後半に同じコースは選べません。同じコースを選ぶと入れ替わります。</div>`}
     <div class="lab">1点あたりの金額（任意）</div><input class="inp n" id="rate" data-rate="1" value="${S.rate||''}" inputmode="numeric" placeholder="100" style="width:120px">
@@ -521,7 +521,9 @@ app.addEventListener('click',e=>{
   if(d.confirm){const par=COURSE[h].p;for(let i=0;i<MAXP;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
     if(S.cur<17)go(S.cur+1);else setView('sum');return}
   if(d.undo){H.done=false;save();render();return}
-  if(d.pick!==undefined){const k=+d.pick,x=S.roster[k];const nOn=S.roster.filter(y=>y.on).length;if(x.on&&nOn<=2)return;if(!x.on&&nOn>=4)return;x.on=!x.on;syncPlayers();save();render();return}
+  if(d.pick!==undefined){const k=+d.pick,x=S.roster[k];const nOn=S.roster.filter(y=>y.on).length;if(x.on&&nOn<=2)return;S.selSeq=S.selSeq||0;S.roster.forEach((y,j)=>{if(y.on&&y.sel==null)y.sel=j-100});
+    if(!x.on&&nOn>=4){const old=S.roster.filter(y=>y.on).sort((a,b)=>a.sel-b.sel)[0];old.on=false}
+    x.on=!x.on;if(x.on)x.sel=++S.selSeq;syncPlayers();save();render();return}
   if(d.front||d.back){if(Object.values(S.holes).some(x=>x.done))return;const f=d.front||null,b=d.back||null;
     if(f){if(f===S.back)S.back=S.front;S.front=f}if(b){if(b===S.front)S.front=S.back;S.back=b}save();render();return}
   if(d.start){const v=d.start==='in';if(v!==S.startIn){const h0=hole();S.startIn=v;S.cur=modal?order().indexOf(h0):0;save()}render();return}
