@@ -409,8 +409,6 @@ function renderHole(){
   const rc=h.pin?recommend(cc,ck,h.pin):null;
   $("holePanel").innerHTML=`
     <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="hr"><div class="cs">${courseOf(i)}コース ${i<9?i+1:i-8}番</div><div class="run">${runText(i)}</div></div></div>
-    <div class="steps">${stepper("par","パー",h.par)}${stepper("score","打数",h.score)}${stepper("putts","パット",h.putts)}</div>
-    ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     ${p3?`<div class="grp"><span class="label">風</span>${chipRow("wind",WIND,h.wind)}</div>
     <div class="grp"><span class="label">ティーショットの番手</span>${chipRow("club",CLUBS,h.club)}</div>
     <div class="grp"><span class="label">ピンに対して縦の距離</span>${chipRow("dist",DIST,h.dist)}</div>`
@@ -425,6 +423,8 @@ function renderHole(){
     <div class="mini"><div class="grp"><span class="label">上り・下り</span>${chipRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${chipRow("line",LINE,h.line)}</div></div>
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
+    <div class="steps">${stepper("par","パー",h.par)}${stepper("score","打数",h.score)}${stepper("putts","パット",h.putts)}</div>
+    ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
     <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
     <div class="nav">${i===0?"<span></span>":`<button class="btn" data-go="-1">← ${i}番</button>`}
@@ -829,7 +829,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1913";
+const APP_VERSION="2026.11.10-1916";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
