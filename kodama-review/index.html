@@ -176,6 +176,9 @@ h2{margin:0;font-size:16px;font-weight:700}
 .p3tbl .k{color:var(--muted);font-size:12px}
 .pos{color:var(--over)!important}.neg{color:var(--under)!important}
 .holehead{align-items:flex-start}
+.advice{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--flag);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.advice ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.advice b{font-variant-numeric:tabular-nums}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -241,6 +244,7 @@ h2{margin:0;font-size:16px;font-weight:700}
       <p class="note">パーはコース情報どおり（各36）。ティー変更などで違う場合はホールごとに修正できます。</p>
     </div>
 
+    <div class="advice" id="advice" hidden></div>
     <div class="panel" id="holePanel"></div>
 
     <div class="tools">
@@ -399,6 +403,7 @@ function stepper(field,label,val){
   return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div></div>`;
 }
 function renderHole(){
+  renderAdvice();
   const i=R.cur,h=R.holes[i],p3=h.par===3;
   const g=gir(h);
   let auto=[];
@@ -478,6 +483,54 @@ async function loadShared(){
   refreshShared();
 }
 loadShared();
+function recsIn(list,c,k){return list.flatMap(r=>{const i=r.out===c?k:r.inn===c?9+k:-1;return i<0||!r.holes||!r.holes[i]?[]:[r.holes[i]]}).filter(h=>h&&h.score!=null)}
+const avgOf=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const f1=v=>(v>0?"+":v<0?"−":"±")+Math.abs(v).toFixed(1);
+function adviceFor(i){
+  const c=courseOf(i),k=i<9?i:i-9,h=R.holes[i],par=h.par,out=[];
+  const S=recsIn(getHist(),c,k),P=recsIn(LOCAL,c,k);
+  // みんなのデータ
+  if(SHARED&&S.length>=3){
+    const av=[];for(let j=0;j<18;j++){const cc=courseOf(j),kk=j<9?j:j-9,x=recsIn(getHist(),cc,kk);if(x.length>=3)av.push([j,avgOf(x.map(r=>r.score-r.par))])}
+    const mine=avgOf(S.map(r=>r.score-r.par)),rank=av.sort((a,b)=>b[1]-a[1]).findIndex(x=>x[0]===i)+1;
+    out.push(`みんなの平均 <b>${f1(mine)}</b>（${S.length}ラウンド）${av.length>=9?`・難しさ ${rank}位／${av.length}ホール中`:""}`);
+    const t3=S.filter(r=>r.putts>=3).length;
+    if(t3/S.length>=0.3)out.push(`みんなも${Math.round(t3/S.length*100)}%で3パット。グリーンが難しいホールです。`);
+  }
+  const L=learn(c,k);if(L.n>=3&&(Math.abs(L.fb)>=1||Math.abs(L.lr)>=1))out.push(`グリーンは${tiltText(L)}傾向。低い側に止めて上りを残しましょう。`);
+  // 自分のデータ
+  if(P.length>=2){
+    out.push(`あなたの平均 <b>${f1(avgOf(P.map(r=>r.score-r.par)))}</b>（${P.length}回）・ベスト ${Math.min(...P.map(r=>r.score))}`);
+    if(par>3){
+      const T=P.filter(r=>r.tee),lf=T.filter(r=>r.tee==="left").length,rt=T.filter(r=>r.tee==="right").length,ob=T.filter(r=>r.tee==="ob").length;
+      if(T.length>=2){
+        if(ob>=1)out.push(`ティーショットでOB・池が${T.length}回中${ob}回。ドライバーにこだわらず、3W・UTで安全に。`);
+        if(rt>=lf+2||(rt>=2&&lf===0))out.push(`右ラフが${T.length}回中${rt}回。ティーを右サイドに立て、左を向いて打ちましょう。`);
+        else if(lf>=rt+2||(lf>=2&&rt===0))out.push(`左ラフが${T.length}回中${lf}回。ティーを左サイドに立て、右を向いて打ちましょう。`);
+        else if(T.filter(r=>r.tee==="fw").length*2>T.length)out.push(`FWキープ率が高いホール。いつもどおりで大丈夫です。`);
+      }
+    }else{
+      const Q=P.filter(r=>r.club||r.dist),last=Q[Q.length-1];
+      if(last)out.push(`前回：${last.wind?WINDN[last.wind]+"・":""}${last.club||"番手未入力"} → ${last.dist?DISTN[last.dist]:"結果未入力"}`);
+      const sh=Q.filter(r=>r.dist==="short").length,ov=Q.filter(r=>r.dist==="over").length;
+      if(Q.length>=2&&sh*2>Q.length)out.push(`このホールはショートが${Q.length}回中${sh}回。前回より1番手大きく。`);
+      else if(Q.length>=2&&ov*2>Q.length)out.push(`このホールはオーバーが${Q.length}回中${ov}回。前回より1番手小さく。`);
+    }
+    const t3=P.filter(r=>r.putts>=3).length;
+    if(t3>=2)out.push(`このホールで3パットが${P.length}回中${t3}回。ファーストパットは寄せる意識で。`);
+    const D=P.filter(r=>r.pin&&r.ball);let ds=0,dov=0;
+    D.forEach(r=>{if(r.ball==="oF")ds++;else if(r.ball==="oB")dov++;else if(r.ball[0]!=="o"){const v=dRank(r.ball)-dRank(r.pin);if(v<0)ds++;if(v>0)dov++}});
+    if(D.length>=2&&ds*2>D.length)out.push(`グリーンを狙うショットはピン手前が${D.length}回中${ds}回。もう少し奥まで。`);
+    else if(D.length>=2&&dov*2>D.length)out.push(`グリーンを狙うショットはピン奥が${D.length}回中${dov}回。奥からは下りが残ります。`);
+  }
+  return out;
+}
+function renderAdvice(){
+  const el=$("advice");if(!el)return;
+  const a=adviceFor(R.cur);
+  if(!a.length){el.hidden=true;el.innerHTML="";return}
+  el.innerHTML=`<span class="label">${R.cur+1}番のアドバイス</span><ul>${a.map(t=>`<li>${t}</li>`).join("")}</ul>`;el.hidden=false;
+}
 function renderInput(){
   $("sampleNote").hidden=!R.sample;
   ["outC","inC"].forEach(id=>{$(id).innerHTML=Object.keys(COURSES).map(k=>`<option${(id==="outC"?R.out:R.inn)===k?" selected":""}>${k}</option>`).join("")});
@@ -803,7 +856,8 @@ $("saveRound").onclick=async()=>{
   if(!played){m.textContent="打数が入っていないので保存できません。";return}
   const d=new Date(),date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   const snap={id:R.id,date,out:R.out,inn:R.inn,holes:R.holes.map(h=>({par:h.par,score:h.score,putts:h.putts,pin:h.pin,ball:h.ball,slope:h.slope}))};
-  LOCAL=[...LOCAL.filter(r=>r.id!==R.id),snap];saveLocal();
+  const full={...snap,holes:R.holes.map(h=>({...h}))};
+  LOCAL=[...LOCAL.filter(r=>r.id!==R.id),full];saveLocal();
   if(GAS_URL){
     $("saveRound").disabled=true;m.textContent="共有データに保存しています…";
     try{
@@ -829,7 +883,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1916";
+const APP_VERSION="2026.11.10-1920";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
