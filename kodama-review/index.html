@@ -171,6 +171,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .run .res{font-weight:700;color:var(--ink)}
 .total small{white-space:nowrap}
 .toprow>div:first-child{min-width:0}
+.p3tbl{display:grid;grid-template-columns:auto auto auto 1fr;gap:6px 14px;font-size:14px;align-items:baseline}
+.p3tbl span:last-child,.p3tbl span:nth-child(4n){text-align:right;color:var(--muted)}
 .pos{color:var(--over)!important}.neg{color:var(--under)!important}
 .holehead{align-items:flex-start}
 .finish{border-color:var(--green)}
@@ -259,6 +261,9 @@ h2{margin:0;font-size:16px;font-weight:700}
 <script>
 const COURSES={"西":[5,4,3,4,4,4,5,4,3],"南":[4,5,4,3,4,4,4,3,5],"東":[4,4,4,3,5,3,5,4,4]};
 const TEE=[["fw","FWキープ"],["left","左ラフ"],["right","右ラフ"],["ob","OB・池"]];
+const CLUBS=["5W","4UT","5UT","6UT","6I","7I","8I","9I","PW","48°","52°","58°"].map(c=>[c,c]);
+const DIST=[["short","ショート"],["just","ちょうど"],["over","オーバー"]];
+const DISTN={short:"ショート",just:"ちょうど",over:"オーバー"};
 const FIRST=[["s","〜1m"],["m","1〜3m"],["l","3〜7m"],["xl","7m〜"]];
 const CAUSE=[["tee","ティーショット"],["second","セカンド"],["approach","アプローチ"],["putt","パット"],["judge","判断ミス"]];
 const CAT={tee:"ティーショット",second:"セカンド",approach:"アプローチ",putt:"パット",pen:"ペナルティ",judge:"判断ミス"};
@@ -334,7 +339,7 @@ function recommend(c,k,pin){
   return {L,recs,avoid,low};
 }
 
-function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",pin:null,ball:null,slope:null,line:null}}
+function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",club:null,dist:null,pin:null,ball:null,slope:null,line:null}}
 function blankRound(out="西",inn="南"){return {id:"r"+Date.now(),out,inn,cur:0,sample:false,holes:[...COURSES[out],...COURSES[inn]].map(blankHole)}}
 function sampleRound(){
   const r=blankRound("西","南");r.sample=true;
@@ -403,7 +408,9 @@ function renderHole(){
     <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="hr"><div class="cs">${courseOf(i)}コース ${i<9?i+1:i-8}番</div><div class="run">${runText(i)}</div></div></div>
     <div class="steps">${stepper("par","パー",h.par)}${stepper("score","打数",h.score)}${stepper("putts","パット",h.putts)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
-    <div class="grp"><span class="label">ティーショット${p3?"（パー3は対象外）":""}</span>${chipRow("tee",TEE,h.tee,p3)}</div>
+    ${p3?`<div class="grp"><span class="label">ティーショットの番手</span>${chipRow("club",CLUBS,h.club)}</div>
+    <div class="grp"><span class="label">ピンに対して縦の距離</span>${chipRow("dist",DIST,h.dist)}</div>`
+    :`<div class="grp"><span class="label">ティーショット</span>${chipRow("tee",TEE,h.tee)}</div>`}
     <div class="grp"><span class="label">グリーン（上が奥）</span>
       <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button></div>
       ${greenPad(h,rc)}
@@ -610,6 +617,22 @@ function buildInsights(s){
       drill:"ハーフ休憩で軽く補食と水分。後半1番ティーで素振り3回とルーティンを決め直す。",
       metric:"後半のオーバー",now:sg(s.back),to:sg(s.back-2)});
   }
+  {const P=R.holes.map((h,i)=>({...h,i})).filter(h=>h.par===3&&h.score!=null&&h.dist);
+   const sh=P.filter(h=>h.dist==="short").length,ov=P.filter(h=>h.dist==="over").length,ju=P.length-sh-ov;
+   const p3loss=P.reduce((a,h)=>a+Math.max(0,h.score-3),0);
+   if(P.length>=2){
+     if(sh>=ov+2){bad.push(`パー3のティーショットは${P.length}回中${sh}回ショートでした。`);
+       tasks.push({w:sh*0.4+p3loss*0.3,title:"パー3の番手選び（ショート傾向）",why:`パー3で${p3loss}打オーバー。ショートが続くのは番手が小さいサインです。`,
+         drill:"表示距離に5ヤード足して番手を選ぶ。迷ったら大きい番手で、ゆったり振る。",metric:"パー3のショート",now:sh,to:Math.max(0,sh-2)});}
+     else if(ov>=sh+2){bad.push(`パー3のティーショットは${P.length}回中${ov}回オーバーでした。`);
+       tasks.push({w:ov*0.4+p3loss*0.3,title:"パー3の番手選び（オーバー傾向）",why:`パー3で${p3loss}打オーバー。奥に外すと下りのアプローチやパットが残ります。`,
+         drill:"アドレナリンで飛ぶ分を見込んで、迷ったら小さい番手を選ぶ。打ち上げ・打ち下ろしも確認する。",metric:"パー3のオーバー",now:ov,to:Math.max(0,ov-2)});}
+     else if(ju*2>=P.length)good.push(`パー3のティーショットは${P.length}回中${ju}回、縦の距離が合っていました。`);
+   }
+   const byC={};P.filter(h=>h.club).forEach(h=>{(byC[h.club]??=[]).push(h.dist)});
+   Object.entries(byC).forEach(([c,a])=>{if(a.length>=2&&a.every(x=>x==="short"))bad.push(`${c}は${a.length}回ともショート。この番手の実際の飛距離を見直しましょう。`);
+     else if(a.length>=2&&a.every(x=>x==="over"))bad.push(`${c}は${a.length}回ともオーバー。思っているより飛んでいます。`);});
+  }
   if(s.carry>=2)bad.push(`ダブルボギー以上の直後のホールで${s.carry}回続けてボギー以上。ミスを引きずっています。`);
   if(s.avg3!=null&&s.avg3>=1.2)bad.push(`パー3は平均${sg(+s.avg3.toFixed(1))}。ティーショット1打で決まるので、番手選びを見直す余地があります。`);
   tasks.sort((a,b)=>b.w-a.w);
@@ -622,6 +645,13 @@ function tiltPanel(){
   return `<div class="panel"><h2>グリーンの傾き（蓄積データ）</h2>
     <p class="note">このページを使う全員のラウンドで「どこから打って上り／下りだったか」を集計して推定しています。保存されるのは打数・パット・ピン位置・ボール位置・傾斜だけで、名前やメモは共有されません。</p>
     <div class="tilt">${rows}</div></div>`;
+}
+function par3Panel(){
+  const P=R.holes.map((h,i)=>({...h,i})).filter(h=>h.par===3&&(h.club||h.dist));
+  if(!P.length)return "";
+  return `<div class="panel"><h2>パー3のティーショット</h2><div class="p3tbl">
+    ${P.map(h=>`<span class="num">${h.i+1}番</span><span>${h.club||"–"}</span><span class="${h.dist==="short"?"neg":h.dist==="over"?"pos":""}">${h.dist?DISTN[h.dist]:"–"}</span><span class="num">${h.score!=null?(RES[h.score-h.par]??ovr(h.score-h.par)):"–"}</span>`).join("")}
+  </div></div>`;
 }
 function dGreen(s){
   const dT=s.depth.short+s.depth.just+s.depth.over;
@@ -686,6 +716,7 @@ function renderReview(){
   </div>
 
   ${(dGreen(s))}
+  ${par3Panel()}
   ${tiltPanel()}
   <div class="panel">
     <h2>振り返り</h2>
@@ -790,7 +821,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1859";
+const APP_VERSION="2026.11.10-1908";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
