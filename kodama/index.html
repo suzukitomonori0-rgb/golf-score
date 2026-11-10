@@ -195,6 +195,11 @@ button.x{border:0;background:var(--sunk);border-radius:999px;width:36px;height:3
 @media (max-width:360px){.prow{gap:8px}.net{width:36px}.selw{width:84px}.chip{padding:4px 9px}.bigno{font-size:54px}.btn{font-size:14px;padding:12px 6px}.st{padding:10px}}
 @media (prefers-reduced-motion: no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
 
+.mbox{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 8px;min-width:0;max-width:40%}
+.mbox .mt{font-size:9.5px;font-weight:900;color:var(--green-ink);background:var(--green);border-radius:3px;padding:0 5px}
+.mbox b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mbox small{font-size:10px;color:var(--muted);white-space:nowrap}
+.mbox+.carry{margin-left:8px}
 /* compact hole screen: 4 players fit without scrolling */
 header .hd{padding-block:6px}
 header .strip{padding-block:0 7px;gap:5px}
@@ -253,6 +258,7 @@ const RULES=[
  {t:'ニアピン',p:'3点',b:['ショートホール4ホールすべてが対象。ワンオンで一番近い人が3点獲得の権利発生します。','該当者なしの場合は流れ、次のショートホールに加算します。','ワンオンして3パットした場合はニアピン権利消滅となり、流れです。','消防隊！ワンオンしなかった人がパー（以上）を取った場合は、ニアピン消しで流れです。最初に消した1人だけが1点獲得します。','最後のショートホールで該当者がいない場合、流れた点は誰にも入りません。']},
  {t:'バーディー・砂イチ',p:'各3点',b:['バーディーを獲得したら3点（イーグル以上も3点）。','砂イチはバンカーから出して1パットで成立、3点。','同じホールで両方達成した場合は両方加算します。']},
  {t:'サオ',p:'+3点・-3点',b:['カップから1ピン以上離れたところから、サオを宣言して1パットで入れたら3点獲得。','サオを宣言して3パットしたら-3点。']},
+ {t:'マッチプレー（栗原・鈴木）',p:'表示のみ',b:['栗原さんと鈴木さんの2人が参加しているときだけ、2人のマッチプレーを表示します。','各ホールのグロススコアで勝ち・負け・分けを決め、UP数を数えます。','残りホール数より差が大きくなった時点で決着です（例：3&2）。','精算の点数には含めません。']},
  {t:'精算',p:'1点＝100プノンペン',b:['他の各人との点数の差を受け払いします。','1点あたりのレートは100プノンペンです。','支払額の上限は2,000プノンペンです。']}];
 
 const MAXP=5;
@@ -275,6 +281,24 @@ ROSTER.forEach(n=>{if(!S.roster.some(x=>x.key===n))S.roster.push({key:n,name:n,h
 {const ix=n=>{const k=ROSTER.indexOf(n);return k<0?99:k};S.roster.sort((a,b)=>ix(a.key)-ix(b.key))}
 const pname=x=>(x.name||'').trim()||x.key;
 S.roster.forEach(p=>{p.hc=Math.min(36,Math.max(0,Number(p.hc)||0))});
+// 栗原と鈴木の2人が参加しているときだけ、グロスのマッチプレーを集計する
+const MATCH=['栗原','鈴木'];
+function computeMatch(ord){
+  const sel=S.roster.filter(x=>x.on),a=sel.findIndex(x=>x.key===MATCH[0]),b=sel.findIndex(x=>x.key===MATCH[1]);
+  if(a<0||b<0)return null;
+  let up=0,played=0,closed=null;const res={};
+  ord.forEach((h,k)=>{const H=S.holes[h];if(!H.done||closed)return;played++;
+    const d=H.s[b]-H.s[a];const w=d>0?a:d<0?b:-1;if(w===a)up++;else if(w===b)up--;res[h]=w;
+    const left=18-(k+1);if(Math.abs(up)>left){closed={up,left,at:h}}});
+  const left=18-played;
+  const lead=up>0?a:up<0?b:-1;
+  let txt;
+  if(closed){txt=closed.left===0?`${esc(S.players[lead].name)} ${Math.abs(up)}UPで勝ち`:`${esc(S.players[lead].name)}の勝ち（${Math.abs(up)}&${closed.left}）`}
+  else if(played===18){txt=up===0?'引き分け（オールスクエア）':`${esc(S.players[lead].name)} ${Math.abs(up)}UPで勝ち`}
+  else if(played===0){txt='まだ始まっていません'}
+  else{txt=up===0?'オールスクエア':`${esc(S.players[lead].name)} ${Math.abs(up)}UP`;if(Math.abs(up)===left&&left>0)txt+='（ドーミー）';txt+=`・残り${left}`}
+  return {a,b,up,played,left,closed,res,txt,lead};
+}
 function syncPlayers(){const sel=S.roster.filter(x=>x.on);S.players=sel.map(x=>({name:pname(x),hc:x.hc}));S.count=sel.length}
 syncPlayers();
 Object.values(S.holes).forEach(padHole);
@@ -348,7 +372,8 @@ function compute(){
   const tot=ps.map(i=>Object.values(pts[i]).reduce((a,b)=>a+b,0));
   const sum=tot.reduce((a,b)=>a+b,0);
   const bal=tot.map(t=>t*n-sum);
-  return {pts,med,sets,hb,carry,npr,npc,nas,tot,bal,gross,net,halves};
+  const match=computeMatch(ord);
+  return {pts,med,sets,hb,carry,npr,npc,nas,tot,bal,gross,net,halves,match};
 }
 
 function hole(){return order()[S.cur]}
@@ -408,12 +433,14 @@ function renderHole(C){
   const board=`<div class="board">${sb.map((i,k)=>{const m=C.med[i];
     return `<div class="bd${k===0&&C.bal[i]>0?' top':''}"><div class="bn">${esc(S.players[i].name)}</div><div class="bv ${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${C.bal[i]>0?'+':''}${C.bal[i]}</div>
       <div class="bm">${MKS.map(x=>`<i class="md ${x}${m[x]?'':' off'}">${m[x]||''}</i>`).join('')}${m.d?`<i class="md d">${m.d}</i>`:''}</div>${overCap(C,i)?'<div class="bcap">上限突破</div>':''}</div>`}).join('')}</div>`;
+  const M=C.match;
+  const mt=M?`<div class="mbox"><span class="mt">マッチ</span><b>${M.closed||M.played===18?(M.lead<0?'引分':esc(S.players[M.lead].name)+' 勝ち'):M.played===0?'開始前':M.up===0?'AS':esc(S.players[M.lead].name)+' '+Math.abs(M.up)+'UP'}</b><small>${M.closed?`${Math.abs(M.up)}&${M.closed.left}`:M.played===18||M.played===0?'':`残り${M.left}${Math.abs(M.up)===M.left?'・ドーミー':''}`}</small></div>`:'';
   return `<main class="wrap">${board}
     <div class="holehead"><div class="bigno">${hn(h)}</div>
       <div class="hmeta"><span class="lbl">${S.cur+1}ホール目 / ${CN(cOf(h))}コース</span>
         <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span></div>
         ${isShort?'<div><span class="tag">ショート</span></div>':''}</div>
-      ${isShort?`<div class="carry">ニアピン流れ<b class="num">${H.done&&C.npr[h]?(C.npr[h].c||0):npPend}</b></div>`:''}</div>
+      ${mt}${isShort?`<div class="carry">ニアピン流れ<b class="num">${H.done&&C.npr[h]?(C.npr[h].c||0):npPend}</b></div>`:''}</div>
     ${Object.values(S.holes).some(x=>x.done)?'':`<div class="box" style="margin:0 0 10px"><h3>コース</h3><div style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">前半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.front===k?'on':''}" data-front="${k}">${CN(k)}</button>`).join('')}</div></div><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">後半</span><div class="seg" style="flex:1">${['W','S','E'].map(k=>`<button class="${S.back===k?'on':''}" data-back="${k}">${CN(k)}</button>`).join('')}</div></div></div></div>`}
     <div class="plist">${cards}</div>${np}${res}
     <div class="actions">
@@ -467,6 +494,11 @@ function renderSum(C,top=''){
     <div class="sec"><h2>順位 · ${doneN}/18ホール確定${C.npc?` · ニアピン流れ${C.npc}`:''}</h2><div class="stand">${stand}</div>
       <div class="hint">勝ち負け＝他の各人との点数の差の合計（全員で合計0）。${S.rate>0?`1点＝${S.rate}プノンペンで換算。`:''}</div></div>
     <div class="sec"><h2>種目別の点数</h2>${brk}</div>
+    ${C.match?(()=>{const M=C.match,A=S.players[M.a].name,B=S.players[M.b].name;let up=0;
+      const rows=ord.map((h,k)=>{const H=S.holes[h];if(!H.done)return '';const w=M.res[h];if(w===undefined)return `<tr${k===9?' class="turn"':''}><td class="l">${CN(cOf(h))}${hn(h)}</td><td class="sc">${H.s[M.a]}</td><td class="sc">${H.s[M.b]}</td><td colspan="2" style="color:var(--muted);font-size:11px">決着後</td></tr>`;
+        if(w===M.a)up++;else if(w===M.b)up--;
+        return `<tr${k===9?' class="turn"':''}><td class="l">${CN(cOf(h))}${hn(h)}</td><td class="sc${w===M.a?' pos':''}">${H.s[M.a]}</td><td class="sc${w===M.b?' pos':''}">${H.s[M.b]}</td><td>${w===M.a?esc(A):w===M.b?esc(B):'分け'}</td><td style="font-weight:700">${up===0?'AS':(up>0?esc(A):esc(B))+' '+Math.abs(up)+'UP'}</td></tr>`}).join('');
+      return `<div class="sec"><h2>マッチプレー ${esc(A)} vs ${esc(B)}（グロス）</h2><div class="result" style="margin:0 0 8px">${M.txt}</div>${rows?`<div class="tw"><table><thead><tr><th class="l">H</th><th>${esc(A)}</th><th>${esc(B)}</th><th>勝ち</th><th>状況</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}</div>`})():''}
     <div class="sec"><h2>スコアカード</h2>${card}</div>
     ${S.view==='sum'?(doneN>0?`<button class="btn pri" data-end="1" style="width:100%;margin-top:22px;${endArm?'background:var(--flag);border-color:var(--flag);color:var(--flag-ink)':''}">${endArm?(doneN<18?`まだ${18-doneN}ホール未確定です。もう一度押すと${doneN}ホールで終了します`:'もう一度押すと保存してゲームをリセットします'):(doneN<18?`ここで終了する（${doneN}/18ホール）`:'全て確定して終了')}</button>
       ${endArm?'<button class="btn" data-endcancel="1" style="width:100%;margin-top:8px">キャンセル</button>':''}
