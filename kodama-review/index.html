@@ -247,8 +247,8 @@ h2{margin:0;font-size:16px;font-weight:700}
     <div id="resumeNote" class="sample resume" hidden></div>
     <div class="panel">
       <div class="courses">
-        <label for="outC">スタートコース<select id="outC"></select></label>
-        <label for="inC">2つ目のコース<select id="inC"></select></label>
+        <label for="outC">前半コース<select id="outC"></select></label>
+        <label for="inC">後半コース<select id="inC"></select></label>
       </div>
       <p class="note">パーはコース情報どおり（各36）です。</p>
     </div>
@@ -926,7 +926,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2033";
+const APP_VERSION="2026.11.10-2034";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
