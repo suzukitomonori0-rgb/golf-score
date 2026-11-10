@@ -6,7 +6,7 @@
  *   アクセスできるユーザー：全員
  */
 const SHEET = "rounds";
-const CLUBS = ["kodama", "furukawa"];
+const CLUBS = ["kodama", "furukawa", "kosugi"];
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
