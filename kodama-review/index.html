@@ -349,7 +349,7 @@ function renderHole(){
       <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span></div>
       ${recBox(h,rc)}
     </div>
-    <div class="grp"><span class="label">ファーストパットの距離</span>${chipRow("first",FIRST,h.first)}</div>
+    <div class="grp"><span class="label">ファーストパット（カップまでの距離）</span>${chipRow("first",FIRST,h.first)}</div>
     <div class="mini"><div class="grp"><span class="label">上り・下り</span>${chipRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${chipRow("line",LINE,h.line)}</div></div>
     <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
