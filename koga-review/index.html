@@ -348,9 +348,9 @@ function renderHole(){
     <div class="grp"><span class="label">ファーストパット（カップまでの距離）</span>${chipRow("first",FIRST,h.first)}</div>
     <div class="mini"><div class="grp"><span class="label">上り・下り</span>${chipRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${chipRow("line",LINE,h.line)}</div></div>
-    <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
+    <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
     <div class="nav">${i===0?"<span></span>":`<button class="btn" data-go="-1">← ${i}番</button>`}
     ${i===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${i+2}番へ →</button>`}</div>`;
 }
