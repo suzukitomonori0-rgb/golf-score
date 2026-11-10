@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1d5a43">
+<meta name="theme-color" content="#1d4f96">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="児玉CC攻略">
@@ -16,19 +16,19 @@
 <style>
 /* Layout: スマホ1カラムのスコアカード。上部に固定ヘッダー（合計）、下に「入力」「振り返り」の2画面 */
 :root{
-  --paper:#eef2ee; --card:#ffffff; --ink:#15221b; --muted:#5b6b62; --line:#d3dcd5;
-  --green:#1d5a43; --green-soft:#e1ede6; --flag:#c9930a; --flag-soft:#fbf1d4;
-  --under:#2463a8; --over:#b5532a; --over-soft:#f8e6dc;
+  --paper:#edf2f8; --card:#ffffff; --ink:#14203a; --muted:#59667d; --line:#d2dbe8;
+  --green:#1d4f96; --green-soft:#e0e9f6; --flag:#c9930a; --flag-soft:#fbf1d4;
+  --under:#0e8a6a; --over:#b5532a; --over-soft:#f8e6dc;
   --font:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#0f1512; --card:#18211c; --ink:#e4ebe6; --muted:#93a39a; --line:#2b3731;
-  --green:#5fbf95; --green-soft:#1d3329; --flag:#e7bb3c; --flag-soft:#352c12;
-  --under:#7fb2ec; --over:#ec946c; --over-soft:#3a2219; color-scheme:dark}}
+  --paper:#0e131d; --card:#162030; --ink:#e3e9f3; --muted:#92a0b6; --line:#28354a;
+  --green:#76a8ee; --green-soft:#1a2a45; --flag:#e7bb3c; --flag-soft:#352c12;
+  --under:#5fcfa8; --over:#ec946c; --over-soft:#3a2219; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --paper:#0f1512; --card:#18211c; --ink:#e4ebe6; --muted:#93a39a; --line:#2b3731;
-  --green:#5fbf95; --green-soft:#1d3329; --flag:#e7bb3c; --flag-soft:#352c12;
-  --under:#7fb2ec; --over:#ec946c; --over-soft:#3a2219; color-scheme:dark}
+  --paper:#0e131d; --card:#162030; --ink:#e3e9f3; --muted:#92a0b6; --line:#28354a;
+  --green:#76a8ee; --green-soft:#1a2a45; --flag:#e7bb3c; --flag-soft:#352c12;
+  --under:#5fcfa8; --over:#ec946c; --over-soft:#3a2219; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
@@ -986,7 +986,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2057";
+const APP_VERSION="2026.11.10-2140";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
