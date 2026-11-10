@@ -627,8 +627,7 @@ function greenPad(h,rc,gn){
     let step="";
   if(gn&&gn.step){const v=gn.dir==="L"||gn.dir==="R";const hi=gn.dir?{B:"奥",F:"手前",L:"左",R:"右"}[gn.dir]+"が高い":"段";
     step=`<span class="gstep ${v?"v":"h"}"></span><span class="gstepl ${v?"v":"h"}">${gn.step}・${hi}</span>`;}
-  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green g16">${cells}</div>${step}${labels}<button class="cbtn" data-gq="C" aria-label="センター"><span>センター</span></button>${Object.keys(AX).map(k=>`<button class="axb" data-gq="${k}" aria-label="${QN[k]}" style="left:${AX[k][0]}%;top:${AX[k][1]}%"></button>`).join("")}${marks}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>
-  <p class="note gnote">${pm?"ピンが切ってある場所をタップ":gmode==="chip"?"寄せた後、パットを打った場所をタップ":"ボールが止まった場所をタップ"}（白い小さな丸は線が交わる点）</p>`;
+  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green g16">${cells}</div>${step}${labels}<button class="cbtn" data-gq="C" aria-label="センター"><span>センター</span></button>${Object.keys(AX).map(k=>`<button class="axb" data-gq="${k}" aria-label="${QN[k]}" style="left:${AX[k][0]}%;top:${AX[k][1]}%"></button>`).join("")}${marks}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>`;
 }
 function recBox(h,rc){
   const i=R.cur,cc=courseOf(i),ck=i<9?i:i-9;
@@ -1076,7 +1075,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2228";
+const APP_VERSION="2026.11.10-2230";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
