@@ -2,6 +2,11 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1d5a43">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="児玉振り返り">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="../kodama/apple-touch-icon.png">
 <link rel="icon" href="../kodama/icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
@@ -765,6 +770,23 @@ $("saveRound").onclick=async()=>{
     const el=$("resumeNote");el.textContent=`前回の続きから再開しました（${n}ホール入力済み）。${R.cur+1}番から入力できます。`;el.hidden=false;}
 })();
 renderInput();
+// ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
+const APP_VERSION="2026.11.10-1856";
+async function checkUpdate(){
+  try{
+    const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
+    const j=await r.json();
+    if(!j.v||j.v===APP_VERSION)return;
+    let tried=null;try{tried=sessionStorage.getItem("review-reload")}catch(e){}
+    if(tried===j.v)return;
+    try{sessionStorage.setItem("review-reload",j.v)}catch(e){}
+    await fetch(location.pathname,{cache:"reload"}).catch(()=>{});
+    location.reload();
+  }catch(e){}
+}
+checkUpdate();
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
 </script>
 
 </body></html>
