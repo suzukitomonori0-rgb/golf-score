@@ -225,7 +225,6 @@ h2{margin:0;font-size:16px;font-weight:700}
 
     <div class="tools">
       <button class="btn ghost" id="newBtn">新しいラウンド</button>
-      <button class="btn ghost" id="sampleBtn">サンプルを読み込む</button>
       <button class="btn primary" id="saveRound">このラウンドをみんなの蓄積に保存</button>
     </div>
     <p class="note" id="histNote"></p>
@@ -279,7 +278,7 @@ function saveLocal(){try{localStorage.setItem(HKEY,JSON.stringify(LOCAL))}catch(
 let SHARED=null,PLAYERS=0,DBSTATE="none";
 const MIN_REAL=5;
 function realRounds(){return SHARED??LOCAL}
-function getHist(){const real=realRounds();return real.length>=MIN_REAL?real:[...real,...SAMPLE]}
+function getHist(){return realRounds()}
 function recordsFor(c,k){return getHist().flatMap(r=>{const i=r.out===c?k:r.inn===c?9+k:-1;return i<0||!r.holes[i]?[]:[r.holes[i]]})}
 function relOf(r){
   if(r.ball[0]==="o")return r.ball==="oF"?"ピンより手前（外れ）":r.ball==="oB"?"ピンより奥（こぼれ）":"横に外れ";
@@ -334,7 +333,7 @@ function sampleRound(){
 }
 let R;
 try{R=JSON.parse(localStorage.getItem(KEY))}catch(e){R=null}
-if(!R||!R.holes)R=sampleRound();
+if(!R||!R.holes||R.sample)R=blankRound();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(R))}catch(e){}}
 
 const $=id=>document.getElementById(id);
@@ -411,7 +410,7 @@ function recBox(h,rc){
 function histNote(){
   const n=realRounds().length,mix=n<MIN_REAL;
   const head=SHARED?`みんなの共有データ：${PLAYERS}人・${n}ラウンド`:DBSTATE==="loading"?"共有データを読み込み中…":DBSTATE==="slow"?`共有データを読み込めませんでした。この端末の記録（${n}ラウンド）で表示しています。`:`この端末の記録：${n}ラウンド（共有の保存先が未設定です）`;
-  $("histNote").textContent=head+(mix?`。${MIN_REAL}ラウンドたまるまでは、サンプルのデータも混ぜてグリーンの傾きを推定します。`:"");
+  $("histNote").textContent=head+"。";
 }
 function refreshShared(){
   histNote();
@@ -754,7 +753,7 @@ $("saveRound").onclick=async()=>{
   histNote();renderHole();
   if(!$("viewRev").hidden)renderReview();
 };
-$("sampleBtn").onclick=()=>{$("resumeNote").hidden=true;R=sampleRound();save();renderInput()};
+
 (()=>{const n=R.holes.filter(h=>h.score!=null).length;
   if(!R.sample&&n>0&&n<18){
     const nx=R.holes.findIndex(h=>h.score==null);if(nx>=0)R.cur=nx;
