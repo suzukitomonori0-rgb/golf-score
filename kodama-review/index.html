@@ -171,8 +171,9 @@ h2{margin:0;font-size:16px;font-weight:700}
 .run .res{font-weight:700;color:var(--ink)}
 .total small{white-space:nowrap}
 .toprow>div:first-child{min-width:0}
-.p3tbl{display:grid;grid-template-columns:auto auto auto 1fr;gap:6px 14px;font-size:14px;align-items:baseline}
-.p3tbl span:last-child,.p3tbl span:nth-child(4n){text-align:right;color:var(--muted)}
+.p3tbl{display:grid;grid-template-columns:auto auto auto auto 1fr;gap:6px 14px;font-size:14px;align-items:baseline}
+.p3tbl span:nth-child(5n){text-align:right;color:var(--muted)}
+.p3tbl .k{color:var(--muted);font-size:12px}
 .pos{color:var(--over)!important}.neg{color:var(--under)!important}
 .holehead{align-items:flex-start}
 .finish{border-color:var(--green)}
@@ -262,6 +263,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 const COURSES={"西":[5,4,3,4,4,4,5,4,3],"南":[4,5,4,3,4,4,4,3,5],"東":[4,4,4,3,5,3,5,4,4]};
 const TEE=[["fw","FWキープ"],["left","左ラフ"],["right","右ラフ"],["ob","OB・池"]];
 const CLUBS=["5W","4UT","5UT","6UT","6I","7I","8I","9I","PW","48°","52°","58°"].map(c=>[c,c]);
+const WIND=[["follow","フォロー"],["none","無風"],["against","アゲインスト"]];
+const WINDN={follow:"フォロー",none:"無風",against:"アゲインスト"};
 const DIST=[["short","ショート"],["just","ちょうど"],["over","オーバー"]];
 const DISTN={short:"ショート",just:"ちょうど",over:"オーバー"};
 const FIRST=[["s","〜1m"],["m","1〜3m"],["l","3〜7m"],["xl","7m〜"]];
@@ -339,7 +342,7 @@ function recommend(c,k,pin){
   return {L,recs,avoid,low};
 }
 
-function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",club:null,dist:null,pin:null,ball:null,slope:null,line:null}}
+function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",wind:null,club:null,dist:null,pin:null,ball:null,slope:null,line:null}}
 function blankRound(out="西",inn="南"){return {id:"r"+Date.now(),out,inn,cur:0,sample:false,holes:[...COURSES[out],...COURSES[inn]].map(blankHole)}}
 function sampleRound(){
   const r=blankRound("西","南");r.sample=true;
@@ -408,7 +411,8 @@ function renderHole(){
     <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="hr"><div class="cs">${courseOf(i)}コース ${i<9?i+1:i-8}番</div><div class="run">${runText(i)}</div></div></div>
     <div class="steps">${stepper("par","パー",h.par)}${stepper("score","打数",h.score)}${stepper("putts","パット",h.putts)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
-    ${p3?`<div class="grp"><span class="label">ティーショットの番手</span>${chipRow("club",CLUBS,h.club)}</div>
+    ${p3?`<div class="grp"><span class="label">風</span>${chipRow("wind",WIND,h.wind)}</div>
+    <div class="grp"><span class="label">ティーショットの番手</span>${chipRow("club",CLUBS,h.club)}</div>
     <div class="grp"><span class="label">ピンに対して縦の距離</span>${chipRow("dist",DIST,h.dist)}</div>`
     :`<div class="grp"><span class="label">ティーショット</span>${chipRow("tee",TEE,h.tee)}</div>`}
     <div class="grp"><span class="label">グリーン（上が奥）</span>
@@ -629,6 +633,10 @@ function buildInsights(s){
          drill:"アドレナリンで飛ぶ分を見込んで、迷ったら小さい番手を選ぶ。打ち上げ・打ち下ろしも確認する。",metric:"パー3のオーバー",now:ov,to:Math.max(0,ov-2)});}
      else if(ju*2>=P.length)good.push(`パー3のティーショットは${P.length}回中${ju}回、縦の距離が合っていました。`);
    }
+   const ag=P.filter(h=>h.wind==="against"),fo=P.filter(h=>h.wind==="follow");
+   const agS=ag.filter(h=>h.dist==="short").length,foO=fo.filter(h=>h.dist==="over").length;
+   if(ag.length>=2&&agS*2>=ag.length+1)bad.push(`アゲインストの${ag.length}回中${agS}回がショート。向かい風では番手をもう1つ上げましょう。`);
+   if(fo.length>=2&&foO*2>=fo.length+1)bad.push(`フォローの${fo.length}回中${foO}回がオーバー。追い風では番手を1つ下げましょう。`);
    const byC={};P.filter(h=>h.club).forEach(h=>{(byC[h.club]??=[]).push(h.dist)});
    Object.entries(byC).forEach(([c,a])=>{if(a.length>=2&&a.every(x=>x==="short"))bad.push(`${c}は${a.length}回ともショート。この番手の実際の飛距離を見直しましょう。`);
      else if(a.length>=2&&a.every(x=>x==="over"))bad.push(`${c}は${a.length}回ともオーバー。思っているより飛んでいます。`);});
@@ -647,10 +655,10 @@ function tiltPanel(){
     <div class="tilt">${rows}</div></div>`;
 }
 function par3Panel(){
-  const P=R.holes.map((h,i)=>({...h,i})).filter(h=>h.par===3&&(h.club||h.dist));
+  const P=R.holes.map((h,i)=>({...h,i})).filter(h=>h.par===3&&(h.club||h.dist||h.wind));
   if(!P.length)return "";
   return `<div class="panel"><h2>パー3のティーショット</h2><div class="p3tbl">
-    ${P.map(h=>`<span class="num">${h.i+1}番</span><span>${h.club||"–"}</span><span class="${h.dist==="short"?"neg":h.dist==="over"?"pos":""}">${h.dist?DISTN[h.dist]:"–"}</span><span class="num">${h.score!=null?(RES[h.score-h.par]??ovr(h.score-h.par)):"–"}</span>`).join("")}
+    ${P.map(h=>`<span class="num">${h.i+1}番</span><span class="k">${h.wind?WINDN[h.wind]:"–"}</span><span>${h.club||"–"}</span><span class="${h.dist==="short"?"neg":h.dist==="over"?"pos":""}">${h.dist?DISTN[h.dist]:"–"}</span><span class="num">${h.score!=null?(RES[h.score-h.par]??ovr(h.score-h.par)):"–"}</span>`).join("")}
   </div></div>`;
 }
 function dGreen(s){
@@ -821,7 +829,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1908";
+const APP_VERSION="2026.11.10-1910";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
