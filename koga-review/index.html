@@ -215,6 +215,11 @@ h2{margin:0;font-size:16px;font-weight:700}
   .cbtn .fl{font-size:22px}
   .club{font-size:10px;letter-spacing:.06em}
   .clubrow{gap:6px}.hrow{grid-template-columns:28px repeat(9,1fr);gap:3px}.hn2{font-size:12px}.hlab{font-size:10px}}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.tile{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 1px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;line-height:1.2;white-space:nowrap;min-width:0;color:var(--ink)}
+.tile span{overflow:hidden;text-overflow:clip;max-width:100%}
+.tile[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--paper);font-weight:500}
+@media (max-width:370px){.tile{font-size:9.5px;letter-spacing:-.04em}.tiles{gap:3px}}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -346,8 +351,8 @@ const KEY="furukawa-review-v1";
 const QN={C:"センター",BL:"奥左",BR:"奥右",FL:"手前左",FR:"手前右",oB:"奥にこぼれ",oF:"手前に外れ",oL:"左に外れ",oR:"右に外れ"};
 const ico=(d,b)=>`<svg class="ico" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="${b?3.2:2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
 const IU="M2 13L13 4M8 4H13V9",IF="M2 8H14M10 4L14 8L10 12",ID="M2 4L13 13M8 13H13V8",IH="M10 15C10 8 8 4 3 3M3 3L7 2M3 3L4 7",IS="M8 15V2M4 6L8 2L12 6",IL="M6 15C6 8 8 4 13 3M13 3L9 2M13 3L12 7";
-const SLOPE=[["upx",ico(IU,1)+"激上り"],["up",ico(IU)+"上り"],["flat",ico(IF)+"平坦"],["down",ico(ID)+"下り"],["downx",ico(ID,1)+"激下り"]];
-const LINE=[["hookx",ico(IH,1)+"激フック"],["hook",ico(IH)+"フック"],["straight",ico(IS)+"まっすぐ"],["slice",ico(IL)+"スライス"],["slicex",ico(IL,1)+"激スライス"]];
+const SLOPE=[["upx",ico(IU,1)+"<span>激上り</span>"],["up",ico(IU)+"<span>上り</span>"],["flat",ico(IF)+"<span>平坦</span>"],["down",ico(ID)+"<span>下り</span>"],["downx",ico(ID,1)+"<span>激下り</span>"]];
+const LINE=[["hookx",ico(IH,1)+"<span>強フック</span>"],["hook",ico(IH)+"<span>フック</span>"],["straight",ico(IS)+"<span>まっすぐ</span>"],["slice",ico(IL)+"<span>スライス</span>"],["slicex",ico(IL,1)+"<span>強スライス</span>"]];
 // 「激〜」は集計では同じ向きとして扱う
 const base=v=>typeof v==="string"?v.replace(/x$/,""):v;
 let gmode="pin";
@@ -496,6 +501,7 @@ function renderStrip(){
 function chipRow(field,opts,val,dis){
   return `<div class="chips">${opts.map(([k,l])=>`<button class="chip" data-f="${field}" data-v="${k}" aria-pressed="${val===k}"${dis?" disabled":""}>${l}</button>`).join("")}</div>`;
 }
+function tileRow(field,opts,val){return `<div class="tiles">${opts.map(([k,l])=>`<button class="tile" data-f="${field}" data-v="${k}" aria-pressed="${val===k}">${l}</button>`).join("")}</div>`}
 function stepper(field,label,val,sub){
   return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
 }
@@ -531,8 +537,8 @@ function renderHole(){
       ${recBox(h,rc)}
     </div>
     <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${chipRow("first",FIRST,h.first)}</div>
-    <div class="grp"><span class="label">上り・下り</span>${chipRow("slope",SLOPE,h.slope)}</div>
-    <div class="grp"><span class="label">ライン</span>${chipRow("line",LINE,h.line)}</div>
+    <div class="grp"><span class="label">上り・下り</span>${tileRow("slope",SLOPE,h.slope)}</div>
+    <div class="grp"><span class="label">ライン</span>${tileRow("line",LINE,h.line)}</div>
     <div class="steps">${stepper("score","打数",h.score,scoreSub(h))}${""}${stepper("putts","パット",h.putts)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
@@ -989,7 +995,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2147";
+const APP_VERSION="2026.11.10-2150";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
