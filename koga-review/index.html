@@ -150,7 +150,7 @@ h2{margin:0;font-size:16px;font-weight:700}
 .gcwrap{position:relative;max-width:100%}
 .cbtn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:66px;height:66px;border-radius:50%;border:2px solid var(--green);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;color:var(--muted);padding:0}
 .cbtn .fl{font-size:26px}.cbtn .bl{width:18px;height:18px}
-.green{width:min(200px,52vw);aspect-ratio:1;max-width:100%;border-radius:50%;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;background:var(--card);border:2px solid var(--green)}
+.green{width:min(260px,62vw);aspect-ratio:1;max-width:100%;border-radius:50%;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;background:var(--card);border:2px solid var(--green)}
 .q{border:0;background:var(--green-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--muted);padding:0}
 .q .ic{display:flex;gap:4px;align-items:center;min-height:22px}
 .fl{color:var(--flag);font-size:30px;line-height:1}
@@ -261,7 +261,7 @@ h2{margin:0;font-size:16px;font-weight:700}
   .mark{width:22px;height:22px;font-size:12px}
   .gwrap{grid-template-columns:44px auto 44px;gap:4px}
   .off{font-size:10px;padding:4px 2px}
-  .green{width:min(184px,50vw)}
+  .green{width:min(220px,58vw)}
   .cbtn{width:58px;height:58px}
   .chip{padding:5px 10px}
   .total b{font-size:28px}
@@ -272,7 +272,9 @@ h2{margin:0;font-size:16px;font-weight:700}
   .stp button{width:24px;height:24px;font-size:14px}
   .stp .v{min-width:20px;font-size:19px}
   .stp .row{gap:2px}
-  .green{width:150px}
+  .green{width:176px}
+  .gwrap{grid-template-columns:36px auto 36px;gap:4px}
+  .off{font-size:9.5px;padding:3px 1px}
   .cbtn{width:50px;height:50px;font-size:10px}
   .chip{padding:4px 8px;font-size:12px}
   .mini{gap:6px}
@@ -1063,7 +1065,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2226";
+const APP_VERSION="2026.11.10-2228";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
