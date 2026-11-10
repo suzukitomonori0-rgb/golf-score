@@ -135,7 +135,7 @@ textarea{font:inherit;width:100%;min-height:58px;padding:8px 10px;border-radius:
 .memos .hn{color:var(--muted);font-weight:700}
 .sample{font-size:12px;background:var(--flag-soft);color:var(--ink);border-radius:8px;padding:6px 10px}
 h2{margin:0;font-size:16px;font-weight:700}
-.gmode{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:8px;padding:2px;align-self:flex-start}
+.gmode{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:8px;padding:2px;align-self:flex-start}
 .gmode button{border:0;background:none;padding:4px 12px;border-radius:6px;font-size:13px;color:var(--muted)}
 .gmode button[aria-pressed="true"]{background:var(--green);color:var(--paper);font-weight:700}
 .gwrap{display:grid;grid-template-columns:56px auto 56px;gap:6px;align-items:center;justify-content:center;justify-items:center}
@@ -186,6 +186,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .stp .sub .even{color:var(--green)}
 .cp{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:3px;background:var(--ink);color:var(--card);font-size:10px;font-weight:700;line-height:1}
 .chipafter{background:var(--paper);border-radius:10px;padding:10px}
+.glegend{flex-wrap:wrap;gap:4px 14px}
+.glegend>span{white-space:nowrap}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -439,6 +441,7 @@ function renderHole(){
   const cc=courseOf(i),ck=i<9?i:i-9;
   const rc=h.pin?recommend(cc,ck,h.pin):null;
   const off=!!(h.ball&&h.ball[0]==="o");
+  if(gmode==="chip"&&!off)gmode="ball";
   $("holePanel").innerHTML=`
     <div class="holehead"><div class="hn num">${i+1}<small>番</small></div><div class="hr"><div class="cs">${courseOf(i)}・パー${h.par}</div><div class="run">${runText(i)}</div></div></div>
     ${p3?`<div class="grp"><span class="label">風</span>${chipRow("wind",WIND,h.wind)}</div>
@@ -446,10 +449,10 @@ function renderHole(){
     <div class="grp"><span class="label">ピンに対して縦の距離</span>${chipRow("dist",DIST,h.dist)}</div>`
     :`<div class="grp"><span class="label">ティーショット</span>${chipRow("tee",TEE,h.tee)}</div>`}
     <div class="grp"><span class="label">グリーン（上が奥）</span>
-      <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button></div>
+      <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button>${off?`<button data-gm="chip" aria-pressed="${gmode==="chip"}">寄せた後</button>`:""}</div>
+      ${gmode==="chip"?`<p class="note">寄せた後、パットを打った区画をタップしてください。</p>`:""}
       ${greenPad(h,rc)}
       <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${QN[h.chip]}</span>`:""}</div>
-      ${off?`<div class="grp chipafter"><span class="label">寄せた後の位置（パットを打った場所）</span>${chipRow("chip",CHIPQ,h.chip)}</div>`:""}
       ${recBox(h,rc)}
     </div>
     <div class="grp"><span class="label">ファーストパット（カップまでの距離）</span>${chipRow("first",FIRST,h.first)}</div>
@@ -466,7 +469,7 @@ function renderHole(){
 function greenPad(h,rc){
   const isRec=k=>!!(rc&&rc.recs&&rc.recs.includes(k)),isAv=k=>!!(rc&&rc.avoid&&rc.avoid.includes(k));
   const q=k=>`<button class="q${isRec(k)?" rec":""}${isAv(k)?" avoid":""}" data-gq="${k}" aria-label="${QN[k]}">${isRec(k)?"<em>狙い目</em>":""}<span class="ic">${h.pin===k?'<span class="fl">⚑</span>':""}${h.ball===k?'<span class="bl"></span>':""}${h.ball&&h.ball[0]==="o"&&h.chip===k?'<span class="cp">寄</span>':""}</span>${QN[k]}</button>`;
-  const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode==="pin"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
+  const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode!=="ball"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
   return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green">${q("BL")}${q("BR")}${q("FL")}${q("FR")}</div><button class="cbtn" data-gq="C" aria-label="センター">${h.pin==="C"?'<span class="fl">⚑</span>':""}${h.ball==="C"?'<span class="bl"></span>':""}${h.ball&&h.ball[0]==="o"&&h.chip==="C"?'<span class="cp">寄</span>':""}<span>センター</span></button></div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>`;
 }
 function recBox(h,rc){
@@ -851,7 +854,8 @@ document.addEventListener("click",e=>{
   if(t.dataset.gm){gmode=t.dataset.gm;renderHole();return}
   if(t.dataset.gq){const k=t.dataset.gq;
     if(gmode==="pin"){if(k[0]==="o")return;h.pin=h.pin===k?null:k;if(h.pin&&!h.ball)gmode="ball";}
-    else h.ball=h.ball===k?null:k;
+    else if(gmode==="chip"){if(k[0]==="o")return;h.chip=h.chip===k?null:k;}
+    else{h.ball=h.ball===k?null:k;if(h.ball&&h.ball[0]==="o"&&!h.chip)gmode="chip";}
     save();renderHole();return}
   if(t.dataset.h!=null){R.cur=+t.dataset.h;gmode="pin";renderInput();save();return}
   if(t.dataset.s){
@@ -911,7 +915,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2009";
+const APP_VERSION="2026.11.10-2011";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
