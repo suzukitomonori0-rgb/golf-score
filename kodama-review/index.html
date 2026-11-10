@@ -374,14 +374,15 @@ function gir(h){return h.score!=null&&h.putts!=null&&(h.score-h.putts)<=h.par-2}
 function courseOf(i){return i<9?R.out:R.inn}
 
 function ORDER(){const st=R.start===9?9:0;return Array.from({length:18},(_,k)=>(st+k)%18)}
+const cn=c=>c==="OUT"||c==="IN"?c:c+"コース";
 function renderStart(){
   const el=$("startPanel");if(!el)return;
   const fresh=R.holes.every(h=>h.score==null);
   if(!fresh){el.hidden=true;return}
   const st=R.start===9?9:0;
-  el.innerHTML=`<span class="label">スタートホール</span><div class="startsel">
-    <button class="chip" data-start="0" aria-pressed="${st===0}">1番から（${R.out}）</button>
-    <button class="chip" data-start="9" aria-pressed="${st===9}">10番から（${R.inn}）</button></div>
+  el.innerHTML=`<span class="label">スタートコース</span><div class="startsel">
+    <button class="chip" data-start="0" aria-pressed="${st===0}">${cn(R.out)}スタート（1番〜）</button>
+    <button class="chip" data-start="9" aria-pressed="${st===9}">${cn(R.inn)}スタート（10番〜）</button></div>
     <p class="note">最初の打数を入れるまでは変更できます。</p>`;
   el.hidden=false;
 }
@@ -900,7 +901,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1924";
+const APP_VERSION="2026.11.10-1925";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
