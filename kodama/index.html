@@ -194,6 +194,38 @@ button.x{border:0;background:var(--sunk);border-radius:999px;width:36px;height:3
 .rule ul{margin:4px 0 0;padding-left:1.2em;font-size:13px;color:var(--muted);display:grid;gap:3px}
 @media (max-width:360px){.prow{gap:8px}.net{width:36px}.selw{width:84px}.chip{padding:4px 9px}.bigno{font-size:54px}.btn{font-size:14px;padding:12px 6px}.st{padding:10px}}
 @media (prefers-reduced-motion: no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
+
+/* compact hole screen: 4 players fit without scrolling */
+header .hd{padding-block:6px}
+header .strip{padding-block:0 7px;gap:5px}
+header .chipH{width:33px;height:33px;font-size:15px}
+.board{margin-top:8px;gap:5px}
+.bd{padding:4px 7px}
+.bv{font-size:20px}
+.bm{gap:2px}
+.md{width:13px;height:13px;font-size:8.5px}
+.holehead{padding-block:8px 6px;gap:10px;align-items:center}
+.bigno{font-size:40px}
+.hmeta .vals b{font-size:19px}
+.plist{gap:5px}
+.pc{padding:8px 10px;gap:6px;position:relative}
+.prow{gap:8px}
+.pname b{font-size:15px}
+.selw{width:84px;height:42px}
+.selw b{font-size:24px}
+.crow{flex-wrap:nowrap;gap:4px}
+.crow .chip{flex:1 1 0;min-width:0;padding:2px 0;min-height:32px;font-size:13px;text-align:center;white-space:nowrap}
+.crow .chip.sand,.crow .chip.sao-ng{flex:1.6 1 0}
+.crow .sep{display:none}
+.bdg{position:absolute;top:6px;right:100px;font-size:10px;padding:1px 6px}
+.pname .capb{font-size:9.5px;padding:0 6px;margin-top:1px}
+.bd{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;column-gap:4px}
+.bd .bm,.bd .bcap{grid-column:1/-1}
+.bd .bcap{font-size:8.5px;margin-top:2px;justify-self:start}
+.holehead{padding-block:6px 4px}
+.bigno{font-size:34px}
+.hmeta{gap:0}
+.hmeta .lbl{font-size:10px}
 </style>
 
 </head>
@@ -343,19 +375,18 @@ function renderHole(C){
     const medChips=(S.count===3?['g','s','b','d']:['g','s','b','i','d']).map(k=>{
       const on=H.oly[i]===k;
       const taken=k!=='d'&&!on&&ps.some(j=>j!==i&&H.oly[j]===k);
-      return `<button class="chip m-${k}" aria-pressed="${on}" data-oly="${i}:${k}"${taken?' disabled':''}>${MED[k].n}<span class="p">${MED[k].pt}</span></button>`}).join('');
+      return `<button class="chip m-${k}" aria-pressed="${on}" data-oly="${i}:${k}"${taken?' disabled':''} aria-label="${MED[k].n}">${MED[k].n.slice(0,1)}</button>`}).join('');
     const birdie=H.done&&H.s[i]<=par-1;
     return `<div class="pc${lead?' lead':''}">
       <div class="prow">
         <div class="pname"><b>${esc(pl.name)}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}</b>${overCap(C,i)?'<span class="capb">上限突破がんばれ！</span>':''}</div>
         <label class="selw${H.done||H.s[i]!=null?'':' draft'}"><b>${val}</b><small>${relName(val-par)}</small><select data-score="${i}" aria-label="${esc(pl.name)}のスコア">${opts.join('')}</select></label>
       </div>
-      <div class="chips">${medChips}<span class="sep"></span>
-        <button class="chip sand" aria-pressed="${!!H.sand[i]}" data-sand="${i}">砂イチ<span class="p">3</span></button>
-        <button class="chip sand" aria-pressed="${!!(H.sao&&H.sao[i]==='ok')}" data-sao="${i}:ok">サオ成功<span class="p">+3</span></button>
-        <button class="chip sao-ng" aria-pressed="${!!(H.sao&&H.sao[i]==='ng')}" data-sao="${i}:ng">サオ3パット<span class="p">-3</span></button>
-        ${birdie?`<span class="badge">${relName(H.s[i]-par)} +3</span>`:''}
-      </div></div>`;
+      <div class="chips crow">${medChips}<span class="sep"></span>
+        <button class="chip sand" aria-pressed="${!!H.sand[i]}" data-sand="${i}" aria-label="砂イチ">砂イチ</button>
+        <button class="chip sand" aria-pressed="${!!(H.sao&&H.sao[i]==='ok')}" data-sao="${i}:ok" aria-label="サオ成功">サオ</button>
+        <button class="chip sao-ng" aria-pressed="${!!(H.sao&&H.sao[i]==='ng')}" data-sao="${i}:ng" aria-label="サオ3パット">サオ×</button>
+      </div>${birdie?`<span class="badge bdg">${relName(H.s[i]-par)} +3</span>`:''}</div>`;
   }).join('');
 
   const npPend=(()=>{let k=0;for(const x of order()){if(x===h)break;const r=C.npr[x];if(r)k=r.c||0}return k})();
