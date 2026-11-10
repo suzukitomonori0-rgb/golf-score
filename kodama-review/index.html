@@ -247,6 +247,9 @@ h2{margin:0;font-size:16px;font-weight:700}
 .tile small{font-size:10.5px;color:inherit;opacity:.75}
 .tile.hot{color:var(--hot);border-color:var(--hot)}
 .tile.hot[aria-pressed="true"]{background:var(--hot);border-color:var(--hot);color:var(--card)}
+.warn{background:var(--over-soft);border:1px solid var(--over);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.warn b{color:var(--over)}
+.wbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -555,6 +558,18 @@ function scoreSub(h){
   const x=h.score-h.par,name=RES[x]??(x>0?`+${x}`:`${x}`);
   return `<span class="${x>0?"pos":x<0?"neg":"even"}">${name}</span>`;
 }
+let warn=null;
+// グリーン〜パット数の未入力チェック
+function missingOf(h){
+  const m=[];
+  if(!h.pin)m.push("ピン位置");
+  if(!h.ball)m.push("乗った位置");
+  else if(h.ball[0]==="o"&&!h.chip&&h.putts!==0)m.push("寄せた後の位置");
+  if(h.putts!==0){if(!h.first)m.push("ファーストパット");if(!h.slope)m.push("上り・下り");if(!h.line)m.push("ライン");}
+  if(h.score==null)m.push("打数");
+  if(h.putts==null)m.push("パット");
+  return m;
+}
 function renderHole(){
   renderHnav();renderStart();renderAdvice();
   const ord=ORDER(),pos=ord.indexOf(R.cur);
@@ -589,6 +604,9 @@ function renderHole(){
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：二段グリーンで奥が高い／受けグリーン／右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
+    ${(()=>{if(!warn||warn.i!==i)return "";const ms=missingOf(h);if(!ms.length)return "";
+      return `<div class="warn" id="warnbox" role="alert"><b>未入力の項目があります</b><span>${ms.join("、")}</span>
+      <div class="wbtns"><button class="btn" data-warnclose="1">入力に戻る</button><button class="btn primary" data-go="${warn.go}" data-force="1">このまま${warn.go==="rev"?"振り返りへ":"次へ"}</button></div></div>`})()}
     <div class="nav">${pos===0?"<span></span>":`<button class="btn" data-go="-1">← ${ord[pos-1]+1}番</button>`}
     ${pos===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${ord[pos+1]+1}番へ →</button>`}</div>`;
 }
@@ -1019,7 +1037,7 @@ document.addEventListener("click",e=>{
     else if(gmode==="chip"){if(k[0]==="o")return;h.chip=h.chip===k?null:k;}
     else{h.ball=h.ball===k?null:k;if(h.ball&&h.ball[0]==="o"&&!h.chip)gmode="chip";}
     save();renderHole();return}
-  if(t.dataset.h!=null){R.cur=+t.dataset.h;gmode="pin";renderInput();save();return}
+  if(t.dataset.h!=null){warn=null;R.cur=+t.dataset.h;gmode="pin";renderInput();save();return}
   if(t.dataset.s){
     const f=t.dataset.s,dd=+t.dataset.d;
     if(f==="score"){h.score=h.score==null?h.par:Math.min(15,Math.max(1,h.score+dd));}
@@ -1028,7 +1046,11 @@ document.addEventListener("click",e=>{
     else h[f]=Math.min(9,Math.max(0,h[f]+dd));
     save();renderInput();return}
   if(t.dataset.f){const f=t.dataset.f;h[f]=h[f]===t.dataset.v?null:t.dataset.v;save();renderHole();return}
-  if(t.dataset.go){if(t.dataset.go==="rev"){show("rev");return}{const o=ORDER();R.cur=o[Math.min(17,Math.max(0,o.indexOf(R.cur)+(+t.dataset.go)))]}gmode="pin";save();renderInput();
+  if(t.dataset.warnclose){warn=null;renderHole();return}
+  if(t.dataset.go){
+    if(t.dataset.go!=="-1"&&!t.dataset.force&&missingOf(h).length){warn={i:R.cur,go:t.dataset.go};renderHole();const w=$("warnbox");if(w)w.scrollIntoView({block:"center"});return}
+    warn=null;
+    if(t.dataset.go==="rev"){show("rev");return}{const o=ORDER();R.cur=o[Math.min(17,Math.max(0,o.indexOf(R.cur)+(+t.dataset.go)))]}gmode="pin";save();renderInput();
     window.scrollTo({top:0,left:0,behavior:"instant"});return}
 });
 document.addEventListener("input",e=>{if(e.target.id==="memo"){R.holes[R.cur].memo=e.target.value;save()}});
@@ -1079,7 +1101,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2238";
+const APP_VERSION="2026.11.10-2241";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
