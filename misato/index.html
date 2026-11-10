@@ -604,7 +604,7 @@ app.addEventListener('click',e=>{
   if(d.sao){const[i,k]=d.sao.split(':');if(!H.sao)H.sao=Array(MAXP).fill('');const on=H.sao[+i]!==k;H.sao[+i]=on?k:'';save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,k==='ok'?'有言実行！ +3点':'残念… -3点',k!=='ok');return}
   if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();const rc=t.getBoundingClientRect();render();if(H.sand[i])pop(rc,'上手い！ +3点');return}
   if(d.np!==undefined){const was=H.np;H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();const rc=t.getBoundingClientRect();render();if(H.np>=0&&was!==H.np){const npP=(()=>{let k=0;for(const x of order()){if(x===h)break;const q=compute().npr[x];if(q)k=q.c||0}return k})();pop(rc,`ナイスニアピン！ +${3*(1+npP)}点`)}return}
-  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);const on=!H.miss[i];H.miss=H.miss.map(()=>false);H.miss[i]=on;save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,'ナイス火消し +1点');return}
+  if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=Array(MAXP).fill(false);const on=!H.miss[i];H.miss=H.miss.map(()=>false);H.miss[i]=on;save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,'火消し助かった！ +1点');return}
   if(d.confirm){const par=COURSE[h].p;for(let i=0;i<MAXP;i++)if(H.s[i]==null)H.s[i]=par;H.done=true;save();
     if(S.cur<17)go(S.cur+1);else setView('sum');return}
   if(d.undo){H.done=false;save();render();return}
