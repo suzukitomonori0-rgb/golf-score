@@ -293,7 +293,7 @@ h2{margin:0;font-size:16px;font-weight:700}
         <li><b>グリーン</b>：「ピン位置」をタップ → 「乗った位置」をタップ。外したら外側のボタンを押し、続けて「寄せた後」にパットを打った場所をタップ。</li>
         <li><b>ファーストパット</b>：カップまでの歩数（1歩＝65cm）。<b>上り・下り</b>と<b>ライン</b>も選びます。</li>
         <li><b>打数・パット</b>：＋を1回押すとパーから始まります。下にパー・ボギーなどが出ます。</li>
-        <li><b>一番悔やまれる1打</b>、<b>ひとことメモ</b>、<b>ペナルティ・バンカー</b>は分かる範囲で。</li>
+        <li><b>一番悔やまれる1打</b>と<b>ひとことメモ</b>は分かる範囲で。</li>
         <li>入力はタップするたびにスマホに保存されます。途中で閉じても、次に開けば続きから再開します。</li></ul>
       <h3>3. ラウンド後</h3>
       <ul><li>「振り返り」タブを開き、<b>「このラウンドをみんなの蓄積に保存」</b>を押します。保存したラウンドが、次回からのアドバイスとグリーン学習に使われます。</li></ul>
@@ -303,7 +303,7 @@ h2{margin:0;font-size:16px;font-weight:700}
       <h3>ラウンドの振り返り</h3>
       <ul>
         <li>スコア、パット数、FWキープ率、パーオン率</li>
-        <li>どこで何打失ったか（ティーショット／セカンド／アプローチ／パット／ペナルティ）</li>
+        <li>どこで何打失ったか（ティーショット／セカンド／アプローチ／パット）</li>
         <li>良かった点と悪かった点、<b>課題TOP3と練習メニュー</b>、次のラウンドの目標スコア</li>
         <li>グリーン上：ピンに対して手前・奥のどちらに外しやすいか、上り・下り別／ライン別の平均パット</li>
         <li>パー3：風と番手とショート・オーバーの傾向</li></ul>
@@ -523,7 +523,6 @@ function renderHole(){
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
-    <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
     <div class="nav">${pos===0?"<span></span>":`<button class="btn" data-go="-1">← ${ord[pos-1]+1}番</button>`}
     ${pos===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${ord[pos+1]+1}番へ →</button>`}</div>`;
 }
@@ -727,12 +726,12 @@ function buildInsights(s){
       drill:long?"15歩・25歩から、カップを中心に半径1歩半の円に止める練習を各10球。":"2歩半の距離をカップ周りの4方向から連続10球。外れたら最初からやり直し。",
       metric:"3パット",now:s.three,to:Math.max(0,Math.floor(s.three/2))});
   }
-  if(s.pen>=2){
-    bad.push(`ペナルティで${s.pen}打。OB・池が${s.ob}回あり、スコアを一気に崩しています。`);
-    tasks.push({w:L.pen+L.judge+1,title:"ハザードを避けるクラブ選択",
-      why:`ペナルティだけで${s.pen}打。ドライバーを持たない判断で、そのまま縮められる失点です。`,
+  if(s.ob>=2){
+    bad.push(`ティーショットのOB・池が${s.ob}回。1回ごとに1〜2打を失い、スコアを一気に崩しています。`);
+    tasks.push({w:s.ob*1.5+L.judge,title:"ハザードを避けるクラブ選択",
+      why:`OB・池が${s.ob}回。ドライバーを持たない判断で、そのまま縮められる失点です。`,
       drill:"ティーグラウンドで「OB・池がある側」を声に出してから打つ。危ないホールは3W／UTで刻む、と事前に決めておく。",
-      metric:"ペナルティ",now:s.pen,to:Math.max(0,s.pen-2)});
+      metric:"OB・池",now:s.ob,to:Math.max(0,s.ob-2)});
   }
   if(s.left+s.right>=3){
     const side=s.left>s.right?"左":"右", sideN=Math.max(s.left,s.right);
@@ -843,7 +842,7 @@ function renderReview(){
   const maxL=Math.max(1,...cats.map(c=>c[1]));
   const card=(from)=>{let h="";for(let i=from;i<from+9;i++)h+=`<div class="h">${i+1}</div>`;for(let i=from;i<from+9;i++)h+=`<div class="p">${R.holes[i].par}</div>`;
     for(let i=from;i<from+9;i++){const x=R.holes[i];h+=`<div><span class="mark ${markCls(x)}">${x.score??"·"}</span></div>`}return h};
-  const saved=I.tasks.reduce((a,t)=>{const m=t.metric;if(m==="3パット"||m==="ペナルティ")return a+(t.now-t.to);return a+1},0);
+  const saved=I.tasks.reduce((a,t)=>{const m=t.metric;if(m==="3パット")return a+(t.now-t.to);if(m==="OB・池")return a+(t.now-t.to)*2;return a+1},0);
   const memos=R.holes.map((h,i)=>({i,m:h.memo.trim()})).filter(x=>x.m);
   v.innerHTML=`
   ${R.sample?`<div class="sample">サンプルのラウンドの分析です。</div>`:""}
@@ -854,7 +853,7 @@ function renderReview(){
       <div><b>${s.puttN?s.putts:"–"}</b><span>パット</span></div>
       <div><b>${s.fwOpp?pct(s.fw,s.fwOpp)+"%":"–"}</b><span>FWキープ</span></div>
       <div><b>${s.girN?pct(s.gir,s.girN)+"%":"–"}</b><span>パーオン</span></div>
-      <div><b>${s.pen}</b><span>ペナルティ</span></div>
+      <div><b>${s.three}</b><span>3パット</span></div>
     </div>
     <div style="overflow-x:auto"><div class="card18">${card(0)}</div></div>
     <div style="overflow-x:auto"><div class="card18">${card(9)}</div></div>
@@ -976,7 +975,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2055";
+const APP_VERSION="2026.11.10-2057";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
