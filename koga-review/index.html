@@ -275,7 +275,7 @@ const WIND=[["follow","フォロー"],["none","無風"],["against","アゲイン
 const WINDN={follow:"フォロー",none:"無風",against:"アゲインスト"};
 const DIST=[["short","ショート"],["just","ちょうど"],["over","オーバー"]];
 const DISTN={short:"ショート",just:"ちょうど",over:"オーバー"};
-const FIRST=[["s","〜1m"],["m","1〜3m"],["l","3〜7m"],["xl","7m〜"]];
+const FIRST=[["s","〜1歩"],["m","2〜3歩"],["l","4〜8歩"],["xl","9歩〜"]];
 const CAUSE=[["tee","ティーショット"],["second","セカンド"],["approach","アプローチ"],["putt","パット"],["judge","判断ミス"]];
 const CAT={tee:"ティーショット",second:"セカンド",approach:"アプローチ",putt:"パット",pen:"ペナルティ",judge:"判断ミス"};
 const KEY="furukawa-review-v1";
@@ -455,7 +455,7 @@ function renderHole(){
       <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${QN[h.chip]}</span>`:""}</div>
       ${recBox(h,rc)}
     </div>
-    <div class="grp"><span class="label">ファーストパット（カップまでの距離）</span>${chipRow("first",FIRST,h.first)}</div>
+    <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${chipRow("first",FIRST,h.first)}</div>
     <div class="mini"><div class="grp"><span class="label">上り・下り</span>${chipRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${chipRow("line",LINE,h.line)}</div></div>
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
@@ -623,7 +623,7 @@ function buildInsights(s){
   if(s.scr>=2)good.push(`パーオンを外したホールで${s.scr}回パー以上を拾えています（寄せワン力）。`);
   if(s.sandSave>0)good.push(`バンカーに入った${s.bunkerH}ホールのうち${s.sandSave}ホールでパー以上。`);
   if(s.birdie>0)good.push(`バーディーが${s.birdie}個ありました。`);
-  if(s.longFirstN>=2&&s.longFirst/s.longFirstN>=0.7)good.push(`7m以上のロングパットも${s.longFirstN}回中${s.longFirst}回は2パットで収めました。`);
+  if(s.longFirstN>=2&&s.longFirst/s.longFirstN>=0.7)good.push(`9歩以上のロングパットも${s.longFirstN}回中${s.longFirst}回は2パットで収めました。`);
   if(s.avg5!=null&&s.avg5<=0.5)good.push(`パー5は平均${sg(+s.avg5.toFixed(1))}。稼ぎどころで崩れていません。`);
   if(s.puttN>=9&&s.putts/s.puttN<=1.8)good.push(`1ホール平均${(s.putts/s.puttN).toFixed(2)}パット。グリーン上は好調でした。`);
 
@@ -656,14 +656,14 @@ function buildInsights(s){
     bad.push(`3パット${s.three}回のうち${s.threeDown}回は下りのパットでした。`);
     tasks.push({w:s.loss.putt+0.6,title:"下りのタッチと、下りを残さない攻め方",
       why:`パットで${s.loss.putt}打を失い、その多くが下りです。${worstLine?lineName[worstLine[0]]+"ラインの下りに特に注意してください。":""}ピンより奥に乗ると下りが残ります。`,
-      drill:"下り2〜5mを、カップを50cm以上オーバーさせない強さで各10球。コースでは、ピンの手前から上りを残すように攻める。",
+      drill:"下り3〜6歩を、カップを50cm以上オーバーさせない強さで各10球。コースでは、ピンの手前から上りを残すように攻める。",
       metric:"3パット",now:s.three,to:Math.max(0,Math.floor(s.three/2))});
   }else if(s.three>=2){
     const long=s.threeLong>=s.threeShort;
-    bad.push(`3パットが${s.three}回。そのうち${long?s.threeLong+"回はファーストパットが3m以上":s.threeShort+"回は3m以内から"}でした。`);
+    bad.push(`3パットが${s.three}回。そのうち${long?s.threeLong+"回はファーストパットが4歩以上":s.threeShort+"回は3歩以内から"}でした。`);
     tasks.push({w:L.putt+0.5,title:long?"ロングパットの距離感":"ショートパットの決定率",
-      why:`パットで${L.putt}打を失っています。${long?"入れにいくより、2打目を1m以内に残すことを優先しましょう。":"1〜3mを外すと、そのまま3パットにつながっています。"}`,
-      drill:long?"10m・15mから、カップを中心に半径1mの円に止める練習を各10球。":"1.5mをカップ周りの4方向から連続10球。外れたら最初からやり直し。",
+      why:`パットで${L.putt}打を失っています。${long?"入れにいくより、2打目をカップから1歩以内に残すことを優先しましょう。":"2〜3歩を外すと、そのまま3パットにつながっています。"}`,
+      drill:long?"12歩・18歩から、カップを中心に半径1歩の円に止める練習を各10球。":"2歩の距離をカップ周りの4方向から連続10球。外れたら最初からやり直し。",
       metric:"3パット",now:s.three,to:Math.max(0,Math.floor(s.three/2))});
   }
   if(s.pen>=2){
@@ -915,7 +915,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2011";
+const APP_VERSION="2026.11.10-2013";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
