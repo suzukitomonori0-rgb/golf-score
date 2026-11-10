@@ -4,13 +4,13 @@
 <meta name="theme-color" content="#1d5a43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="児玉振り返り">
+<meta name="apple-mobile-web-app-title" content="児玉CC攻略">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="../kodama/apple-touch-icon.png">
 <link rel="icon" href="../kodama/icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
-<title>児玉CC ラウンド振り返り</title>
+<title>児玉CC攻略</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
 <style>
@@ -225,7 +225,7 @@ h2{margin:0;font-size:16px;font-weight:700}
     <div class="toprow">
       <div>
         <div class="club">KODAMA COUNTRY CLUB</div>
-        <h1>児玉CC ラウンド振り返り</h1>
+        <h1>児玉CC攻略</h1>
       </div>
       <div class="total"><b class="num" id="tot">0</b><small id="totSub">PAR 72</small></div>
     </div>
@@ -901,7 +901,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-1925";
+const APP_VERSION="2026.11.10-1956";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
