@@ -655,7 +655,7 @@ function recBox(h,rc){
 }
 function histNote(){
   const n=realRounds().length,mix=n<MIN_REAL;
-  const head=SHARED?`みんなの共有データ：${PLAYERS}人・${n}ラウンド`:DBSTATE==="loading"?"共有データを読み込み中…":DBSTATE==="slow"?`共有データを読み込めませんでした。この端末の記録（${n}ラウンド）で表示しています。`:`この端末の記録：${n}ラウンド（共有の保存先が未設定です）`;
+  const head=SHARED?`みんなの共有データ：${PLAYERS}人・${n}ラウンド`:DBSTATE==="loading"?"共有データを読み込み中…":DBSTATE==="slow"?`共有データを読み込めませんでした。この端末の記録（${n}ラウンド）で表示しています`:`この端末の記録：${n}ラウンド（共有の保存先が未設定です）`;
   $("histNote").textContent=head+"。";
 }
 function refreshShared(){
@@ -683,8 +683,23 @@ async function loadShared(){
   }catch(e){SHARED=null;DBSTATE="slow"}
   finally{clearTimeout(t)}
   refreshShared();
+  if(DBSTATE==="ok"&&!syncing)syncPending();
+}
+// 圏外のときに保存したラウンドを、電波が戻ったら送る
+let syncing=false;
+async function syncPending(){
+  const P=LOCAL.filter(r=>r.pending);if(!P.length)return;
+  syncing=true;let sent=0;
+  for(const r of P){
+    const snap={id:r.id,date:r.date,out:r.out,inn:r.inn,holes:r.holes.map(h=>({par:h.par,score:h.score,putts:h.putts,pin:h.pin,ball:h.ball&&h.ball[0]==="o"&&h.chip?h.ball+">"+h.chip:h.ball,slope:h.slope}))};
+    try{const res=await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({club:CLUB,player:PID,round:snap})});
+      const j=await res.json();if(j.ok){LOCAL=LOCAL.map(x=>x.id===r.id?{...x,pending:false}:x);saveLocal();sent++}}catch(e){break}
+  }
+  syncing=false;
+  if(sent)await loadShared();
 }
 loadShared();
+window.addEventListener("online",()=>loadShared());
 function recsIn(list,c,k){return list.flatMap(r=>{const i=r.out===c?k:r.inn===c?9+k:-1;return i<0||!r.holes||!r.holes[i]?[]:[r.holes[i]]}).filter(h=>h&&h.score!=null)}
 const avgOf=a=>a.reduce((x,y)=>x+y,0)/a.length;
 const f1=v=>(v>0?"+":v<0?"−":"±")+Math.abs(v).toFixed(1);
@@ -941,7 +956,8 @@ function finishPanel(s){
   return `<div class="panel finish"><span class="label">ROUND COMPLETE</span>
     <h2>18ホール終了、お疲れさまでした</h2>
     <div class="fscore"><b class="num">${s.score}</b><span class="num">${sg(d)}</span><span class="k">${s.puttN?s.putts+"パット":""}</span></div>
-    ${saved?`<p class="note">このラウンドはみんなの蓄積に保存済みです。</p><button class="btn" data-revnew="1">新しいラウンドを始める</button>`
+    ${saved&&LOCAL.some(r=>r.id===R.id&&r.pending)?`<p class="note">このスマホには保存済みです。共有データへは、電波が戻ったら自動で送ります。</p><button class="btn" data-revnew="1">新しいラウンドを始める</button>`
+      :saved?`<p class="note">このラウンドはみんなの蓄積に保存済みです。</p><button class="btn" data-revnew="1">新しいラウンドを始める</button>`
       :`<p class="note">保存すると、グリーンの傾きの学習に加わります（名前とメモは送られません）。</p><button class="btn primary" data-revsave="1">このラウンドをみんなの蓄積に保存</button>`}
     <p class="note" id="revSaveMsg" hidden></p></div>`;
 }
@@ -1071,10 +1087,12 @@ $("saveRound").onclick=async()=>{
       const res=await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({club:CLUB,player:PID,round:snap})});
       const j=await res.json();
       if(!j.ok)throw new Error(j.error||"bad");
+      LOCAL=LOCAL.map(r=>r.id===R.id?{...r,pending:false}:r);saveLocal();
       m.textContent=j.updated?"共有データの自分のラウンドを今回の内容で更新しました。":`共有データに保存しました。${played}ホール分のグリーン情報が、みんなの学習に加わります。`;
       await loadShared();
     }catch(e){
-      m.textContent="共有データに保存できませんでした。この端末には保存してあります。電波の良い場所で、もう一度押してください。";
+      LOCAL=LOCAL.map(r=>r.id===R.id?{...r,pending:true}:r);saveLocal();
+      m.textContent="今は共有データに送れませんでした（圏外・機内モードなど）。この端末には保存済みで、次に電波があるときに開けば自動で送ります。";
     }finally{$("saveRound").disabled=false}
   }else{
     m.textContent="この端末に保存しました。共有の保存先が未設定のため、他の人の学習には加わりません。";
@@ -1090,7 +1108,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2247";
+const APP_VERSION="2026.11.10-2251";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
