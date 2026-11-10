@@ -333,7 +333,7 @@ function renderHole(C){
     <div class="plist">${cards}</div>
     <div class="hint">バーディー・バウンスバック・中継の倍・メダルは「確定」で自動計算されます。手入力の項目は確定前でも入れられます。</div>
     <div class="actions"><button class="btn sm" data-go="${S.cur-1}"${S.cur===0?' disabled':''} aria-label="前のホール">◀</button>
-      ${H.done?`<button class="btn" data-undo="1">未確定に戻す</button><button class="btn pri" data-go="${S.cur+1}"${S.cur===17?' disabled':''}>次のホールへ ▶</button>`:`<button class="btn pri" data-confirm="1">スコア確定${S.cur<17?'して次へ':''}</button>`}</div>
+      ${H.done?`<button class="btn" data-undo="1">未確定に戻す</button><button class="btn pri" data-go="${S.cur+1}"${S.cur===17?' disabled':''}>次のホールへ ▶</button>`:`<button class="btn pri" data-confirm="1">スコア確定${S.cur<17?'して次へ ▶':''}</button>`}</div>
   </main>`;
 }
 
