@@ -29,6 +29,9 @@ body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
 .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.wrap>.wrap{width:100%;min-width:0}
+.steps>*,.mini>*,.courses>*{min-width:0}
+.panel{min-width:0}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
 .num{font-variant-numeric:tabular-nums}
@@ -157,6 +160,40 @@ h2{margin:0;font-size:16px;font-weight:700}
 .tilt .k{color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.bar .fill{transition:width .4s ease}}
 @media (max-width:380px){.sum{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:78px 1fr 32px}}
+.finish{border-color:var(--green)}
+.fscore{display:flex;align-items:baseline;gap:12px}
+.fscore b{font-size:40px;font-weight:900;line-height:1}
+.fscore span{font-size:18px;font-weight:700}
+.fscore .k{font-size:14px;color:var(--muted);font-weight:500}
+.resume{background:var(--green-soft)}
+@media (max-width:400px){
+  .panel{padding:12px;gap:12px}
+  .steps{gap:6px}
+  .stp{padding:6px 2px}
+  .stp .row{gap:3px}
+  .stp button{width:28px;height:28px;font-size:16px}
+  .stp .v{min-width:24px;font-size:21px}
+  .strip{gap:3px}
+  .hb .n{font-size:9px}
+  .mark{width:22px;height:22px;font-size:12px}
+  .gwrap{grid-template-columns:44px auto 44px;gap:4px}
+  .off{font-size:10px;padding:4px 2px}
+  .green{width:min(184px,50vw)}
+  .cbtn{width:58px;height:58px}
+  .chip{padding:5px 10px}
+  .total b{font-size:28px}
+  h1{font-size:18px}
+}
+@media (max-width:340px){
+  .stp button{width:24px;height:24px;font-size:14px}
+  .stp .v{min-width:20px;font-size:19px}
+  .stp .row{gap:2px}
+  .green{width:150px}
+  .cbtn{width:50px;height:50px;font-size:10px}
+  .chip{padding:4px 8px;font-size:12px}
+  .mini{gap:6px}
+  .sum{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 
 </head>
@@ -178,6 +215,7 @@ h2{margin:0;font-size:16px;font-weight:700}
 
   <section id="viewIn" class="wrap" style="gap:16px">
     <div id="sampleNote" class="sample">サンプルのラウンドを表示しています。「新しいラウンド」で白紙から入力できます。</div>
+    <div id="resumeNote" class="sample resume" hidden></div>
     <div class="panel">
       <div class="courses">
         <label for="outC">OUT（前半）<select id="outC"></select></label>
@@ -576,6 +614,22 @@ function dGreen(s){
     ${lnN?`<span class="label">ライン別　平均パット</span><div class="gtbl">${row("フック",s.ln.hook)}${row("まっすぐ",s.ln.straight)}${row("スライス",s.ln.slice)}</div>`:""}
   </div>`;
 }
+const HK=["par","score","putts","pin","ball","slope"];
+function isSaved(){return realRounds().some(r=>String(r.id)===String(R.id)&&Array.isArray(r.holes)&&r.holes.length===18&&r.holes.every((h,i)=>HK.every(k=>(h[k]??null)===(R.holes[i][k]??null))))}
+function finishPanel(s){
+  const miss=R.holes.map((h,i)=>h.score==null?i:-1).filter(i=>i>=0);
+  if(miss.length===18)return "";
+  if(miss.length)return `<div class="panel"><h2>まだ入力していないホール</h2>
+    <p class="note">タップするとそのホールの入力に戻ります。途中で閉じても、入力した内容はこのスマホに残っています。</p>
+    <div class="chips">${miss.map(i=>`<button class="chip" data-jump="${i}">${i+1}番</button>`).join("")}</div></div>`;
+  const d=s.score-s.par,saved=isSaved();
+  return `<div class="panel finish"><span class="label">ROUND COMPLETE</span>
+    <h2>18ホール終了、お疲れさまでした</h2>
+    <div class="fscore"><b class="num">${s.score}</b><span class="num">${sg(d)}</span><span class="k">${s.puttN?s.putts+"パット":""}</span></div>
+    ${saved?`<p class="note">このラウンドはみんなの蓄積に保存済みです。</p><button class="btn" data-revnew="1">新しいラウンドを始める</button>`
+      :`<p class="note">保存すると、グリーンの傾きの学習に加わります（名前とメモは送られません）。</p><button class="btn primary" data-revsave="1">このラウンドをみんなの蓄積に保存</button>`}
+    <p class="note" id="revSaveMsg" hidden></p></div>`;
+}
 function renderReview(){
   const v=$("viewRev"); const A=analyze();
   if(!A){v.innerHTML=`<div class="panel"><h2>まだ入力がありません</h2><p class="note">「入力」タブで打数を入れると、ここに振り返りと課題が表示されます。</p></div>`;return}
@@ -588,6 +642,7 @@ function renderReview(){
   const memos=R.holes.map((h,i)=>({i,m:h.memo.trim()})).filter(x=>x.m);
   v.innerHTML=`
   ${R.sample?`<div class="sample">サンプルのラウンドの分析です。</div>`:""}
+  ${finishPanel(s)}
   <div class="panel">
     <div class="holehead"><h2>${R.out}→${R.inn}　${s.n}ホール</h2><div class="cs num">${s.score}（${sg(d)}）</div></div>
     <div class="sum num">
@@ -647,6 +702,9 @@ $("tabIn").onclick=()=>show("in");$("tabRev").onclick=()=>show("rev");
 document.addEventListener("click",e=>{
   const t=e.target.closest("button");if(!t)return;
   const h=R.holes[R.cur];
+  if(t.dataset.jump!=null){R.cur=+t.dataset.jump;gmode="pin";save();show("in");renderInput();return}
+  if(t.dataset.revsave){$("saveRound").click();return}
+  if(t.dataset.revnew){show("in");$("confirmBox").hidden=false;$("confirmBox").scrollIntoView({block:"center"});return}
   if(t.dataset.gm){gmode=t.dataset.gm;renderHole();return}
   if(t.dataset.gq){const k=t.dataset.gq;
     if(gmode==="pin"){if(k[0]==="o")return;h.pin=h.pin===k?null:k;if(h.pin&&!h.ball)gmode="ball";}
@@ -674,10 +732,11 @@ function changeCourse(){
 $("outC").onchange=changeCourse;$("inC").onchange=changeCourse;
 $("newBtn").onclick=()=>{$("confirmBox").hidden=false};
 $("noNew").onclick=()=>{$("confirmBox").hidden=true};
-$("yesNew").onclick=()=>{R=blankRound(R.out,R.inn);save();$("confirmBox").hidden=true;renderInput()};
+$("yesNew").onclick=()=>{$("resumeNote").hidden=true;R=blankRound(R.out,R.inn);save();$("confirmBox").hidden=true;renderInput()};
+function setMsg(t){const m=$("saveMsg");m.textContent=t;m.hidden=false;const r=$("revSaveMsg");if(r){r.textContent=t;r.hidden=false}}
 $("saveRound").onclick=async()=>{
   R.id??="r"+Date.now();
-  const played=R.holes.filter(h=>h.score!=null).length,m=$("saveMsg");
+  const played=R.holes.filter(h=>h.score!=null).length,m={set textContent(t){setMsg(t)},set hidden(v){}};
   m.hidden=false;
   if(!played){m.textContent="打数が入っていないので保存できません。";return}
   const d=new Date(),date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -698,8 +757,14 @@ $("saveRound").onclick=async()=>{
     m.textContent="この端末に保存しました。共有の保存先が未設定のため、他の人の学習には加わりません。";
   }
   histNote();renderHole();
+  if(!$("viewRev").hidden)renderReview();
 };
-$("sampleBtn").onclick=()=>{R=sampleRound();save();renderInput()};
+$("sampleBtn").onclick=()=>{$("resumeNote").hidden=true;R=sampleRound();save();renderInput()};
+(()=>{const n=R.holes.filter(h=>h.score!=null).length;
+  if(!R.sample&&n>0&&n<18){
+    const nx=R.holes.findIndex(h=>h.score==null);if(nx>=0)R.cur=nx;
+    const el=$("resumeNote");el.textContent=`前回の続きから再開しました（${n}ホール入力済み）。${R.cur+1}番から入力できます。`;el.hidden=false;}
+})();
 renderInput();
 </script>
 
