@@ -18,17 +18,17 @@
 :root{
   --paper:#edf2f8; --card:#ffffff; --ink:#14203a; --muted:#59667d; --line:#d2dbe8;
   --green:#1d4f96; --green-soft:#e0e9f6; --flag:#c9930a; --flag-soft:#fbf1d4;
-  --under:#0e8a6a; --over:#b5532a; --over-soft:#f8e6dc;
+  --under:#0e8a6a; --over:#b5532a; --hot:#d32f2f; --over-soft:#f8e6dc;
   --font:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#0e131d; --card:#162030; --ink:#e3e9f3; --muted:#92a0b6; --line:#28354a;
   --green:#76a8ee; --green-soft:#1a2a45; --flag:#e7bb3c; --flag-soft:#352c12;
-  --under:#5fcfa8; --over:#ec946c; --over-soft:#3a2219; color-scheme:dark}}
+  --under:#5fcfa8; --over:#ec946c; --hot:#ff7b72; --over-soft:#3a2219; color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#0e131d; --card:#162030; --ink:#e3e9f3; --muted:#92a0b6; --line:#28354a;
   --green:#76a8ee; --green-soft:#1a2a45; --flag:#e7bb3c; --flag-soft:#352c12;
-  --under:#5fcfa8; --over:#ec946c; --over-soft:#3a2219; color-scheme:dark}
+  --under:#5fcfa8; --over:#ec946c; --hot:#ff7b72; --over-soft:#3a2219; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
@@ -245,6 +245,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .gstepl.v{top:6%;left:calc(50% + 8px)}
 .tile b{font-size:13px;font-weight:700}
 .tile small{font-size:10.5px;color:inherit;opacity:.75}
+.tile.hot{color:var(--hot);border-color:var(--hot)}
+.tile.hot[aria-pressed="true"]{background:var(--hot);border-color:var(--hot);color:var(--card)}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -544,7 +546,7 @@ function renderStrip(){
 function chipRow(field,opts,val,dis){
   return `<div class="chips">${opts.map(([k,l])=>`<button class="chip" data-f="${field}" data-v="${k}" aria-pressed="${val===k}"${dis?" disabled":""}>${l}</button>`).join("")}</div>`;
 }
-function tileRow(field,opts,val,n){return `<div class="tiles"${n?` style="grid-template-columns:repeat(${n},minmax(0,1fr))"`:""}>${opts.map(([k,l])=>`<button class="tile" data-f="${field}" data-v="${k}" aria-pressed="${val===k}">${l}</button>`).join("")}</div>`}
+function tileRow(field,opts,val,n){return `<div class="tiles"${n?` style="grid-template-columns:repeat(${n},minmax(0,1fr))"`:""}>${opts.map(([k,l])=>`<button class="tile${/x$/.test(k)?" hot":""}" data-f="${field}" data-v="${k}" aria-pressed="${val===k}">${l}</button>`).join("")}</div>`}
 function stepper(field,label,val,sub){
   return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
 }
@@ -1077,7 +1079,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2235";
+const APP_VERSION="2026.11.10-2238";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
