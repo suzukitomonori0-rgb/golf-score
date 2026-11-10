@@ -135,6 +135,9 @@ h2{margin:0;font-size:16px;font-weight:700}
 .off{border:1px dashed var(--line);background:none;border-radius:8px;font-size:11px;color:var(--muted);padding:6px 6px;line-height:1.3}
 .off.sel{border-style:solid;border-color:var(--over);color:var(--over);font-weight:700}
 .off[disabled]{opacity:.35;cursor:default}
+.gcwrap{position:relative;max-width:100%}
+.cbtn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:66px;height:66px;border-radius:50%;border:2px solid var(--green);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;color:var(--muted);padding:0}
+.cbtn .fl{font-size:18px}.cbtn .bl{width:12px;height:12px}
 .green{width:min(200px,52vw);aspect-ratio:1;max-width:100%;border-radius:50%;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;background:var(--card);border:2px solid var(--green)}
 .q{border:0;background:var(--green-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--muted);padding:0}
 .q .ic{display:flex;gap:4px;align-items:center;min-height:22px}
@@ -210,10 +213,12 @@ const FIRST=[["s","〜1m"],["m","1〜3m"],["l","3〜7m"],["xl","7m〜"]];
 const CAUSE=[["tee","ティーショット"],["second","セカンド"],["approach","アプローチ"],["putt","パット"],["judge","判断ミス"]];
 const CAT={tee:"ティーショット",second:"セカンド",approach:"アプローチ",putt:"パット",pen:"ペナルティ",judge:"判断ミス"};
 const KEY="kodama-review-v3";
-const QN={BL:"奥左",BR:"奥右",FL:"手前左",FR:"手前右",oB:"奥にこぼれ",oF:"手前に外れ",oL:"左に外れ",oR:"右に外れ"};
+const QN={C:"センター",BL:"奥左",BR:"奥右",FL:"手前左",FR:"手前右",oB:"奥にこぼれ",oF:"手前に外れ",oL:"左に外れ",oR:"右に外れ"};
 const SLOPE=[["up","上り"],["flat","平坦"],["down","下り"]];
 const LINE=[["hook","フック"],["straight","まっすぐ"],["slice","スライス"]];
 let gmode="pin";
+const DR={F:0,C:1,B:2},SR={L:0,C:1,R:2};
+const dRank=q=>q==="C"?1:DR[q[0]],sRank=q=>q==="C"?1:SR[q[1]];
 const HKEY="kodama-history-v1";
 function slopeOf(pin,ball,t,rnd){
   if(pin===ball)return rnd()<0.5?"flat":(t.fb>0?"up":"down");
@@ -245,7 +250,7 @@ function recordsFor(c,k){return getHist().flatMap(r=>{const i=r.out===c?k:r.inn=
 function relOf(r){
   if(r.ball[0]==="o")return r.ball==="oF"?"ピンより手前（外れ）":r.ball==="oB"?"ピンより奥（こぼれ）":"横に外れ";
   if(r.pin===r.ball)return "ピンと同じ区画";
-  if(r.pin[0]!==r.ball[0])return r.ball[0]==="F"?"ピンより手前":"ピンより奥";
+  if(dRank(r.pin)!==dRank(r.ball))return dRank(r.ball)<dRank(r.pin)?"ピンより手前":"ピンより奥";
   return "ピンの横";
 }
 function learn(c,k){
@@ -254,9 +259,9 @@ function learn(c,k){
     if(!r.pin||!r.ball)return;
     if(r.putts!=null){const rel=relOf(r);(st[rel]??={n:0,p:0,t:0});st[rel].n++;st[rel].p+=r.putts;if(r.putts>=3)st[rel].t++}
     if(r.ball[0]==="o"||r.pin===r.ball||!r.slope||r.slope==="flat")return;
-    const sgn=r.slope==="up"?1:-1,dd=r.pin[0]!==r.ball[0],ds=r.pin[1]!==r.ball[1],w=dd&&ds?0.5:1;
-    if(dd)fb+=w*sgn*(r.pin[0]==="B"?1:-1);
-    if(ds)lr+=w*sgn*(r.pin[1]==="R"?1:-1);
+    const sgn=r.slope==="up"?1:-1,ddv=Math.sign(dRank(r.pin)-dRank(r.ball)),dsv=Math.sign(sRank(r.pin)-sRank(r.ball)),w=ddv&&dsv?0.5:1;
+    if(ddv)fb+=w*sgn*ddv;
+    if(dsv)lr+=w*sgn*dsv;
     n++;});
   return {fb,lr,n,st,rounds:recs.length};
 }
@@ -268,11 +273,15 @@ function recommend(c,k,pin){
   const L=learn(c,k);
   if(L.n<3)return {L,none:true};
   const dH=L.fb>=1?"B":L.fb<=-1?"F":null,sH=L.lr>=1?"R":L.lr<=-1?"L":null;
-  const rec=(dH?(dH==="B"?"F":"B"):pin[0])+(sH?(sH==="R"?"L":"R"):pin[1]);
-  let avoid=(rec[0]==="F"?"B":"F")+(rec[1]==="L"?"R":"L");
-  if(!dH&&!sH)avoid=null;
+  const lowD=dH?(dH==="B"?"F":"B"):null,lowS=sH?(sH==="R"?"L":"R"):null;
+  let recs;
+  if(pin==="C"){
+    const d=lowD||"F",ss=lowS?[lowS]:["L","R"];
+    recs=ss.map(x=>d+x);
+  }else recs=[(lowD||pin[0])+(lowS||pin[1])];
+  let avoid=(dH||sH)?recs.map(r=>(r[0]==="F"?"B":"F")+(r[1]==="L"?"R":"L")).filter(a=>!recs.includes(a)):[];
   const low=[dH?(dH==="B"?"手前":"奥"):"",sH?(sH==="R"?"左":"右"):""].filter(Boolean).join("・");
-  return {L,rec,avoid,low};
+  return {L,recs,avoid,low};
 }
 
 function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",pin:null,ball:null,slope:null,line:null}}
@@ -346,21 +355,22 @@ function renderHole(){
     <div class="mini">${stepper("pen","ペナルティ",h.pen)}${stepper("bunker","バンカー",h.bunker)}</div>
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
-    <div class="nav"><button class="btn" data-go="-1"${i===0?" disabled":""}>← ${i}番</button>
+    <div class="nav">${i===0?"<span></span>":`<button class="btn" data-go="-1">← ${i}番</button>`}
     ${i===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${i+2}番へ →</button>`}</div>`;
 }
 function greenPad(h,rc){
-  const q=k=>`<button class="q${rc&&rc.rec===k?" rec":""}${rc&&rc.avoid===k?" avoid":""}" data-gq="${k}" aria-label="${QN[k]}">${rc&&rc.rec===k?"<em>狙い目</em>":""}<span class="ic">${h.pin===k?'<span class="fl">⚑</span>':""}${h.ball===k?'<span class="bl"></span>':""}</span>${QN[k]}</button>`;
+  const isRec=k=>!!(rc&&rc.recs&&rc.recs.includes(k)),isAv=k=>!!(rc&&rc.avoid&&rc.avoid.includes(k));
+  const q=k=>`<button class="q${isRec(k)?" rec":""}${isAv(k)?" avoid":""}" data-gq="${k}" aria-label="${QN[k]}">${isRec(k)?"<em>狙い目</em>":""}<span class="ic">${h.pin===k?'<span class="fl">⚑</span>':""}${h.ball===k?'<span class="bl"></span>':""}</span>${QN[k]}</button>`;
   const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode==="pin"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
-  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="green">${q("BL")}${q("BR")}${q("FL")}${q("FR")}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>`;
+  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green">${q("BL")}${q("BR")}${q("FL")}${q("FR")}</div><button class="cbtn" data-gq="C" aria-label="センター">${h.pin==="C"?'<span class="fl">⚑</span>':""}${h.ball==="C"?'<span class="bl"></span>':""}<span>センター</span></button></div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>`;
 }
 function recBox(h,rc){
   const i=R.cur,cc=courseOf(i),ck=i<9?i:i-9;
   if(!h.pin){const L=learn(cc,ck);return `<div class="recbox"><span class="sub">${L.rounds?`このグリーンの蓄積 ${L.rounds}回分。ピン位置を入れると、狙い目の区画を表示します。`:"このホールの蓄積データはまだありません。ラウンドを保存するたびに学習します。"}</span></div>`}
   if(rc.none)return `<div class="recbox"><span class="sub">傾斜が分かるデータがまだ${rc.L.n}件です。3件以上たまると落としどころを提案します。</span></div>`;
   const st=Object.entries(rc.L.st).filter(([k,o])=>o.n>=2).sort((a,b)=>a[1].p/a[1].n-b[1].p/b[1].n).slice(0,3);
-  return `<div class="recbox"><b>狙い目：${QN[rc.rec]}${rc.rec===h.pin&&rc.low?`（ピンより${rc.low}側）`:""}</b>
-    <span>このグリーンは${tiltText(rc.L)}傾向です。ここに止めれば上りのパットが残ります。${rc.avoid&&rc.avoid!==rc.rec?`${QN[rc.avoid]}に乗ると下りになりやすいです。`:""}</span>
+  return `<div class="recbox"><b>狙い目：${rc.recs.map(k=>QN[k]).join("・")}${(rc.recs.includes(h.pin)||h.pin==="C")&&rc.low?`（ピンより${rc.low}側）`:""}</b>
+    <span>このグリーンは${tiltText(rc.L)}傾向です。ここに止めれば上りのパットが残ります。${rc.avoid.length?`${rc.avoid.map(k=>QN[k]).join("・")}に乗ると下りになりやすいです。`:""}</span>
     ${st.length?`<span class="sub">過去の平均パット：${st.map(([k,o])=>`${k} ${(o.p/o.n).toFixed(1)}（${o.n}回）`).join("／")}</span>`:""}
     <span class="sub">傾斜データ ${rc.L.n}件から推定</span></div>`;
 }
@@ -427,8 +437,8 @@ function analyze(){
     if(h.pin&&h.ball){
       if(h.ball==="oF")s.depth.short++; else if(h.ball==="oB")s.depth.over++;
       else if(h.ball==="oL"||h.ball==="oR")s.sideMiss++;
-      else{const pb=h.pin[0]==="B",bb=h.ball[0]==="B";s.depth[pb===bb?"just":(bb?"over":"short")]++;
-        if(h.pin[1]!==h.ball[1])s.sideMiss++;}
+      else{const dv=dRank(h.ball)-dRank(h.pin);s.depth[dv===0?"just":(dv>0?"over":"short")]++;
+        if(sRank(h.pin)!==sRank(h.ball))s.sideMiss++;}
     }
     if(h.first==="xl"){s.longFirstN++; if(h.putts!=null&&h.putts<=2)s.longFirst++;}
     if(h.par>3&&h.tee){s.fwOpp++; if(h.tee==="fw")s.fw++; if(h.tee==="left")s.left++; if(h.tee==="right")s.right++; if(h.tee==="ob")s.ob++;}
