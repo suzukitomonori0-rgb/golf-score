@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#C2332F">
+<meta name="theme-color" content="#F2B705">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="美里ロイヤル">
@@ -20,21 +20,21 @@
 <style>
 /* Layout: scorecard app — sticky header, one hole per screen, fixed bottom tab bar */
 :root{
-  --bg:#FBF1F0; --surface:#FFFFFF; --sunk:#F6E2DF; --ink:#2A1514; --muted:#7A5A57; --line:#EDD3CF;
-  --green:#C2332F; --green-ink:#FFFFFF; --flag:#E2B21C; --flag-ink:#2A2100;
+  --bg:#FFF9E6; --surface:#FFFFFF; --sunk:#FBEFC8; --ink:#2A2208; --muted:#76693F; --line:#EFE0AE;
+  --green:#F2B705; --green-ink:#2A1F00; --flag:#2A1F00; --flag-ink:#FFD54A; --acc-t:#8A6400;
   --gold:#B8901A; --silver:#7E8B92; --bronze:#A0602F; --iron:#4A545B; --diamond:#2479AE;
   --win:#1E7A45; --lose:#B23A3A;
   --f-body:"Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
   --f-num:"Barlow Condensed", "Noto Sans JP", "Arial Narrow", sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#1B0F0E; --surface:#2A1715; --sunk:#221311; --ink:#F4E6E4; --muted:#B79894; --line:#472A27;
-  --green:#EF6B63; --green-ink:#1A0605; --flag:#E9BF36; --flag-ink:#2A2100;
+  --bg:#19150A; --surface:#262011; --sunk:#1F1A0D; --ink:#F6EED6; --muted:#B9AB7E; --line:#463C1E;
+  --green:#F5C22E; --green-ink:#1E1600; --flag:#FFF3C4; --flag-ink:#2A1F00; --acc-t:#F5C22E;
   --gold:#D8B23E; --silver:#A9B5BB; --bronze:#C98552; --iron:#8C979E; --diamond:#5BAEE0;
   --win:#5CC48A; --lose:#E07070; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#1B0F0E; --surface:#2A1715; --sunk:#221311; --ink:#F4E6E4; --muted:#B79894; --line:#472A27;
-  --green:#EF6B63; --green-ink:#1A0605; --flag:#E9BF36; --flag-ink:#2A2100;
+  --bg:#19150A; --surface:#262011; --sunk:#1F1A0D; --ink:#F6EED6; --muted:#B9AB7E; --line:#463C1E;
+  --green:#F5C22E; --green-ink:#1E1600; --flag:#FFF3C4; --flag-ink:#2A1F00; --acc-t:#F5C22E;
   --gold:#D8B23E; --silver:#A9B5BB; --bronze:#C98552; --iron:#8C979E; --diamond:#5BAEE0;
   --win:#5CC48A; --lose:#E07070; color-scheme:dark}
 *{box-sizing:border-box}
@@ -64,7 +64,7 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 
 /* hole head */
 .holehead{display:flex;align-items:flex-end;gap:14px;padding-block:18px 10px}
-.bigno{font-family:var(--f-num);font-size:64px;font-weight:700;line-height:.85;color:var(--green)}
+.bigno{font-family:var(--f-num);font-size:64px;font-weight:700;line-height:.85;color:var(--acc-t)}
 .hmeta{display:flex;flex-direction:column;gap:2px;min-width:0}
 .hmeta .lbl{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
 .hmeta .vals{display:flex;gap:14px;font-size:14px}
@@ -90,7 +90,7 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 .pname .hcb{display:inline-block;font-size:11px;font-weight:900;padding:1px 7px;border-radius:4px;background:var(--green);color:var(--green-ink);margin-left:4px}
 .tag.hct{background:var(--green);color:var(--green-ink)}
 td.hcell{background:color-mix(in srgb,var(--green) 12%,transparent)}
-.hsup{font-size:8px;color:var(--green);letter-spacing:-1px;margin-left:1px;vertical-align:6px}
+.hsup{font-size:8px;color:var(--acc-t);letter-spacing:-1px;margin-left:1px;vertical-align:6px}
 .dots{display:inline-flex;gap:3px;vertical-align:middle;margin-left:4px}
 .dots i{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block}
 .selw{position:relative;flex:0 0 auto;width:92px;height:52px;border-radius:10px;background:var(--sunk);border:1.5px solid var(--line);
@@ -118,7 +118,7 @@ td.hcell{background:color-mix(in srgb,var(--green) 12%,transparent)}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
 .box h3{margin:0 0 8px;font-size:12px;letter-spacing:.12em;color:var(--muted)}
 .result{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--sunk);font-size:14px}
-.result b{color:var(--green)}
+.result b{color:var(--acc-t)}
 .actions{display:flex;gap:8px;margin-top:14px}
 .btn{flex:1;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 10px;font-weight:700;font-size:15px}
 .btn.pri{background:var(--green);color:var(--green-ink);border-color:var(--green)}
@@ -140,7 +140,7 @@ td.hcell{background:color-mix(in srgb,var(--green) 12%,transparent)}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
   display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs button{flex:1;background:none;border:0;padding:12px 6px 14px;font-size:13px;font-weight:700;color:var(--muted);border-top:3px solid transparent}
-nav.tabs button.on{color:var(--green);border-top-color:var(--green)}
+nav.tabs button.on{color:var(--acc-t);border-top-color:var(--green)}
 
 /* summary */
 .sec{margin-top:22px}
@@ -186,21 +186,25 @@ button.x{border:0;background:var(--sunk);border-radius:999px;width:36px;height:3
 .lab{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin:16px 0 6px}
 .seg{display:flex;background:var(--sunk);border-radius:10px;padding:3px;gap:3px}
 .seg button{flex:1;border:0;background:transparent;border-radius:8px;padding:9px 6px;font-weight:700;font-size:14px;color:var(--muted)}
-.seg button.on{background:var(--surface);color:var(--green);box-shadow:0 1px 2px color-mix(in srgb,#000 15%,transparent)}
+.seg button.on{background:var(--surface);color:var(--acc-t);box-shadow:0 1px 2px color-mix(in srgb,#000 15%,transparent)}
 .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .rule{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
 .rule h4{margin:0 0 4px;font-size:15px;display:flex;gap:8px;align-items:center}
-.rule h4 span{font-family:var(--f-num);font-size:13px;color:var(--green);font-weight:700}
+.rule h4 span{font-family:var(--f-num);font-size:13px;color:var(--acc-t);font-weight:700}
 .rule ul{margin:4px 0 0;padding-left:1.2em;font-size:13px;color:var(--muted);display:grid;gap:3px}
 @media (max-width:360px){.prow{gap:8px}.net{width:36px}.selw{width:84px}.chip{padding:4px 9px}.bigno{font-size:54px}.btn{font-size:14px;padding:12px 6px}.st{padding:10px}}
 @media (prefers-reduced-motion: no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
 
-.mbox{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 8px;min-width:0;max-width:40%}
+.mbox{flex:0 0 auto;margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 8px;min-width:0;max-width:40%}
 .mbox .mt{font-size:9.5px;font-weight:900;color:var(--green-ink);background:var(--green);border-radius:3px;padding:0 5px}
 .mbox b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .mbox small{font-size:10px;color:var(--muted);white-space:nowrap}
 .mbox+.carry{margin-left:8px}
-/* compact hole screen: 4 players fit without scrolling */
+/* compact hole screen */
+.holehead .carry{font-size:10px;line-height:1.1}
+.holehead .carry b{font-size:20px}
+.hmeta .vals{gap:10px;flex-wrap:nowrap;white-space:nowrap}
+/* --: 4 players fit without scrolling */
 header .hd{padding-block:6px}
 header .strip{padding-block:0 7px;gap:5px}
 header .chipH{width:33px;height:33px;font-size:15px}
@@ -383,7 +387,7 @@ function go(i){S.cur=Math.max(0,Math.min(17,i));save();render();window.scrollTo(
 function renderHeader(){
   const ord=order();
   const chips=ord.map((h,i)=>`<button class="chipH${S.holes[h].done?' done':''}${i===S.cur&&S.view==='hole'?' cur':''}${i===9?' turn':''}" data-go="${i}" aria-label="${dno(h)}番ホール">${dno(h)}</button>`).join('');
-  return `<header><div class="wrap"><div class="hd"><h1><small>MISATO ROYAL · 週末ゴルフルール · ${CN(S.front)}スタート</small>美里ロイヤルGC</h1>
+  return `<header><div class="wrap"><div class="hd"><h1><small>週末ゴルフルール · ${CN(S.front)}スタート</small>美里ロイヤルGC</h1>
   <button class="hbtn" data-modal="rules">ルール</button><button class="hbtn" data-modal="settings">設定</button></div>
   <div class="strip" id="strip">${chips}</div></div></header>`;
 }
@@ -438,9 +442,8 @@ function renderHole(C){
   return `<main class="wrap">${board}
     <div class="holehead"><div class="bigno">${dno(h)}</div>
       <div class="hmeta"><span class="lbl">${S.cur+1}ホール目 / ${CN(cOf(h))}コース</span>
-        <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span></div>
-        ${isShort?'<div><span class="tag">ショート</span></div>':''}</div>
-      ${mt}${isShort?`<div class="carry">ニアピン流れ<b class="num">${H.done&&C.npr[h]?(C.npr[h].c||0):npPend}</b></div>`:''}</div>
+        <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span>${isShort?(()=>{const n=H.done&&C.npr[h]?(C.npr[h].c||0):npPend;return `<span class="tag" style="align-self:center">ショート${n?`・流れ${n}`:''}</span>`})():''}</div></div>
+      ${mt}</div>
     ${Object.values(S.holes).some(x=>x.done)?'':`<div class="box" style="margin:0 0 10px"><h3>スタートコース</h3><div style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">前半</span><div class="seg" style="flex:1">${['O','I'].map(k=>`<button class="${S.front===k?'on':''}" data-front="${k}">${CN(k)}</button>`).join('')}</div></div><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">後半</span><div class="seg" style="flex:1">${['O','I'].map(k=>`<button class="${S.back===k?'on':''}" data-back="${k}">${CN(k)}</button>`).join('')}</div></div></div></div>`}
     <div class="plist">${cards}</div>${np}${res}
     <div class="actions">

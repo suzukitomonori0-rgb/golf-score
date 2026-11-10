@@ -195,12 +195,16 @@ button.x{border:0;background:var(--sunk);border-radius:999px;width:36px;height:3
 @media (max-width:360px){.prow{gap:8px}.net{width:36px}.selw{width:84px}.chip{padding:4px 9px}.bigno{font-size:54px}.btn{font-size:14px;padding:12px 6px}.st{padding:10px}}
 @media (prefers-reduced-motion: no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
 
-.mbox{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 8px;min-width:0;max-width:40%}
+.mbox{flex:0 0 auto;margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 8px;min-width:0;max-width:40%}
 .mbox .mt{font-size:9.5px;font-weight:900;color:var(--green-ink);background:var(--green);border-radius:3px;padding:0 5px}
 .mbox b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .mbox small{font-size:10px;color:var(--muted);white-space:nowrap}
 .mbox+.carry{margin-left:8px}
-/* compact hole screen: 4 players fit without scrolling */
+/* compact hole screen */
+.holehead .carry{font-size:10px;line-height:1.1}
+.holehead .carry b{font-size:20px}
+.hmeta .vals{gap:10px;flex-wrap:nowrap;white-space:nowrap}
+/* --: 4 players fit without scrolling */
 header .hd{padding-block:6px}
 header .strip{padding-block:0 7px;gap:5px}
 header .chipH{width:33px;height:33px;font-size:15px}
@@ -438,9 +442,8 @@ function renderHole(C){
   return `<main class="wrap">${board}
     <div class="holehead"><div class="bigno">${dno(h)}</div>
       <div class="hmeta"><span class="lbl">${S.cur+1}ホール目 / ${CN(cOf(h))}コース</span>
-        <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span></div>
-        ${isShort?'<div><span class="tag">ショート</span></div>':''}</div>
-      ${mt}${isShort?`<div class="carry">ニアピン流れ<b class="num">${H.done&&C.npr[h]?(C.npr[h].c||0):npPend}</b></div>`:''}</div>
+        <div class="vals"><span>PAR<b>${par}</b></span><span>HDCP<b>${c.h}</b></span>${isShort?(()=>{const n=H.done&&C.npr[h]?(C.npr[h].c||0):npPend;return `<span class="tag" style="align-self:center">ショート${n?`・流れ${n}`:''}</span>`})():''}</div></div>
+      ${mt}</div>
     ${Object.values(S.holes).some(x=>x.done)?'':`<div class="box" style="margin:0 0 10px"><h3>スタートコース</h3><div style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">前半</span><div class="seg" style="flex:1">${['O','I'].map(k=>`<button class="${S.front===k?'on':''}" data-front="${k}">${CN(k)}</button>`).join('')}</div></div><div style="display:flex;align-items:center;gap:10px"><span style="width:2.5em;font-weight:700;color:var(--muted);font-size:13px">後半</span><div class="seg" style="flex:1">${['O','I'].map(k=>`<button class="${S.back===k?'on':''}" data-back="${k}">${CN(k)}</button>`).join('')}</div></div></div></div>`}
     <div class="plist">${cards}</div>${np}${res}
     <div class="actions">
