@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1E4A36">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="課題発見">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../kodama/apple-touch-icon.png">
+<link rel="icon" href="../kodama/icon-192.png">
+<meta name="description" content="児玉カントリー倶楽部で、1ホール最短1タップの入力から自分の課題と練習メニューがわかるアプリ">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ワンタップ課題発見">
+<meta property="og:title" content="ワンタップ課題発見｜児玉カントリー倶楽部">
+<meta property="og:description" content="1ホール最短1タップ。どこで打数を失ったか、次回の課題と練習メニューがわかります。">
+<meta property="og:url" content="https://suzukitomonori0-rgb.github.io/golf-score/kodama-onetap/">
+<meta property="og:image" content="https://suzukitomonori0-rgb.github.io/golf-score/kodama-onetap/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>ワンタップ課題発見</title>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one-column phone app (max 480px), scorecard notation for scores, sticky action bar at the bottom */
+:root {
+  --bg: #F2F5F1; --surface: #FFFFFF; --surface2: #E5EDE7; --fg: #17201B; --muted: #4B5951; --line: #D2DBD4;
+  --green: #1E4A36; --on-green: #FFFFFF; --accent: #D9712A; --on-accent: #1A140F;
+  --warn-bg: #FBEFE4; --warn-line: #EFC6A2; --warn-fg: #8E3F10;
+  --bar-par: #93AF9F; --bar-bogey: #E3A06A; --bar-dbl: #9A4413; --good: #1E6B47;
+  --font: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1612; --surface: #18221C; --surface2: #22312A; --fg: #E8EFEA; --muted: #A7B6AD; --line: #2E3E35;
+  --green: #2F7354; --on-green: #FFFFFF; --accent: #E88A45; --on-accent: #1A140F;
+  --warn-bg: #2B1E14; --warn-line: #6A4022; --warn-fg: #F2B888;
+  --bar-par: #5E8A73; --bar-bogey: #D88B4E; --bar-dbl: #F0B489; --good: #7FD1A6; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0F1612; --surface: #18221C; --surface2: #22312A; --fg: #E8EFEA; --muted: #A7B6AD; --line: #2E3E35;
+  --green: #2F7354; --on-green: #FFFFFF; --accent: #E88A45; --on-accent: #1A140F;
+  --warn-bg: #2B1E14; --warn-line: #6A4022; --warn-fg: #F2B888;
+  --bar-par: #5E8A73; --bar-bogey: #D88B4E; --bar-dbl: #F0B489; --good: #7FD1A6; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.6;
+  font-variant-numeric: tabular-nums; -webkit-tap-highlight-color: transparent; }
+button { font-family: inherit; cursor: pointer; color: inherit; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+#app { max-width: 480px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.main { flex: 1; padding-block: 20px 24px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--green); }
+:root:not([data-theme="light"]) .eyebrow { color: var(--good); }
+.title { font-size: 24px; font-weight: 900; line-height: 1.35; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.card { background: var(--surface); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.card h2 { font-size: 15px; font-weight: 900; }
+.label { font-size: 12px; font-weight: 700; color: var(--muted); }
+.chips { display: grid; gap: 8px; }
+.c2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.c3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.c4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.c5 { grid-template-columns: repeat(5, minmax(0,1fr)); }
+.chip { min-height: 50px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-size: 16px; font-weight: 700; padding: 0 4px; }
+.chip.on { background: var(--green); color: var(--on-green); border-color: var(--green); }
+.chip.sm { min-height: 44px; font-size: 14px; }
+.btn { min-height: 56px; border-radius: 16px; border: none; font-size: 17px; font-weight: 900; width: 100%; }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.btn.green { background: var(--green); color: var(--on-green); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); font-size: 15px; font-weight: 700; min-height: 48px; }
+.linkbtn { background: none; border: none; font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: underline; padding: 8px; }
+.bar { position: sticky; bottom: 0; background: var(--bg); padding-block: 12px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+
+/* play header */
+.ph { background: var(--green); color: var(--on-green); padding-block: 16px 14px; display: flex; flex-direction: column; gap: 12px; }
+.ph-top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; }
+.ph-top button { background: rgba(255,255,255,0.14); border: none; color: var(--on-green); border-radius: 10px; padding: 6px 10px; font-size: 12px; font-weight: 700; }
+.ph-hole { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+.ph-left { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.ph-no { font-size: 42px; font-weight: 900; line-height: 1; }
+.ph-no small { font-size: 18px; margin-left: 2px; }
+.pill { font-size: 14px; font-weight: 700; background: rgba(255,255,255,0.16); padding: 2px 10px; border-radius: 8px; }
+.ph-total { margin-left: auto; flex: none; display: flex; flex-direction: column; align-items: flex-end; font-size: 13px; font-weight: 700; line-height: 1.2; }
+.ph-total b { font-size: 48px; font-weight: 900; line-height: 1; }
+.ph-total em { font-style: normal; font-size: 20px; font-weight: 700; margin-left: 6px; }
+.hints { display: flex; gap: 6px; flex-wrap: wrap; }
+.hint { font-size: 12px; font-weight: 700; background: rgba(255,255,255,0.92); color: #1E4A36; border-radius: 999px; padding: 2px 10px; }
+.hint.warn { background: #F6C79F; color: #4A2207; }
+.dots { display: grid; grid-template-columns: repeat(9, minmax(0,1fr)); gap: 6px; }
+.dot { height: 30px; border-radius: 15px; font-size: 12px; font-weight: 700; padding: 0; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: var(--on-green); }
+.dot.done { background: rgba(255,255,255,0.92); color: #1E4A36; border-color: transparent; }
+.dot.here { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.stepper { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 16px; padding: 10px; }
+.stepper button { width: 60px; height: 60px; border-radius: 14px; font-size: 28px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); }
+.stepper button.plus { background: var(--green); color: var(--on-green); border-color: var(--green); }
+.stepper .val { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.stepper .val b { font-size: 42px; font-weight: 900; line-height: 1.1; }
+.stepper .val span { font-size: 13px; font-weight: 700; }
+.auto { display: flex; gap: 8px; align-items: center; background: var(--surface2); border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+/* today's tendency (live during play) */
+.today { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.today-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.today-h h2 { font-size: 15px; font-weight: 900; }
+.mini { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+.mini div { background: var(--surface2); border-radius: 10px; padding: 6px 2px; display: flex; flex-direction: column; align-items: center; }
+.mini span { font-size: 10px; color: var(--muted); font-weight: 700; }
+.mini b { font-size: 17px; font-weight: 900; line-height: 1.3; }
+.dir { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 4px; text-align: center; }
+.dir div { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; color: var(--muted); padding: 4px 0; border-radius: 10px; }
+.dir div.hot { background: var(--warn-bg); color: var(--warn-fg); }
+.dir b { font-size: 15px; color: var(--fg); }
+.dir div.hot b { color: var(--warn-fg); }
+.tip { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; font-weight: 700; line-height: 1.6; }
+.tip svg { flex: none; margin-top: 2px; color: var(--accent); }
+/* detailed review */
+.pts { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.8; }
+.pts li::marker { color: var(--accent); }
+.sub { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.card h2 + .sub { border-top: none; padding-top: 4px; }
+.goals { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.goal { background: var(--surface2); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.goal span { font-size: 11px; font-weight: 700; color: var(--muted); }
+.goal b { font-size: 17px; font-weight: 900; }
+.goal i { font-style: normal; color: var(--accent); margin: 0 6px; }
+.cmp { display: flex; flex-direction: column; }
+.cmp-row { display: grid; grid-template-columns: 1fr 64px 52px 56px; align-items: center; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; text-align: right; }
+.cmp-row:last-child { border-bottom: none; }
+.cmp-row > span:first-child { text-align: left; font-weight: 700; }
+.badge { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 0; text-align: center; background: var(--surface2); color: var(--muted); }
+.badge.up { background: var(--surface2); color: var(--good); }
+.badge.down { background: var(--warn-bg); color: var(--warn-fg); }
+.msg { background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-fg); border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 700; }
+
+/* result */
+.score-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.big { font-size: 56px; font-weight: 900; line-height: 1; }
+.diff { font-size: 20px; font-weight: 700; color: var(--warn-fg); margin-left: 6px; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+.chip.tee { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 66px; font-size: 13px; }
+.ti { display: inline-flex; align-items: center; justify-content: center; line-height: 1; vertical-align: middle; }
+.ti.fw { font-weight: 900; }
+.tile { background: var(--surface); border-radius: 14px; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; gap: 0; }
+.tile span { font-size: 11px; color: var(--muted); }
+.tile b { font-size: 21px; font-weight: 900; }
+.loss-row { display: flex; flex-direction: column; gap: 4px; }
+.loss-row .t { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; }
+.track { height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; }
+.fill { height: 100%; border-radius: 5px; }
+.sc-wrap { overflow-x: auto; }
+table.sc { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; min-width: 330px; }
+table.sc th, table.sc td { padding: 4px 0; border-bottom: 1px solid var(--line); }
+table.sc th { font-size: 11px; color: var(--muted); font-weight: 700; }
+table.sc td.rl { text-align: left; font-size: 11px; color: var(--muted); font-weight: 700; white-space: nowrap; padding-right: 4px; }
+.mk { display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; font-weight: 900; box-sizing: border-box; }
+.mk.b { border: 1.5px solid var(--good); border-radius: 50%; color: var(--good); }
+.mk.e { border: 3px double var(--good); border-radius: 50%; color: var(--good); }
+.mk.bo { border: 1.5px solid var(--fg); }
+.mk.db { background: var(--bar-dbl); color: var(--bg); }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend .mk { width: 16px; height: 16px; font-size: 0; }
+.issue { background: var(--warn-bg); border: 1px solid var(--warn-line); }
+.issue .eye { color: var(--warn-fg); font-size: 12px; font-weight: 900; }
+.issue h3 { font-size: 18px; font-weight: 900; }
+.menu { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.menu .n { flex: none; width: 24px; height: 24px; border-radius: 12px; background: var(--surface2); font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+.review p { font-size: 14px; line-height: 1.8; }
+.tabs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); background: var(--surface2); border-radius: 12px; padding: 4px; gap: 4px; }
+.tabs button { min-height: 40px; border: none; border-radius: 9px; background: transparent; font-weight: 700; font-size: 14px; color: var(--muted); }
+.tabs button.on { background: var(--surface); color: var(--fg); }
+
+/* home */
+.hist { display: flex; flex-direction: column; gap: 0; }
+.hrow { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.hrow:last-child { border-bottom: none; }
+.hrow .open { flex: 1; display: flex; align-items: center; gap: 12px; background: none; border: none; text-align: left; padding: 0; min-width: 0; min-height: 44px; }
+.hrow .sc { font-size: 24px; font-weight: 900; width: 46px; }
+.hrow .meta { display: flex; flex-direction: column; min-width: 0; font-size: 13px; }
+.tag { font-size: 10px; font-weight: 700; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; color: var(--muted); margin-left: 6px; }
+.del { background: none; border: 1px solid var(--line); border-radius: 10px; font-size: 12px; font-weight: 700; min-height: 36px; padding: 0 10px; color: var(--muted); }
+.del.arm { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-fg); }
+.resume { background: var(--green); color: var(--on-green); border: none; border-radius: 18px; padding: 16px; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; }
+.resume b { font-size: 17px; }
+svg text { fill: var(--muted); font-family: var(--font); }
+@media (prefers-reduced-motion: no-preference) { .chip, .dot, .btn { transition: background-color .15s, color .15s; } }
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(() => {
+// ---- Course data: 児玉カントリー倶楽部（GDO掲載のヤーデージ表）
+// [par, HDCP, BACK, REG, FRONT, OB率%, バンカー率%]  OB率・バンカー率はGDOユーザー（スコア96〜105）の集計値。
+// 対象（スコア80〜100）とずれるため%は表示せず、危険度ラベルの判定だけに使う。自分の実績が3回以上あればそちらを優先。
+const C = {
+  '西': [[5,2,546,535,523,0,14],[4,5,406,381,345,25,0],[3,8,201,174,130,13,25],[4,1,419,392,374,30,0],[4,4,380,359,330,18,9],[4,7,365,347,336,17,17],[5,3,534,488,476,0,0],[4,6,407,352,315,20,0],[3,9,145,134,124,0,0]],
+  '南': [[4,8,353,324,324,0,0],[5,2,535,520,509,18,18],[4,4,377,349,336,29,0],[3,7,153,143,130,56,0],[4,5,395,369,347,0,29],[4,1,366,351,341,0,22],[4,6,349,340,293,13,13],[3,3,145,132,120,0,14],[5,9,489,472,459,0,0]],
+  '東': [[4,8,317,300,300,0,0],[4,2,360,332,319,50,0],[4,5,325,315,300,75,0],[3,4,148,148,128,100,0],[5,1,456,440,419,67,0],[3,7,136,124,110,75,25],[5,3,510,486,452,57,0],[4,6,355,338,323,0,0],[4,9,350,350,335,0,20]]
+};
+const TEE = { back: ['バック', 2], reg: ['レギュラー', 3], front: ['フロント', 4] };
+const TEESHOT = [['OB','OB'],['L','左'],['FW','FW'],['R','右'],['W','池']];
+const KEY = 'kodama-onetap-v1';
+const SAMPLE_VER = 2; // サンプルを入れ替えたら上げる（自分の記録は残す）
+const OWN_MIN = 3; // 自分の実績に切り替える最低ラウンド数
+
+// 自分の過去ラウンド（サンプル除く）から、そのホールの実績を集計
+function own(course, no) {
+  let n = 0, ob = 0, w = 0, fw = 0, par = 0;
+  S.rounds.filter(r => !r.sample).forEach(r => r.holes.forEach((h, i) => {
+    const f = info(r, i);
+    if (f.course === course && f.no === no && h) { n++; par = f.par; if (h.t === 'OB') ob++; if (h.t === 'W') w++; if (h.t === 'FW') fw++; }
+  }));
+  return { n, ob, w, fw, par };
+}
+function riskHints(h) {
+  const out = [];
+  const o = own(h.course, h.no);
+  if (o.n >= OWN_MIN) {
+    out.push([o.ob + o.w >= Math.ceil(o.n / 3) ? 'warn' : '', `あなたのOB・池 ${o.ob + o.w}/${o.n}回`]);
+    if (o.par >= 4) out.push(['', `FWキープ ${o.fw}/${o.n}回`]);
+  } else {
+    if (h.ob >= 40) out.push(['warn', 'OB多発']); else if (h.ob >= 20) out.push(['', 'OB注意']);
+    if (h.bk >= 20) out.push(['', 'バンカー注意']);
+  }
+  return out;
+}
+
+// ティーショットのアイコン：左右は矢印、FWは◎、OBは白杭、池は池のイラスト
+function teeIcon(k, s) {
+  const lab = (TEESHOT.find(t => t[0] === k) || ['', ''])[1];
+  const a = `width="${s}" height="${s}" viewBox="0 0 24 24" role="img" aria-label="${lab}"`;
+  // 足元から上に伸び、途中から左（右）へ逸れていく弾道の矢印
+  if (k === 'L') return `<svg class="ti" ${a} fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 19.5C14 13.5 13 9 6 5"></path><path d="M12 4.5L6 5l2.6 5.5"></path><circle cx="14" cy="21.6" r="1.6" fill="currentColor" stroke="none"></circle></svg>`;
+  if (k === 'R') return `<svg class="ti" ${a} fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 19.5C10 13.5 11 9 18 5"></path><path d="M12 4.5L18 5l-2.6 5.5"></path><circle cx="10" cy="21.6" r="1.6" fill="currentColor" stroke="none"></circle></svg>`;
+  if (k === 'FW') return `<span class="ti fw" style="font-size:${Math.round(s * 1.05)}px" role="img" aria-label="FW">◎</span>`;
+  if (k === 'OB') return `<svg class="ti" ${a}>
+    <line x1="3" y1="21.5" x2="21" y2="21.5" stroke="#5E8A4E" stroke-width="2" stroke-linecap="round"></line>
+    <path d="M9 3.5h6v13l-3 4.5-3-4.5z" fill="#FFFFFF" stroke="#2A2F2C" stroke-width="1.4" stroke-linejoin="round"></path>
+    <line x1="9" y1="7" x2="15" y2="7" stroke="#2A2F2C" stroke-width="1"></line></svg>`;
+  if (k === 'W') return `<svg class="ti" ${a}>
+    <path d="M5 9c-.5-2 .2-4 1-5M7.5 9c0-2 .6-3.6 1.6-4.6" fill="none" stroke="#5E8A4E" stroke-width="1.6" stroke-linecap="round"></path>
+    <ellipse cx="12" cy="15" rx="10" ry="6" fill="#3E8FCB" stroke="#2A6E9F" stroke-width="1.2"></ellipse>
+    <path d="M6.5 14.5q1.6-1.4 3.2 0t3.2 0M10.5 17.5q1.6-1.4 3.2 0t3.2 0" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"></path></svg>`;
+  return '–';
+}
+
+function info(r, i) {
+  const course = i < 9 ? r.out : r.in;
+  const h = C[course][i % 9];
+  return { course, no: i % 9 + 1, par: h[0], hdcp: h[1], yd: h[TEE[r.tee][1]], ob: h[5], bk: h[6] };
+}
+
+// ---- Sample rounds (shown until the user deletes them)
+function mk(id, date, out, inn, weather, wind, s, p, t, label) {
+  return { id, date, out, in: inn, tee: 'reg', weather, wind, sample: true, label: label || '',
+    holes: s.map((v, i) => ({ s: v, p: p[i], t: t[i] })) };
+}
+function samples() {
+  return [
+    mk(1, '2026-10-18', '東', '西', '曇', '弱',
+      [5,6,5,4,6,4,7,5,5, 6,5,4,6,5,5,6,5,4], [2,2,2,2,2,2,3,2,2, 2,2,2,3,2,2,2,2,2],
+      ['L','OB','FW',null,'R',null,'L','FW','R', 'FW','R',null,'L','FW','R','FW','L',null]),
+    mk(2, '2026-11-01', '西', '南', '晴', '中',
+      [6,5,4,6,5,4,6,5,3, 5,6,5,4,5,5,4,4,6], [2,2,2,2,2,1,2,2,2, 2,2,3,2,2,2,2,2,2],
+      ['L','R',null,'OB','FW','FW','L','R',null, 'FW','R','FW',null,'L','R','FW',null,'FW']),
+    // 想定A：ショットは安定、3パットで崩れた日
+    mk(3, '2026-11-05', '南', '東', '晴', '弱',
+      [5,5,5,3,4,5,5,4,6, 5,4,5,4,6,3,5,5,4], [3,2,3,2,1,3,2,3,2, 2,2,3,3,2,2,2,3,2],
+      ['FW','FW','R',null,'FW','FW','L',null,'FW', 'FW','FW','FW',null,'R',null,'FW','L','FW'], 'パットで崩れた日'),
+    // 想定B：左へのミスとOBが続き、後半に崩れた日
+    mk(4, '2026-11-08', '西', '南', '曇', '中',
+      [6,6,4,7,5,4,6,5,3, 5,6,7,4,6,6,5,4,7], [2,2,2,2,2,2,2,2,2, 2,2,2,2,2,3,2,2,2],
+      ['L','OB',null,'OB','L','FW','L','FW',null, 'L','FW','OB',null,'L','L','R',null,'L'], 'OB・左ミスが続いた日'),
+    // 想定C：ティーショットはまずまず、グリーン周りで大叩きした日
+    mk(5, '2026-11-10', '東', '西', '晴', '強',
+      [7,6,6,5,7,3,7,6,5, 7,4,4,6,5,5,7,5,3], [2,2,2,2,2,2,2,2,1, 2,2,2,2,2,2,2,2,1],
+      ['FW','R','FW',null,'FW',null,'FW','L','FW', 'FW','FW',null,'R','FW','FW','L','FW',null], '寄せで苦しんだ日')
+  ];
+}
+
+// ---- State & storage (この端末のブラウザに保存)
+const S = { view: 'home', rounds: [], cur: null, viewId: null, hole: 0, draft: null, arm: null, tab: 'review', msg: '', copied: false,
+  setup: { out: '西', in: '南', tee: 'reg', weather: '晴', wind: '弱' } };
+function load() {
+  try { const d = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (d && Array.isArray(d.rounds)) {
+      S.rounds = d.sv === SAMPLE_VER ? d.rounds : d.rounds.filter(r => !r.sample).concat(samples());
+      S.cur = d.cur || null; return; } } catch (e) {}
+  S.rounds = samples();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ sv: SAMPLE_VER, rounds: S.rounds, cur: S.cur })); } catch (e) {} }
+
+// ---- Analysis
+function sum(a) { return a.reduce((x, y) => x + y, 0); }
+function analyze(r) {
+  const H = r.holes.map((h, i) => Object.assign({ i }, info(r, i), h));
+  const total = sum(H.map(h => h.s)), par = sum(H.map(h => h.par));
+  const out = sum(H.slice(0, 9).map(h => h.s)), inn = sum(H.slice(9).map(h => h.s));
+  const putts = sum(H.map(h => h.p));
+  const fwCh = H.filter(h => h.par >= 4), fwHit = fwCh.filter(h => h.t === 'FW').length;
+  const gir = H.filter(h => h.s - h.p <= h.par - 2).length;
+  const three = H.filter(h => h.p >= 3).length;
+  const obN = H.filter(h => h.t === 'OB').length, wN = H.filter(h => h.t === 'W').length;
+  const loss = { approach: 0, tee: 0, putt: 0, pen: 0 };
+  H.forEach(h => {
+    const d = h.s - h.par;
+    const pen = h.t === 'OB' ? 2 : h.t === 'W' ? 1 : 0;
+    const pl = Math.max(0, h.p - 2);
+    loss.pen += Math.min(pen, Math.max(0, d));
+    loss.putt += Math.min(pl, Math.max(0, d - pen));
+    let rest = Math.max(0, d - pen - pl);
+    const girH = h.s - h.p <= h.par - 2;
+    if (h.par >= 4 && (h.t === 'L' || h.t === 'R') && !girH && rest > 0) { loss.tee += 1; rest -= 1; }
+    loss.approach += rest;
+    h.d = d; h.gir = girH;
+  });
+  const cnt = { e: 0, b: 0, p: 0, bo: 0, db: 0 };
+  H.forEach(h => { if (h.d <= -2) cnt.e++; else if (h.d === -1) cnt.b++; else if (h.d === 0) cnt.p++; else if (h.d === 1) cnt.bo++; else cnt.db++; });
+  return { H, total, par, diff: total - par, out, inn, putts, avgPutt: putts / 18, fwHit, fwCh: fwCh.length, gir, three, obN, wN, loss, cnt };
+}
+function sgn(n) { return n > 0 ? '+' + n : n === 0 ? '±0' : String(n); }
+function md(d) { const [y, m, dd] = d.split('-'); return Number(m) + '/' + Number(dd); }
+
+const ISSUE = {
+  approach: { name: 'アプローチ〜寄せ', title: 'グリーン周りから確実に「乗せる」',
+    why: 'スコア80〜100の人で一番差がつくのがここです。原因は「グリーンを外した後の1打が乗らない（ダフリ・トップ・距離不足）」か、「2打目以降で無理にピンを狙い、難しい場所に外す」のどちらかが大半です。',
+    check: 'グリーンを外したら「次の1打で必ずグリーンに乗せる」が合格ライン。ピンに寄せるより、乗せることを優先してください。',
+    menu: ['30y以内のランニングアプローチ（7〜9番アイアン）を20球。キャリー1/3・ラン2/3を体で覚える', '芝の上なら、ラフ・左足下がりなど外しやすいライから10球ずつ。練習場ならマットの端から', '50y・70y・100yの3つの距離を、番手と振り幅で打ち分ける練習を各10球'] },
+  tee: { name: 'ティーショット', title: 'フェアウェイに置くティーショット',
+    why: 'フェアウェイを外すと、2打目が林越えやラフからになり、グリーンを狙えなくなります。左右どちらかに偏っているなら、スイングの癖が出ているサインです。',
+    check: '打つ前に、フェアウェイの中の狙う一点（木や看板）を決めてから構える。飛距離は8割で十分です。',
+    menu: ['ドライバーを8割の振り幅で10球。飛距離は見ず、狙った幅に何球入るかだけ数える', 'UTかFWウッドでのティーショットを10球。ドライバーとの曲がり幅の差を確認する', '本番と同じルーティン（素振り1回→目標確認→構えて3秒以内に打つ）で5球'] },
+  putt: { name: 'パット', title: '3パットをなくす距離感',
+    why: '3パットの多くは、1打目の距離感（大きくショート・オーバー）が原因です。ラインを読むより、距離を合わせる方がスコアに直結します。',
+    check: '10m以上は「カップを中心に半径1mの円に止める」が目標。カップインは狙わなくて構いません。',
+    menu: ['10m・15mのロングパットを各10球。半径1m以内に止まった数を数える', '1.5mのパットを連続10球入るまで続ける', 'スタート前の練習グリーンでは、ラインより距離感だけを合わせる（5分で十分）'] },
+  pen: { name: 'OB・池', title: 'OB・池を出さないマネジメント',
+    why: 'OBは1回で2打、池でも1打を失うので、スコアへの影響が最も大きいミスです。多くは「無理なクラブ選択」と「OB側に向いて構えている」ことから起きます。',
+    check: 'OBのあるホールは、ティーグラウンドのOB側に立ち、OBと反対サイドを狙う。迷ったら番手を落とす。',
+    menu: ['練習場で自分の「最大の曲がり幅」を把握する（ドライバー10球の左右のブレを確認）', 'UT・FWウッドで、狙った方向に打ち出す練習を10球', 'ティーショットで番手を落とす基準（例：OB率の高いホール、狭いホール）を決めておく'] }
+};
+
+function hn(h) { return `${h.course}${h.no}番`; }
+function avg(a) { return a.length ? sum(a) / a.length : 0; }
+function f1(n) { return (n > 0 ? '+' : '') + n.toFixed(1); }
+function pctS(a, b) { return b ? Math.round(a / b * 100) : 0; }
+
+function review(r, a) {
+  const H = a.H;
+  H.forEach(h => { h.toG = h.s - h.p; h.bon = h.toG <= h.par - 1; });
+  const fwH = H.filter(h => h.par >= 4 && h.t === 'FW'), missH = H.filter(h => h.par >= 4 && (h.t === 'L' || h.t === 'R'));
+  const L = H.filter(h => h.t === 'L').length, R = H.filter(h => h.t === 'R').length;
+  const penH = H.filter(h => h.t === 'OB' || h.t === 'W');
+  const nonGir = H.filter(h => !h.gir);
+  const scramble = nonGir.filter(h => h.d <= 0).length;
+  const bogeyOn = H.filter(h => h.bon).length;
+  const far = H.filter(h => h.toG - (h.par - 2) >= 3);
+  const one = H.filter(h => h.p === 1).length;
+  const threeH = H.filter(h => h.p >= 3);
+  const big = H.filter(h => h.d >= 3);
+  let streak = 0, best = 0, bestEnd = -1;
+  H.forEach((h, i) => { streak = h.d >= 1 ? streak + 1 : 0; if (streak > best) { best = streak; bestEnd = i; } });
+  let bounce = 0, bounceCh = 0;
+  H.forEach((h, i) => { if (h.d >= 2 && i < 17) { bounceCh++; if (H[i + 1].d <= 0) bounce++; } });
+  const byPar = [3, 4, 5].map(p => { const hs = H.filter(h => h.par === p); return { p, n: hs.length, avg: avg(hs.map(h => h.d)) }; });
+  const hard = H.filter(h => h.hdcp <= 3), easy = H.filter(h => h.hdcp >= 7);
+  const hardAvg = avg(hard.map(h => h.d)), easyAvg = avg(easy.map(h => h.d));
+
+  // 総評
+  // ティーショットの曲がりとOB・池はどちらもティーショットのミス。合算で比べて最優先の課題を決める
+  const totalLoss = sum(Object.values(a.loss));
+  const teeAll = a.loss.tee + a.loss.pen;
+  const merged = a.loss.tee > 0 && a.loss.pen > 0 && teeAll > a.loss.approach && teeAll > a.loss.putt;
+  let keys = Object.keys(a.loss).sort((x, y) => a.loss[y] - a.loss[x]);
+  if (merged) { const lead = a.loss.pen >= a.loss.tee ? 'pen' : 'tee'; keys = [lead].concat(keys.filter(k => k !== lead)); }
+  const top = totalLoss > 0 ? keys[0] : null;
+  const pct = k => totalLoss ? Math.round(a.loss[k] / totalLoss * 100) : 0;
+  const topV = merged ? teeAll : (top ? a.loss[top] : 0);
+  const topPct = totalLoss ? Math.round(topV / totalLoss * 100) : 0;
+  let summary = `${a.total}（${sgn(a.diff)}）。パー比${sgn(a.diff)}のうち、`;
+  if (merged) summary += `一番大きいのはティーショットのミスで、曲がり${a.loss.tee}打とOB・池${a.loss.pen}打を合わせて推定${teeAll}打（約${topPct}%）です。`;
+  else summary += top ? `一番大きいのは${ISSUE[top].name}で推定${a.loss[top]}打（約${pct(top)}%）です。` : '大きなロスはありませんでした。';
+  const second = keys.slice(1).find(k => a.loss[k] > 0 && !(merged && (k === 'tee' || k === 'pen')));
+  if (top && second) summary += `次いで${ISSUE[second].name}が${a.loss[second]}打。`;
+  if (Math.abs(a.out - a.inn) >= 4) summary += a.inn > a.out ? `後半に${a.inn - a.out}打崩れたのも響きました。` : `前半の出遅れ（後半より${a.out - a.inn}打多い）が響きました。`;
+
+  // 良かったこと
+  const good = [];
+  if (a.avgPutt <= 1.9) good.push(`パットは平均${a.avgPutt.toFixed(2)}、3パットは${a.three}回。グリーン上は安定しています。`);
+  if (a.fwCh && a.fwHit / a.fwCh >= 0.55) good.push(`フェアウェイキープ率${pctS(a.fwHit, a.fwCh)}%。ティーショットで大きく崩れていません。`);
+  if (a.obN + a.wN === 0) good.push('OB・池はゼロ。大叩きにつながるミスを防げています。');
+  if (a.cnt.e + a.cnt.b + a.cnt.p >= 5) good.push(`パー以上が${a.cnt.e + a.cnt.b + a.cnt.p}ホール${a.cnt.b + a.cnt.e ? `（うちバーディ以上${a.cnt.b + a.cnt.e}）` : ''}。取れるホールでしっかり取れています。`);
+  if (bounceCh >= 2 && bounce / bounceCh >= 0.5) good.push(`ダボ以上の次のホールで、パー以上が${bounce}回。気持ちの切り替えができています。`);
+  if (scramble >= 3) good.push(`パーオンしなかったホールでパーを${scramble}回拾っています。寄せとパットで粘れています。`);
+  if (!good.length) good.push(`OUT ${a.out}・IN ${a.inn}。18ホールの記録が揃ったことで、課題がはっきり数字で見えるようになりました。`);
+
+  // 分野別の詳細
+  const tee = [];
+  tee.push(`パー4・パー5の${a.fwCh}ホールで、FWキープ${a.fwHit}回（${pctS(a.fwHit, a.fwCh)}%）。左${L}回・右${R}回・OB${a.obN}回・池${a.wN}回。`);
+  if (fwH.length >= 2 && missH.length >= 2) {
+    const g = avg(missH.map(h => h.d)) - avg(fwH.map(h => h.d));
+    tee.push(`FWに置いたホールは平均${f1(avg(fwH.map(h => h.d)))}、左右に外したホールは平均${f1(avg(missH.map(h => h.d)))}。${g > 0.3 ? `フェアウェイを外すと1ホールあたり約${g.toFixed(1)}打損をしている計算です。` : 'FWを外してもリカバリーできています。'}`);
+  }
+  if (L >= 2 && L >= R * 2) tee.push(`ミスは左に偏っています（${L}回）。引っかけが出やすい日は、切り返しで上体が突っ込んで体の回転が止まり、手が返りすぎていることが多いです。フィニッシュまで体を回し切る意識を。`);
+  else if (R >= 2 && R >= L * 2) tee.push(`ミスは右に偏っています（${R}回）。スライス・プッシュはフェースが開いたまま当たるのが典型です。グリップを少しだけかぶせて握り、球をつかまえる意識を。`);
+  else if (L + R >= 3) tee.push('ミスは左右両方に出ています。方向の癖よりも、リズムや力みが原因のことが多いです。8割の力で振ることを優先しましょう。');
+  if (penH.length) tee.push(`OB・池は${penH.map(h => `${hn(h)}（${h.t === 'OB' ? 'OB' : '池'}）`).join('、')}。合計${a.obN * 2 + a.wN}打のロスです。`);
+
+  const appr = [];
+  appr.push(`パーオン${a.gir}/18（${pctS(a.gir, 18)}%）、ボギーオン（パーより1打多い打数で乗せる）${bogeyOn}/18（${pctS(bogeyOn, 18)}%）。90切りの目安は、ボギーオン率70%以上とよく言われます。`);
+  if (nonGir.length) appr.push(`パーオンしなかった${nonGir.length}ホールのうち、パー以上で上がれたのは${scramble}ホール（寄せワン率${pctS(scramble, nonGir.length)}%）。`);
+  if (far.length) appr.push(`グリーンに乗せるまでに、パーオンより3打以上多くかかったホールが${far.length}つ（${far.map(hn).join('、')}）。グリーン周りを行ったり来たりしている可能性が高く、一番縮めやすい部分です。`);
+
+  const putt = [];
+  putt.push(`合計${a.putts}パット（平均${a.avgPutt.toFixed(2)}）。1パット${one}回、3パット以上${threeH.length}回。`);
+  if (threeH.length) putt.push(`3パットは${threeH.map(hn).join('、')}。${threeH.filter(h => h.gir).length >= 1 ? 'パーオンしたホールでの3パットは、長い距離が残った可能性が高いです。ロングパットの距離感を磨きましょう。' : 'アプローチの後の3パットは、寄せが離れたかショートパットのミスです。1.5mの練習が効きます。'}`);
+  const girPutt = avg(H.filter(h => h.gir).map(h => h.p)), ngPutt = avg(nonGir.map(h => h.p));
+  if (a.gir >= 2 && nonGir.length >= 2) putt.push(`パーオンしたホールは平均${girPutt.toFixed(1)}パット、しなかったホールは平均${ngPutt.toFixed(1)}パット。${ngPutt < girPutt ? '寄せが近くに付いている証拠です。' : '寄せの距離を詰めると、パット数も自然に減ります。'}`);
+
+  const flow = [];
+  if (a.inn - a.out >= 4) flow.push(`後半に${a.inn - a.out}打落としています。昼休憩の後は体が硬くなりやすいので、後半スタート前に素振りとストレッチを5分。後半最初の3ホールは安全策で入りましょう。`);
+  else if (a.out - a.inn >= 4) flow.push(`前半が後半より${a.out - a.inn}打多いです。出だしで体が温まっていない可能性があります。スタート前にアプローチとパットで距離感を合わせておくと効果的です。`);
+  else flow.push(`前半${a.out}・後半${a.inn}。前後半の差は小さく、18ホールを通して安定しています。`);
+  if (best >= 3) flow.push(`${best}ホール連続でボギー以上（${hn(H[bestEnd - best + 1])}〜${hn(H[bestEnd])}）。悪い流れのときは、次のティーショットをFWに置くことだけに集中して流れを切りましょう。`);
+  if (big.length) flow.push(`トリプルボギー以上が${big.length}回（${big.map(h => `${hn(h)} ${sgn(h.d)}`).join('、')}）。大叩き1回で3打以上を失います。ピンチでは「ボギーで止める」判断を最優先に。`);
+  if (bounceCh >= 2 && bounce / bounceCh < 0.5) flow.push(`ダボ以上の次のホールでパー以上は${bounceCh}回中${bounce}回。ミスを引きずりやすい傾向があります。ミスの後は、深呼吸してからティーに立つルーティンを決めておきましょう。`);
+  if (r.wind === '強') flow.push('強風の中でのラウンドでした。この条件での数字は割り引いて見て大丈夫です。');
+  if (r.weather === '雨') flow.push('雨の中でのラウンドでした。グリーンが重い日は、パットが短くなりやすいです。');
+
+  // ホールの傾向
+  const holeT = [];
+  const worstPar = byPar.filter(x => x.n).sort((x, y) => y.avg - x.avg)[0];
+  holeT.push(`パー3 平均${f1(byPar[0].avg)}・パー4 平均${f1(byPar[1].avg)}・パー5 平均${f1(byPar[2].avg)}。`);
+  if (worstPar && worstPar.avg >= 1) holeT.push({ 3: 'パー3で一番苦戦しています。ティーショットがそのままグリーンを狙う1打なので、ショートしやすい人は1番手大きめを選びましょう。', 4: 'パー4で一番苦戦しています。2打目が長く残りやすいので、ボギーオン（3打でグリーン）を基準に組み立てるのが現実的です。', 5: 'パー5で一番苦戦しています。2打目で無理をせず、3打目を得意な距離から打てるように刻むのが近道です。' }[worstPar.p]);
+  if (easy.length && hard.length) {
+    if (easyAvg >= 1 && easyAvg >= hardAvg - 0.3) holeT.push(`易しいホール（HDCP7〜9）でも平均${f1(easyAvg)}。難ホールの平均${f1(hardAvg)}と差がありません。易しいホールの取りこぼしを減らすのが、一番効率よくスコアを縮める方法です。`);
+    else holeT.push(`難ホール（HDCP1〜3）で平均${f1(hardAvg)}、易しいホール（HDCP7〜9）で平均${f1(easyAvg)}。難ホールはボギーで十分という意識で、大叩きを防ぎましょう。`);
+  }
+
+  // 次回の児玉CC攻略プラン（今日打数を落としたホール）
+  const plan = H.slice().filter(h => h.d >= 2).sort((x, y) => (y.d - x.d) || (x.hdcp - y.hdcp)).slice(0, 3).map(h => {
+    const o = own(h.course, h.no);
+    let t = `今日は${sgn(h.d)}。`;
+    if (h.t === 'OB' || h.t === 'W') t += `ティーショットが${h.t === 'OB' ? 'OB' : '池'}。次回はUTかFWウッドで、${h.t === 'OB' ? 'OB' : '池'}と反対サイドを狙いましょう。`;
+    else if (h.t === 'L' || h.t === 'R') t += `ティーショットを${h.t === 'L' ? '左' : '右'}に外してから崩れました。次回は${h.t === 'L' ? '右' : '左'}サイドを狙い、2打目は確実に前へ。`;
+    else if (h.p >= 3) t += `${h.p}パット。グリーンに乗ったら、まず2パットで上がることを優先。`;
+    else t += `グリーンまで${h.toG}打かかりました。2打目以降は無理にピンを狙わず、グリーンの広い側へ。`;
+    if (o.n >= OWN_MIN && o.ob + o.w >= 2) t += `（これまで${o.n}回中${o.ob + o.w}回OB・池）`;
+    else if (o.n < OWN_MIN && h.ob >= 20) t += '（OBが出やすいホール）';
+    if (h.hdcp <= 3) t += ` HDCP${h.hdcp}の難ホールなので、ボギーで上がれば十分です。`;
+    if (h.par === 5) t += ' パー5は3打目勝負。2打目は得意な距離を残すことを優先。';
+    return { title: `${hn(h)}（PAR${h.par}・${h.yd}y）`, t };
+  });
+
+  // 次回の目標
+  const goals = [];
+  if (top) goals.push(['スコア', `${a.total}`, `${a.total - Math.max(2, Math.min(5, Math.ceil(topV / 2)))}`]);
+  keys.filter(k => a.loss[k] > 0).slice(0, 3).forEach(k => {
+    if (k === 'approach') goals.push(bogeyOn < 13 ? ['ボギーオン', `${bogeyOn}/18`, `${Math.min(18, bogeyOn + 3)}/18`] : ['パーオン', `${a.gir}/18`, `${Math.min(18, a.gir + 2)}/18`]);
+    if (k === 'tee') goals.push(['FWキープ', `${a.fwHit}/${a.fwCh}`, `${Math.min(a.fwCh, a.fwHit + 2)}/${a.fwCh}`]);
+    const cap = t => t > 0 ? `${t}回以下` : '0回';
+    if (k === 'putt') goals.push(['3パット', `${a.three}回`, cap(Math.max(0, Math.min(1, a.three - 1)))]);
+    if (k === 'pen') goals.push(['OB・池', `${a.obN + a.wN}回`, cap(Math.max(0, a.obN + a.wN - 1))]);
+  });
+
+  // 練習メニュー（1位の課題を3つ、2位の課題から1つ）
+  const menu = top ? ISSUE[top].menu.slice() : [];
+  if (merged) { const o = top === 'tee' ? 'pen' : 'tee'; menu.push(`（${ISSUE[o].name}）${ISSUE[o].menu[0]}`); }
+  if (top && second) menu.push(`（${ISSUE[second].name}）${ISSUE[second].menu[0]}`);
+
+  // これまでとの比較
+  const pool = S.rounds.filter(x => x.id !== r.id && x.date <= r.date && !!x.sample === !!r.sample).slice(-5);
+  let comp = null;
+  if (pool.length) {
+    const P = pool.map(analyze);
+    const pb = P.map(p => p.H.filter(h => h.s - h.p <= h.par - 1).length);
+    const row = (label, now, before, lowerBetter, fmt) => ({ label, now: fmt(now), before: fmt(before), better: lowerBetter ? now < before - 0.05 : now > before + 0.05, worse: lowerBetter ? now > before + 0.05 : now < before - 0.05 });
+    comp = { k: pool.length, rows: [
+      row('スコア', a.total, avg(P.map(p => p.total)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1)),
+      row('FWキープ', pctS(a.fwHit, a.fwCh), avg(P.map(p => pctS(p.fwHit, p.fwCh))), false, v => Math.round(v) + '%'),
+      row('ボギーオン', bogeyOn, avg(pb), false, v => v.toFixed(Number.isInteger(v) ? 0 : 1)),
+      row('パット', a.putts, avg(P.map(p => p.putts)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1)),
+      row('OB・池', a.obN + a.wN, avg(P.map(p => p.obN + p.wN)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1))
+    ] };
+  }
+
+  const issue = top ? Object.assign({ v: topV, pct: topPct }, ISSUE[top]) : null;
+  if (issue && merged) { issue.title = 'ティーショットのミスを減らす'; issue.why = `左右への曲がり（${a.loss.tee}打）とOB・池（${a.loss.pen}打）を合わせると、ロスの一番大きな原因です。` + ISSUE[top].why; }
+  const others = top ? keys.slice(1).filter(k => a.loss[k] > 0 && !(merged && (k === 'tee' || k === 'pen'))).map(k => ({ name: ISSUE[k].name, v: a.loss[k], pct: pct(k) })) : [];
+  return { summary, good: good.slice(0, 3), issue, others, sections: [['ティーショット', tee], ['2打目〜グリーンまで', appr], ['パット', putt], ['流れ・メンタル', flow], ['ホールの傾向', holeT]], plan, goals, menu, comp };
+}
+
+function reviewView(r, a) {
+  const rv = review(r, a);
+  const ul = arr => `<ul class="pts">${arr.map(t => `<li>${t}</li>`).join('')}</ul>`;
+  return `
+    <div class="card review"><span class="eyebrow">総評</span><p>${rv.summary}</p></div>
+    <div class="card review"><span class="eyebrow">良かったこと</span>${ul(rv.good)}</div>
+    ${rv.issue ? `<div class="card issue"><span class="eye">最優先の課題（ロスの約${rv.issue.pct}%）</span><h3>${rv.issue.title}</h3>
+      <p style="font-size:14px;line-height:1.8">${rv.issue.why}</p>
+      <p style="font-size:14px;line-height:1.8"><b>次回のチェックポイント：</b>${rv.issue.check}</p>
+      ${rv.others.length ? `<p class="small" style="color:var(--warn-fg)">そのほかのロス：${rv.others.map(o => `${o.name} +${o.v}打`).join(' / ')}</p>` : ''}</div>` : ''}
+    ${rv.goals.length ? `<div class="card"><h2>次回の目標</h2><div class="goals">${rv.goals.map(([l, n, t]) => `<div class="goal"><span>${l}</span><b>${n}<i>→</i>${t}</b></div>`).join('')}</div></div>` : ''}
+    <div class="card review"><h2>分野別の詳細</h2>
+      ${rv.sections.filter(s => s[1].length).map(([t, arr]) => `<div class="sub"><span class="eyebrow">${t}</span>${ul(arr)}</div>`).join('')}</div>
+    ${rv.plan.length ? `<div class="card review"><h2>次回の児玉CC攻略プラン</h2>${rv.plan.map(p => `<div class="sub"><b style="font-size:14px">${p.title}</b><p>${p.t}</p></div>`).join('')}</div>` : ''}
+    ${rv.menu.length ? `<div class="card"><h2>次の練習メニュー</h2>${rv.menu.map((m, k) => `<div class="menu"><span class="n">${k + 1}</span><span>${m}</span></div>`).join('')}</div>` : ''}
+    ${rv.comp ? `<div class="card"><h2>これまでとの比較</h2><p class="muted small">直近${rv.comp.k}ラウンドの平均との比較</p>
+      <div class="cmp">${rv.comp.rows.map(x => `<div class="cmp-row"><span>${x.label}</span><span class="muted">${x.before}</span><b>${x.now}</b><span class="badge ${x.better ? 'up' : x.worse ? 'down' : ''}">${x.better ? '良化' : x.worse ? '悪化' : '横ばい'}</span></div>`).join('')}</div></div>` : ''}`;
+}
+
+// ---- Views
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function vHome() {
+  const done = S.rounds.slice().sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const list = done.map(r => { const a = analyze(r); return `
+    <div class="hrow">
+      <button class="open" data-a="open" data-v="${r.id}">
+        <span class="sc">${a.total}</span>
+        <span class="meta"><b>${md(r.date)} · ${r.out}→${r.in}${r.sample ? `<span class="tag">サンプル${r.label ? '・' + r.label : ''}</span>` : ''}</b>
+        <span class="muted small">${sgn(a.diff)} · パット${a.putts} · ${r.weather}・風${r.wind}</span></span>
+      </button>
+      <button class="del ${S.arm === r.id ? 'arm' : ''}" data-a="del" data-v="${r.id}">${S.arm === r.id ? '本当に削除' : '削除'}</button>
+    </div>`; }).join('');
+  let resume = '';
+  if (S.cur) { const n = S.cur.holes.filter(Boolean).length; resume = `
+    <button class="resume" data-a="resume"><span><span class="small">プレー中のラウンド</span><br><b>${S.cur.out}→${S.cur.in} · ${n}ホール入力済み</b></span><span style="font-weight:900">続きから →</span></button>`; }
+  return `<div class="main wrap stack">
+    <div><div class="eyebrow">KODAMA COUNTRY CLUB</div><h1 class="title">ワンタップ課題発見</h1>
+    <p class="muted small">1ホール最短1タップ。スコア・パット・ティーショットだけで、どこで打数を失ったかを分析します。</p></div>
+    ${resume}
+    ${trendCard(done)}
+    <div class="card"><h2>ラウンド履歴</h2>${list ? `<div class="hist">${list}</div>` : '<p class="muted small">まだ記録がありません。下のボタンから最初のラウンドを始めましょう。</p>'}</div>
+  </div>
+  <div class="bar wrap"><button class="btn primary" data-a="new">${S.cur ? '新しいラウンドを始める' : 'ラウンドを始める'}</button>
+  ${S.cur && S.arm === 'cur' ? '<button class="linkbtn" data-a="discard">もう一度押すと、プレー中のラウンドを破棄します</button>' : S.cur ? '<button class="linkbtn" data-a="discard">プレー中のラウンドを破棄</button>' : ''}</div>`;
+}
+
+function trendCard(desc) {
+  const asc = desc.slice().reverse().slice(-10);
+  if (asc.length < 2) return '';
+  const vals = asc.map(r => analyze(r).total);
+  const lo = Math.min(...vals) - 2, hi = Math.max(...vals) + 2;
+  const W = 320, Hh = 110, padL = 30, padR = 16, padT = 14, padB = 26;
+  const x = i => padL + (W - padL - padR) * (asc.length === 1 ? 0.5 : i / (asc.length - 1));
+  const y = v => padT + (Hh - padT - padB) * (v - lo) / (hi - lo);
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const avg = (sum(vals) / vals.length).toFixed(1);
+  const best = Math.min(...vals);
+  const labels = asc.map((r, i) => `<text x="${x(i).toFixed(1)}" y="${Hh - 6}" font-size="10" text-anchor="middle">${md(r.date)}</text>`).join('');
+  const last = vals.length - 1;
+  return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2>スコア推移</h2><span class="muted small">平均 <b style="color:var(--fg)">${avg}</b> · ベスト <b style="color:var(--fg)">${best}</b></span></div>
+    <div class="sc-wrap"><svg viewBox="0 0 ${W} ${Hh}" width="100%" role="img" aria-label="直近${vals.length}ラウンドのスコア推移">
+      <line x1="${padL}" x2="${W - padR}" y1="${y(hi - 2).toFixed(1)}" y2="${y(hi - 2).toFixed(1)}" stroke="var(--line)" stroke-dasharray="3 3"></line>
+      <line x1="${padL}" x2="${W - padR}" y1="${y(lo + 2).toFixed(1)}" y2="${y(lo + 2).toFixed(1)}" stroke="var(--line)" stroke-dasharray="3 3"></line>
+      <text x="${padL - 6}" y="${(y(hi - 2) + 4).toFixed(1)}" font-size="10" text-anchor="end">${hi - 2}</text>
+      <text x="${padL - 6}" y="${(y(lo + 2) + 4).toFixed(1)}" font-size="10" text-anchor="end">${lo + 2}</text>
+      <polyline points="${pts}" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      ${vals.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${i === last ? 5 : 3}" fill="${i === last ? 'var(--accent)' : 'var(--green)'}"></circle>`).join('')}
+      <text x="${x(last).toFixed(1)}" y="${(y(vals[last]) - 9).toFixed(1)}" font-size="11" font-weight="700" text-anchor="middle" style="fill:var(--fg)">${vals[last]}</text>
+      ${labels}
+    </svg></div><p class="muted small">上がスコアが悪く、下が良い方向です。</p></div>`;
+}
+
+function vSetup() {
+  const s = S.setup;
+  const row = (act, opts, val, cls) => `<div class="chips ${cls}">${opts.map(([k, l]) => `<button class="chip ${val === k ? 'on' : ''}" data-a="${act}" data-v="${k}">${l}</button>`).join('')}</div>`;
+  const cs = [['西', '西'], ['南', '南'], ['東', '東']];
+  const yd = c => sum(C[c].map(h => h[TEE[s.tee][1]]));
+  return `<div class="main wrap stack">
+    <div><div class="eyebrow">NEW ROUND</div><h1 class="title">今日のコースを選ぶ</h1></div>
+    <div class="card"><span class="label">前半（OUT）</span>${row('out', cs, s.out, 'c3')}
+      <span class="label">後半（IN）</span>${row('in', cs.filter(c => c[0] !== s.out), s.in, 'c2')}
+      <p class="muted small">${s.out}（${yd(s.out).toLocaleString()}y）→ ${s.in}（${yd(s.in).toLocaleString()}y）· PAR72</p></div>
+    <div class="card"><span class="label">ティー</span>${row('tee', [['back', 'バック'], ['reg', 'レギュラー'], ['front', 'フロント']], s.tee, 'c3')}</div>
+    <div class="card"><span class="label">天気（分析の補正に使います）</span>${row('weather', [['晴', '晴れ'], ['曇', 'くもり'], ['雨', '雨']], s.weather, 'c3')}
+      <span class="label">風</span>${row('wind', [['弱', '弱い'], ['中', 'ふつう'], ['強', '強い']], s.wind, 'c3')}</div>
+  </div>
+  <div class="bar wrap"><button class="btn green" data-a="start">${s.out}コース1番からスタート</button><button class="linkbtn" data-a="home">戻る</button></div>`;
+}
+
+// ここまで入力したホールから、今日の傾向とプレー中のひと言を出す
+function todayCard(r) {
+  const H = [];
+  r.holes.forEach((h, i) => { if (h) H.push(Object.assign({}, info(r, i), h)); });
+  const n = H.length;
+  if (!n) return `<div class="today"><div class="today-h"><h2>今日の傾向</h2></div><p class="muted small">1ホール記録すると、ここに今日の傾向が出ます。</p></div>`;
+  const ch = H.filter(h => h.par >= 4);
+  const c = k => ch.filter(h => h.t === k).length;
+  const fw = c('FW'), L = c('L'), R = c('R'), ob = c('OB'), w = c('W');
+  const gir = H.filter(h => h.s - h.p <= h.par - 2).length;
+  const putts = sum(H.map(h => h.p)), three = H.filter(h => h.p >= 3).length;
+  const pen = ob * 2 + w;
+  let appr = 0;
+  H.forEach(h => { const d = h.s - h.par, pp = h.t === 'OB' ? 2 : h.t === 'W' ? 1 : 0;
+    let rest = Math.max(0, d - pp - Math.max(0, h.p - 2));
+    if (h.par >= 4 && (h.t === 'L' || h.t === 'R') && h.s - h.p > h.par - 2 && rest > 0) rest--;
+    appr += rest; });
+  const tips = [];
+  if (n >= 3) {
+    if (L >= 2 && L > R) tips.push(`左へのミスが${L}回。次のティーショットはフェアウェイの右サイドを狙いましょう。`);
+    else if (R >= 2 && R > L) tips.push(`右へのミスが${R}回。次のティーショットはフェアウェイの左サイドを狙いましょう。`);
+    if (ob + w >= 2) tips.push(`OB・池が${ob + w}回。危ないホールは番手を落として、まず前に運ぶことを優先。`);
+    if (three >= 2) tips.push(`3パットが${three}回。ロングパットはカップを狙わず、距離を合わせることだけに集中。`);
+    if (appr >= 3 && appr >= pen && appr >= three) tips.push(`グリーン周りでここまで約${appr}打のロス。寄せは転がしで、まず確実に乗せましょう。`);
+    if (!tips.length) tips.push('大きなミスの偏りはありません。このリズムのまま進みましょう。');
+  }
+  const cell = (k, v, hot) => `<div class="${hot ? 'hot' : ''}">${teeIcon(k, 18)}<b>${v}</b></div>`;
+  const most = Math.max(L, R, ob, w);
+  return `<section class="today" aria-label="今日の傾向">
+    <div class="today-h"><h2>今日の傾向</h2><span class="muted small">ここまで${n}ホール</span></div>
+    <div class="mini">
+      <div><span>FWキープ</span><b>${fw}/${ch.length}</b></div>
+      <div><span>パーオン</span><b>${gir}/${n}</b></div>
+      <div><span>平均パット</span><b>${(putts / n).toFixed(1)}</b></div>
+      <div><span>3パット</span><b>${three}</b></div>
+    </div>
+    ${ch.length ? `<div><span class="label">ティーショットの行き先</span><div class="dir">
+      ${cell('OB', ob, ob > 0 && ob === most)}${cell('L', L, L >= 2 && L === most)}${cell('FW', fw, false)}${cell('R', R, R >= 2 && R === most)}${cell('W', w, w > 0 && w === most)}
+    </div></div>` : ''}
+    ${n < 3 ? '<p class="muted small">3ホール記録すると、プレー中のアドバイスが出ます。</p>'
+      : tips.slice(0, 2).map(t => `<p class="tip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.5 5.5L20 11l-5.5 2.5L12 19l-2.5-5.5L4 11l5.5-2.5z"></path></svg><span>${t}</span></p>`).join('')}
+  </section>`;
+}
+
+function vPlay() {
+  const r = S.cur, i = S.hole, h = info(r, i), d = S.draft;
+  const diff = d.s - h.par;
+  const names = { '-3': 'アルバトロス', '-2': 'イーグル', '-1': 'バーディ', '0': 'パー', '1': 'ボギー', '2': 'ダブルボギー', '3': 'トリプルボギー' };
+  const nm = names[String(diff)] || sgn(diff);
+  const col = diff < 0 ? 'var(--good)' : diff === 0 ? 'var(--muted)' : 'var(--warn-fg)';
+  let tot = 0, tp = 0, n = 0;
+  r.holes.forEach((x, j) => { if (x) { tot += x.s; tp += info(r, j).par; n++; } });
+  const hints = [];
+  if (h.hdcp <= 2) hints.push(['warn', `HDCP${h.hdcp} 難ホール`]); else hints.push(['', `HDCP${h.hdcp}`]);
+  riskHints(h).forEach(x => hints.push(x));
+  const dots = r.holes.map((x, j) => `<button class="dot ${j === i ? 'here' : x ? 'done' : ''}" data-a="go" data-v="${j}" aria-label="${info(r, j).course}${info(r, j).no}番へ">${j + 1}</button>`).join('');
+  const putts = [0, 1, 2, 3, 4].map(p => `<button class="chip ${d.p === p ? 'on' : ''}" data-a="putt" data-v="${p}">${p === 4 ? '4+' : p}</button>`).join('');
+  const tees = TEESHOT.map(([k, l]) => `<button class="chip tee ${d.t === k ? 'on' : ''}" data-a="tee" data-v="${k}" aria-pressed="${d.t === k}">${teeIcon(k, 24)}<span aria-hidden="true">${l}</span></button>`).join('');
+  const last = i === 17;
+  return `<div class="ph wrap">
+      <div class="ph-top"><span>児玉CC · ${r.out}→${r.in} · ${TEE[r.tee][0]}</span><button data-a="home">中断</button></div>
+      <div class="ph-hole"><div class="ph-left"><span class="ph-no">${h.course}${h.no}<small>番</small></span><span class="pill">PAR ${h.par}</span><span class="pill">${h.yd}y</span></div>
+        <div class="ph-total"><span>${n}H 合計</span><div><b>${tot}</b><em>${n ? sgn(tot - tp) : '±0'}</em></div></div></div>
+      <div class="hints">${hints.map(([c, t]) => `<span class="hint ${c}">${t}</span>`).join('')}</div>
+      <div class="dots">${dots}</div>
+    </div>
+    <div class="main wrap stack">
+      ${S.msg ? `<div class="msg" role="status">${esc(S.msg)}</div>` : ''}
+      <div class="stack" style="gap:8px"><span class="label">スコア</span>
+        <div class="stepper"><button data-a="dec" aria-label="1打減らす">−</button>
+          <div class="val"><b>${d.s}</b><span style="color:${col}">${nm}</span></div>
+          <button class="plus" data-a="inc" aria-label="1打増やす">＋</button></div></div>
+      <div class="stack" style="gap:8px"><span class="label">パット数</span><div class="chips c5">${putts}</div></div>
+      ${h.par >= 4 ? `<div class="stack" style="gap:8px"><span class="label">ティーショット</span><div class="chips c5">${tees}</div></div>`
+        : `<p class="auto">パー3はティーショット入力なし。パーオンで評価します。</p>`}
+      ${todayCard(r)}
+    </div>
+    <div class="bar wrap"><button class="btn primary" data-a="next">${last ? '記録してラウンド終了' : '記録して次のホールへ →'}</button></div>`;
+}
+
+function mark(d, s) {
+  const c = d <= -2 ? 'e' : d === -1 ? 'b' : d === 0 ? '' : d === 1 ? 'bo' : 'db';
+  return `<span class="mk ${c}">${s}</span>`;
+}
+
+function vResult() {
+  const r = S.rounds.find(x => x.id === S.viewId);
+  if (!r) { S.view = 'home'; return vHome(); }
+  const a = analyze(r);
+  const half = (k) => { const hs = a.H.slice(k * 9, k * 9 + 9); const course = k ? r.in : r.out;
+    return `<table class="sc"><thead><tr><th scope="col" style="text-align:left">${course}</th>${hs.map(h => `<th scope="col">${h.no}</th>`).join('')}<th scope="col">計</th></tr></thead><tbody>
+      <tr><td class="rl">PAR</td>${hs.map(h => `<td class="muted">${h.par}</td>`).join('')}<td class="muted">36</td></tr>
+      <tr><td class="rl">打数</td>${hs.map(h => `<td>${mark(h.d, h.s)}</td>`).join('')}<td><b>${sum(hs.map(h => h.s))}</b></td></tr>
+      <tr><td class="rl">パット</td>${hs.map(h => `<td class="muted">${h.p}</td>`).join('')}<td class="muted">${sum(hs.map(h => h.p))}</td></tr>
+      <tr><td class="rl">ティー</td>${hs.map(h => `<td class="${h.t === 'FW' ? '' : 'muted'}" style="${h.t === 'FW' ? 'color:var(--good)' : ''}">${h.t ? teeIcon(h.t, 16) : '<span class="muted small">–</span>'}</td>`).join('')}<td></td></tr>
+    </tbody></table>`; };
+  const L = a.loss, maxL = Math.max(1, ...Object.values(L));
+  const lossRows = [['approach', 'アプローチ〜寄せ', 'var(--bar-dbl)'], ['tee', 'ティーショット（FWを外した）', 'var(--accent)'], ['putt', 'パット（3パット以上）', 'var(--bar-bogey)'], ['pen', 'OB・池', 'var(--bar-par)']]
+    .map(([k, l, c]) => `<div class="loss-row"><div class="t"><span>${l}</span><span>+${L[k]}打</span></div><div class="track"><div class="fill" style="width:${Math.round(L[k] / maxL * 100)}%;background:${c}"></div></div></div>`).join('');
+
+  const analysis = `
+    <div class="tiles">
+      <div class="tile"><span>FWキープ</span><b>${a.fwCh ? Math.round(a.fwHit / a.fwCh * 100) : 0}%</b><span>${a.fwHit}/${a.fwCh}</span></div>
+      <div class="tile"><span>パーオン</span><b>${Math.round(a.gir / 18 * 100)}%</b><span>${a.gir}/18</span></div>
+      <div class="tile"><span>平均パット</span><b>${a.avgPutt.toFixed(2)}</b><span>3パット ${a.three}</span></div>
+      <div class="tile"><span>OB・池</span><b>${a.obN + a.wN}</b><span>+${a.obN * 2 + a.wN}打</span></div>
+    </div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2>どこで打数を失ったか</h2><span class="muted small">パー比 ${sgn(a.diff)} の内訳（推定）</span></div>
+      ${lossRows}
+      <p class="muted small">スコア・パット・ティーショットの3項目から推定しています。</p></div>
+    <div class="card"><h2>スコアカード</h2>
+      <div class="sc-wrap">${half(0)}</div><div class="sc-wrap">${half(1)}</div>
+      <div class="legend"><span><span class="mk b">.</span>バーディ</span><span><span class="mk">.</span>パー</span><span><span class="mk bo">.</span>ボギー</span><span><span class="mk db">.</span>ダブルボギー以上</span></div>
+      <p class="muted small">バーディ${a.cnt.b + a.cnt.e} · パー${a.cnt.p} · ボギー${a.cnt.bo} · ダボ以上${a.cnt.db}</p></div>`;
+
+  const reviewHtml = reviewView(r, a);
+
+  return `<div class="main wrap stack">
+    <div class="score-head"><div><span class="muted small">${md(r.date)} · 児玉CC ${r.out}→${r.in} · ${TEE[r.tee][0]} · ${r.weather}・風${r.wind}${r.sample ? `<span class="tag">サンプル${r.label ? '・' + r.label : ''}</span>` : ''}</span>
+      <div><span class="big">${a.total}</span><span class="diff">${sgn(a.diff)}</span></div></div>
+      <div class="small muted" style="text-align:right">OUT <b style="color:var(--fg);font-size:16px">${a.out}</b> / IN <b style="color:var(--fg);font-size:16px">${a.inn}</b><br>パット <b style="color:var(--fg);font-size:16px">${a.putts}</b></div></div>
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="${S.tab === 'review'}" class="${S.tab === 'review' ? 'on' : ''}" data-a="tab" data-v="review">振り返り</button><button role="tab" aria-selected="${S.tab === 'analysis'}" class="${S.tab === 'analysis' ? 'on' : ''}" data-a="tab" data-v="analysis">データ分析</button></div>
+    ${S.tab === 'review' ? reviewHtml : analysis}
+    <textarea id="copytxt" readonly hidden></textarea>
+  </div>
+  <div class="bar wrap"><button class="btn green" data-a="copy">${S.copied ? 'コピーしました' : '結果をテキストでコピー'}</button><button class="linkbtn" data-a="home">ホームに戻る</button></div>`;
+}
+
+function shareText(r) {
+  const a = analyze(r), rv = review(r, a);
+  return [`【児玉CC ${r.out}→${r.in}】${md(r.date)} ${a.total}（${sgn(a.diff)}）`,
+    `OUT ${a.out} / IN ${a.inn} · パット${a.putts}`,
+    `FWキープ${a.fwCh ? Math.round(a.fwHit / a.fwCh * 100) : 0}% · パーオン${a.gir}/18 · OB・池${a.obN + a.wN}`,
+    rv.issue ? `次回の課題：${rv.issue.title}` : ''].filter(Boolean).join('\n');
+}
+
+// ---- Actions
+function draftFor(i) {
+  const x = S.cur.holes[i]; if (x) return Object.assign({}, x);
+  const par = info(S.cur, i).par; return { s: par, p: 2, t: par === 3 ? null : 'FW' };
+}
+function act(a, v) {
+  S.msg = ''; if (a !== 'del' && a !== 'discard') S.arm = null; if (a !== 'copy') S.copied = false;
+  switch (a) {
+    case 'new': S.view = 'setup'; break;
+    case 'home': S.view = 'home'; break;
+    case 'out': S.setup.out = v; if (S.setup.in === v) S.setup.in = ['西', '南', '東'].find(c => c !== v); break;
+    case 'in': S.setup.in = v; break;
+    case 'tee': if (S.view === 'play') S.draft.t = v; else S.setup.tee = v; break;
+    case 'weather': S.setup.weather = v; break;
+    case 'wind': S.setup.wind = v; break;
+    case 'start': {
+      const t = new Date(); const p = n => String(n).padStart(2, '0');
+      S.cur = Object.assign({ id: Date.now(), date: `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`, holes: Array(18).fill(null) }, S.setup);
+      S.hole = 0; S.draft = draftFor(0); S.view = 'play'; save(); break; }
+    case 'resume': { const f = S.cur.holes.findIndex(x => !x); S.hole = f < 0 ? 17 : f; S.draft = draftFor(S.hole); S.view = 'play'; break; }
+    case 'discard': if (S.arm === 'cur') { S.cur = null; S.arm = null; save(); } else S.arm = 'cur'; break;
+    case 'go': S.hole = Number(v); S.draft = draftFor(S.hole); break;
+    case 'inc': S.draft.s = Math.min(15, S.draft.s + 1); break;
+    case 'dec': S.draft.s = Math.max(1, S.draft.s - 1); if (S.draft.p > S.draft.s) S.draft.p = S.draft.s; break;
+    case 'putt': S.draft.p = Number(v); if (S.draft.p >= S.draft.s) S.draft.s = S.draft.p + 1; break;
+    case 'next': {
+      S.cur.holes[S.hole] = Object.assign({}, S.draft); save();
+      const miss = S.cur.holes.findIndex(x => !x);
+      if (S.hole < 17 && (miss < 0 || miss > S.hole)) { S.hole++; S.draft = draftFor(S.hole); }
+      else if (miss >= 0) { S.hole = miss; S.draft = draftFor(miss); S.msg = `${info(S.cur, miss).course}${info(S.cur, miss).no}番（${miss + 1}H目）が未入力です。入力するとラウンドを終了できます。`; }
+      else { const r = S.cur; delete r.arm; S.rounds.push(r); S.cur = null; S.viewId = r.id; S.tab = 'review'; S.view = 'result'; save(); }
+      window.scrollTo(0, 0); break; }
+    case 'open': S.viewId = Number(v); S.tab = 'review'; S.view = 'result'; window.scrollTo(0, 0); break;
+    case 'del': { const id = Number(v); if (S.arm === id) { S.rounds = S.rounds.filter(x => x.id !== id); S.arm = null; save(); } else S.arm = id; break; }
+    case 'tab': S.tab = v; break;
+    case 'copy': {
+      const r = S.rounds.find(x => x.id === S.viewId); const txt = shareText(r);
+      const fallback = () => { const ta = document.getElementById('copytxt'); ta.hidden = false; ta.value = txt; ta.rows = 4; ta.style.width = '100%'; ta.select(); };
+      try { navigator.clipboard.writeText(txt).then(() => { S.copied = true; render(); }, fallback); } catch (e) { fallback(); }
+      return; }
+  }
+  render();
+}
+
+const app = document.getElementById('app');
+function render() {
+  app.innerHTML = S.view === 'setup' ? vSetup() : S.view === 'play' ? vPlay() : S.view === 'result' ? vResult() : vHome();
+}
+app.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) act(b.dataset.a, b.dataset.v); });
+load(); render();
+})();
+</script>
+
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}</script>
+</body></html>
