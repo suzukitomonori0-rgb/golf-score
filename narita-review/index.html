@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#8a6a00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="成田ハイツリー攻略">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<meta name="description" content="ゴルフ倶楽部成田ハイツリーのスコア入力・振り返り・グリーン攻略アプリ">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="成田ハイツリー攻略">
+<meta property="og:title" content="成田ハイツリー攻略">
+<meta property="og:description" content="ゴルフ倶楽部成田ハイツリーのスコア入力・振り返り・グリーン攻略アプリ">
+<meta property="og:url" content="https://suzukitomonori0-rgb.github.io/golf-score/narita-review/">
+<meta property="og:image" content="https://suzukitomonori0-rgb.github.io/golf-score/narita-review/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>成田ハイツリー攻略</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: スマホ1カラムのスコアカード。上部に固定ヘッダー（合計）、下に「入力」「振り返り」の2画面 */
+:root{
+  --paper:#f8f4e4; --card:#ffffff; --ink:#26220f; --muted:#6b6447; --line:#e6dcb8;
+  --green:#8a6a00; --green-soft:#f6ebbd; --flag:#c2410c; --flag-soft:#fde5d4;
+  --under:#2463a8; --over:#b5532a; --hot:#d32f2f; --over-soft:#f8e6dc;
+  --font:"Noto Sans JP",system-ui,-apple-system,"Hiragino Sans",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#17150c; --card:#221f11; --ink:#f0ead2; --muted:#a9a080; --line:#3a3420;
+  --green:#e2b93b; --green-soft:#3a3214; --flag:#fb923c; --flag-soft:#3d2513;
+  --under:#7fb2ec; --over:#ec946c; --hot:#ff7b72; --over-soft:#3a2219; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#17150c; --card:#221f11; --ink:#f0ead2; --muted:#a9a080; --line:#3a3420;
+  --green:#e2b93b; --green-soft:#3a3214; --flag:#fb923c; --flag-soft:#3d2513;
+  --under:#7fb2ec; --over:#ec946c; --hot:#ff7b72; --over-soft:#3a2219; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.wrap>.wrap{width:100%;min-width:0}
+.steps>*,.mini>*,.courses>*{min-width:0}
+.panel{min-width:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+header{position:relative;background:var(--paper);padding-block:14px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.toprow{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.club{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+h1{margin:0;font-size:20px;font-weight:900;letter-spacing:.02em;text-wrap:balance}
+.total{text-align:right;line-height:1.1}
+.total b{font-size:34px;font-weight:900}
+.total small{display:block;font-size:12px;color:var(--muted)}
+.titlerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tabs{display:inline-grid;grid-template-columns:auto auto;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:2px}
+.tabs button{border:0;background:none;padding:5px 12px;font-size:13px;border-radius:7px;white-space:nowrap;font-weight:700;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--green);color:var(--paper)}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.label{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.courses{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.courses label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:700}
+select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.note{font-size:12px;color:var(--muted);margin:0}
+
+/* ホール選択ストリップ */
+.strip{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.strip .side{grid-column:1/-1;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-top:4px}
+.hb{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:4px 0 3px;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
+.hb .n{font-size:10px;color:var(--muted)}
+.hb.on{border-color:var(--green);box-shadow:0 0 0 2px var(--green) inset}
+.mark{display:inline-grid;place-items:center;width:24px;height:24px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.mark.u{border:1.5px solid var(--under);border-radius:50%;color:var(--under)}
+.mark.u2{border:1.5px solid var(--under);border-radius:50%;box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--under);color:var(--under)}
+.mark.b{border:1.5px solid var(--over);color:var(--over)}
+.mark.d{border:1.5px solid var(--over);box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--over);color:var(--over)}
+.mark.e{color:var(--muted);font-weight:400}
+
+/* ホール入力 */
+.holehead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.holehead .hn{font-size:26px;font-weight:900;line-height:1.1;display:flex;gap:10px;align-items:baseline;white-space:nowrap}
+.hgrp{display:flex;flex-direction:column;gap:2px}
+.holehead .hpar{font-size:26px;font-weight:900}
+.holehead .hn small{font-size:14px;font-weight:700;margin-left:2px}
+.holehead .cs{font-size:13px;color:var(--muted)}
+.steps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stp{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--paper);border-radius:10px;padding:8px 4px}
+.stp .row{display:flex;align-items:center;gap:6px}
+.stp button{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px;line-height:1}
+.stp .v{min-width:30px;text-align:center;font-size:24px;font-weight:900}
+.stp .v.empty{color:var(--muted);font-weight:400}
+.grp{display:flex;flex-direction:column;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px;display:inline-flex;align-items:center;gap:3px}
+.chip .ico{flex:none}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--paper);font-weight:700}
+.chip[disabled]{opacity:.4;cursor:default}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+textarea{font:inherit;width:100%;min-height:58px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);resize:vertical}
+.auto{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+.auto span{background:var(--paper);border-radius:6px;padding:2px 8px}
+.nav{display:flex;justify-content:space-between;gap:10px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;font-weight:700}
+.btn.primary{background:var(--green);border-color:var(--green);color:var(--paper)}
+.btn.ghost{background:none}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.confirm{background:var(--over-soft);border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+
+/* 振り返り */
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sum div{background:var(--paper);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:0;min-width:0}
+.sum b{font-size:20px;font-weight:900;line-height:1.2}
+.sum span{font-size:11px;color:var(--muted)}
+.card18{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;text-align:center;overflow-x:auto}
+.card18 .h{font-size:10px;color:var(--muted)}
+.card18 .p{font-size:10px;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:112px 1fr 36px;gap:8px;align-items:center;font-size:13px}
+.bar .track{height:14px;background:var(--paper);border-radius:4px;overflow:hidden}
+.bar .fill{height:100%;background:var(--green);border-radius:4px}
+.bar.top .fill{background:var(--flag)}
+.bar .v{text-align:right;font-weight:700}
+.lst{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.lst li{display:grid;grid-template-columns:22px 1fr;gap:6px;font-size:14px}
+.lst .ic{font-weight:900;text-align:center}
+.lst .good .ic{color:var(--green)} .lst .bad .ic{color:var(--over)}
+.task{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.task.first{border-color:var(--flag);background:var(--flag-soft)}
+.task .t{display:flex;gap:8px;align-items:baseline}
+.task .rk{font-weight:900;color:var(--flag);font-size:13px;white-space:nowrap}
+.task h3{margin:0;font-size:16px;font-weight:700;text-wrap:balance}
+.task p{margin:0;font-size:13px;color:var(--muted)}
+.task .drill{font-size:13px;color:var(--ink)}
+.task .drill b{color:var(--green)}
+.goal{display:grid;grid-template-columns:1fr auto auto auto;gap:4px 10px;font-size:14px;align-items:center}
+.goal .arrow{color:var(--muted)}
+.goal .to{font-weight:900;color:var(--green)}
+.proj{background:var(--green-soft);border-radius:10px;padding:12px;font-size:14px}
+.proj b{font-size:22px;font-weight:900;color:var(--green)}
+.memos{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.memos div{display:grid;grid-template-columns:40px 1fr;gap:6px}
+.memos .hn{color:var(--muted);font-weight:700}
+.sample{font-size:12px;background:var(--flag-soft);color:var(--ink);border-radius:8px;padding:6px 10px}
+h2{margin:0;font-size:16px;font-weight:700}
+.gmode{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:8px;padding:2px;align-self:flex-start}
+.gmode button{border:0;background:none;padding:4px 12px;border-radius:6px;font-size:13px;color:var(--muted)}
+.gmode button[aria-pressed="true"]{background:var(--green);color:var(--paper);font-weight:700}
+.gwrap{display:grid;grid-template-columns:56px auto 56px;gap:6px;align-items:center;justify-content:center;justify-items:center}
+.mini .chips .chip{padding:5px 10px}
+.off{border:1px dashed var(--line);background:none;border-radius:8px;font-size:11px;color:var(--muted);padding:6px 6px;line-height:1.3}
+.off.sel{border-style:solid;border-color:var(--over);color:var(--over);font-weight:700}
+.off[disabled]{opacity:.35;cursor:default}
+.gcwrap{position:relative;max-width:100%}
+.cbtn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:66px;height:66px;border-radius:50%;border:2px solid var(--green);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;color:var(--muted);padding:0}
+.cbtn .fl{font-size:26px}.cbtn .bl{width:18px;height:18px}
+.green{width:min(260px,62vw);aspect-ratio:1;max-width:100%;border-radius:50%;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;background:var(--card);border:2px solid var(--green)}
+.q{border:0;background:var(--green-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--muted);padding:0}
+.q .ic{display:flex;gap:4px;align-items:center;min-height:22px}
+.fl{color:var(--flag);font-size:30px;line-height:1}
+.bl{display:inline-block;width:22px;height:22px;border-radius:50%;flex:none;
+  background:
+    radial-gradient(circle at 34% 28%,rgba(255,255,255,.95) 0 14%,rgba(255,255,255,0) 38%),
+    radial-gradient(circle,rgba(70,80,90,.28) 0 .8px,transparent 1.3px) 0 0/3.6px 3.6px,
+    radial-gradient(circle,rgba(70,80,90,.22) 0 .8px,transparent 1.3px) 1.8px 1.8px/3.6px 3.6px,
+    radial-gradient(circle at 40% 34%,#ffffff 0%,#f4f5f6 42%,#d2d5d9 78%,#a9aeb5 100%);
+  box-shadow:inset -2px -3px 4px rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35)}
+.glegend{display:flex;gap:14px;justify-content:center;font-size:12px;color:var(--muted);align-items:center}
+.gtbl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;font-size:14px;align-items:center}
+.gtbl .k{color:var(--muted)} .gtbl .x{text-align:right;font-weight:700}
+.gtbl .hl{color:var(--over)}
+.q.rec{box-shadow:inset 0 0 0 3px var(--flag)}
+.q.avoid{background:var(--over-soft)}
+.q em{font-style:normal;font-size:10px;font-weight:900;color:var(--flag)}
+.recbox{background:var(--flag-soft);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.recbox b{font-size:15px}
+.recbox .sub{color:var(--muted);font-size:12px}
+.tilt{display:grid;grid-template-columns:auto auto 1fr auto;gap:4px 12px;font-size:13px;align-items:baseline}
+.tilt .k{color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.bar .fill{transition:width .4s ease}}
+@media (max-width:380px){.sum{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:78px 1fr 32px}}
+.hr{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.run{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--muted);flex-wrap:wrap;justify-content:flex-end}
+.run b{font-size:22px;font-weight:900;color:var(--ink)}
+.run .res{font-weight:700;color:var(--ink)}
+.total small{white-space:nowrap}
+.toprow>div:first-child{min-width:0}
+.p3tbl{display:grid;grid-template-columns:auto auto auto auto 1fr;gap:6px 14px;font-size:14px;align-items:baseline}
+.p3tbl span:nth-child(5n){text-align:right;color:var(--muted)}
+.p3tbl .k{color:var(--muted);font-size:12px}
+.pos{color:var(--over)!important}.neg{color:var(--under)!important}
+.holehead{align-items:flex-start}
+.advice{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--flag);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.advice ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.advice b{font-variant-numeric:tabular-nums}
+.startsel{display:flex;gap:8px;flex-wrap:wrap}
+.startsel .chip{padding:8px 14px;font-size:14px}
+.stp .sub{font-size:13px;font-weight:700;min-height:1.4em;line-height:1.4}
+.stp .sub .hint{font-weight:400;color:var(--muted);font-size:11px}
+.stp .sub .even{color:var(--green)}
+.cp{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:3px;background:var(--ink);color:var(--card);font-size:10px;font-weight:700;line-height:1}
+.chipafter{background:var(--paper);border-radius:10px;padding:10px}
+.glegend{flex-wrap:wrap;gap:4px 14px}
+.glegend>span{white-space:nowrap}
+.clubrow{display:flex;align-items:center;gap:10px}
+.club{white-space:nowrap}
+.helpbtn{white-space:nowrap;flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;color:var(--green)}
+.help h3{margin:6px 0 0;font-size:14px;font-weight:700;color:var(--green)}
+.help ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.help b{font-weight:700}
+.hnav{display:flex;flex-direction:column;gap:6px}
+.hrow{display:grid;grid-template-columns:34px repeat(9,1fr);gap:4px;align-items:center}
+.hlab{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.hn2{aspect-ratio:1;max-width:36px;width:100%;justify-self:center;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;padding:0;color:var(--muted)}
+.hn2.done{background:var(--green-soft);border-color:var(--green-soft);color:var(--ink)}
+.hn2.cur{background:var(--green);border-color:var(--green);color:var(--paper)}
+@media (max-width:340px){
+  .fl{font-size:26px}
+  .cbtn .fl{font-size:22px}
+  .club{font-size:10px;letter-spacing:.06em}
+  .clubrow{gap:6px}.hrow{grid-template-columns:28px repeat(9,1fr);gap:3px}.hn2{font-size:12px}.hlab{font-size:10px}}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.tile{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 1px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;line-height:1.2;white-space:nowrap;min-width:0;color:var(--ink)}
+.tile span{overflow:hidden;text-overflow:clip;max-width:100%}
+.tile[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--paper);font-weight:500}
+@media (max-width:370px){.tile{font-size:9.5px;letter-spacing:-.04em}.tiles{gap:3px}}
+.g16{grid-template-columns:repeat(4,1fr)!important;grid-template-rows:repeat(4,1fr)!important;gap:0!important}
+.gc{border:0;background:var(--green-soft);padding:0;min-width:0;cursor:pointer}
+.gc.rec{background:var(--flag-soft)}
+.gc.avoid{background:var(--over-soft)}
+.gc:focus-visible{outline:2px solid var(--flag);outline-offset:-2px}
+.mk{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:3;line-height:1;display:block}
+.mflag{transform:translate(-22%,-88%)}
+.ql{position:absolute;transform:translate(-50%,-50%);font-size:10px;opacity:.75;color:var(--muted);pointer-events:none;text-align:center;line-height:1.25;z-index:2;white-space:nowrap;display:flex;flex-direction:column;align-items:center}
+.ql em{font-style:normal;font-size:10px;font-weight:900;color:var(--flag)}
+.cbtn{z-index:2}
+.gnote{text-align:center;margin:0}
+.axb{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;border:0;background:transparent;padding:0;z-index:2}
+.axb::after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid var(--green);background:var(--card)}
+.axb:focus-visible{outline:2px solid var(--flag)}
+.gfeat{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.gtag{background:var(--flag-soft);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.glast{flex-basis:100%;font-size:12px;color:var(--muted)}
+.gstep{position:absolute;pointer-events:none;z-index:1;border-color:var(--flag);border-style:dashed;border-width:0}
+.gstep.h{left:6%;right:6%;top:50%;border-top-width:3px}
+.gstep.v{top:6%;bottom:6%;left:50%;border-left-width:3px}
+.gstepl{position:absolute;pointer-events:none;z-index:2;font-size:10px;font-weight:700;color:var(--flag);background:var(--card);border-radius:4px;padding:0 4px;white-space:nowrap}
+.gstepl.h{left:50%;top:calc(50% + 40px);transform:translateX(-50%)}
+.gstepl.v{top:6%;left:calc(50% + 8px)}
+.tile b{font-size:13px;font-weight:700}
+.tile small{font-size:10.5px;color:inherit;opacity:.75}
+.tile.hot{color:var(--hot);border-color:var(--hot)}
+.tile.hot[aria-pressed="true"]{background:var(--hot);border-color:var(--hot);color:var(--card)}
+.warn{background:var(--over-soft);border:1px solid var(--over);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.warn b{color:var(--over)}
+.wbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.courses label[for="teeC"]{grid-column:1/-1}
+.ktext{margin:0;font-size:14px;line-height:1.8}
+.kpts{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.7}
+.ksub{display:flex;flex-direction:column;gap:4px;padding-top:10px;border-top:1px solid var(--line)}
+.ksub:first-of-type{border-top:0;padding-top:0}
+.kissue{border-color:var(--flag);background:var(--flag-soft)}
+.kissue h2{font-size:17px}
+.kmenu{display:grid;grid-template-columns:24px 1fr;gap:8px;font-size:14px;line-height:1.7}
+.kn{width:22px;height:22px;border-radius:50%;background:var(--green);color:var(--paper);display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:2px}
+.kcmp{display:grid;grid-template-columns:1fr auto auto auto;gap:8px 12px;font-size:14px;align-items:center}
+.kcmp .k{color:var(--muted)}
+.kbadge{font-size:11px;border-radius:999px;padding:1px 8px;background:var(--paper);color:var(--muted)}
+.kbadge.up{background:var(--green-soft);color:var(--green)}
+.kbadge.down{background:var(--over-soft);color:var(--over)}
+.stp .v.pre{color:var(--muted);font-weight:700}
+.finish{border-color:var(--green)}
+.fscore{display:flex;align-items:baseline;gap:12px}
+.fscore b{font-size:40px;font-weight:900;line-height:1}
+.fscore span{font-size:18px;font-weight:700}
+.fscore .k{font-size:14px;color:var(--muted);font-weight:500}
+.resume{background:var(--green-soft)}
+@media (max-width:400px){
+  .panel{padding:12px;gap:12px}
+  .steps{gap:6px}
+  .stp{padding:6px 2px}
+  .stp .row{gap:3px}
+  .stp button{width:28px;height:28px;font-size:16px}
+  .stp .v{min-width:24px;font-size:21px}
+  .strip{gap:3px}
+  .hb .n{font-size:9px}
+  .mark{width:22px;height:22px;font-size:12px}
+  .gwrap{grid-template-columns:44px auto 44px;gap:4px}
+  .off{font-size:10px;padding:4px 2px}
+  .green{width:min(220px,58vw)}
+  .cbtn{width:58px;height:58px}
+  .chip{padding:5px 10px}
+  .total b{font-size:28px}
+  h1{font-size:18px}
+}
+@media (max-width:340px){
+  h1{font-size:16px}
+  .stp button{width:24px;height:24px;font-size:14px}
+  .stp .v{min-width:20px;font-size:19px}
+  .stp .row{gap:2px}
+  .green{width:176px}
+  .gwrap{grid-template-columns:36px auto 36px;gap:4px}
+  .off{font-size:9.5px;padding:3px 1px}
+  .cbtn{width:50px;height:50px;font-size:10px}
+  .chip{padding:4px 8px;font-size:12px}
+  .mini{gap:6px}
+  .sum{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="toprow">
+      <div>
+        <div class="clubrow"><div class="club">GOLF CLUB NARITA HIGH TREE</div><button class="helpbtn" id="helpBtn">使い方</button></div>
+        <div class="titlerow"><h1>成田ハイツリー攻略</h1>
+          <div class="tabs" role="tablist"><button role="tab" id="tabIn" aria-selected="true">入力</button><button role="tab" id="tabRev" aria-selected="false">振り返り</button></div>
+        </div>
+      </div>
+      <div class="total"><b class="num" id="tot">0</b><small id="totSub">PAR 72</small></div>
+    </div>
+  </header>
+
+  <section id="viewIn" class="wrap" style="gap:16px">
+    <div id="sampleNote" class="sample">サンプルのラウンドを表示しています。「新しいラウンド」で白紙から入力できます。</div>
+    <div id="resumeNote" class="sample resume" hidden></div>
+    <div class="panel">
+      <div class="courses">
+        <label for="outC" hidden>前半コース<select id="outC"></select></label>
+        <label for="inC" hidden>後半コース<select id="inC"></select></label>
+        <label for="teeC">ティー<select id="teeC"><option value="gold">ゴールド</option><option value="black">ブラック</option><option value="blue">ブルー</option><option value="white">ホワイト</option><option value="green">グリーン</option></select></label>
+      </div>
+      <p class="note">18ホール・パー72（OUT 36／IN 36）。パーと距離はコース情報どおりです。</p>
+    </div>
+
+    <nav class="hnav" id="hnav" aria-label="ホールを選ぶ"></nav>
+    <div class="panel" id="startPanel" hidden></div>
+    <div class="advice" id="advice" hidden></div>
+    <div class="panel" id="holePanel"></div>
+
+    <div class="tools">
+      <button class="btn ghost" id="newBtn">新しいラウンド</button>
+      <button class="btn primary" id="saveRound" hidden>このラウンドをみんなの蓄積に保存</button>
+    </div>
+    <p class="note" id="histNote"></p>
+    <p class="note" id="saveMsg" hidden></p>
+    <div class="confirm" id="confirmBox" hidden>
+      入力中のデータを消して白紙にしますか？
+      <button class="btn" id="yesNew">消して始める</button>
+      <button class="btn ghost" id="noNew">やめる</button>
+    </div>
+  </section>
+
+  <section id="viewRev" class="wrap" style="gap:16px" hidden></section>
+  <section id="viewHelp" class="wrap" style="gap:16px" hidden>
+    <div class="panel help">
+      <h2>使い方</h2>
+      <h3>1. ラウンド前</h3>
+      <ul><li><b>OUTスタート／INスタート</b>を選びます（最初の打数を入れるまで変更できます）。使うティー（ゴールド〜グリーン）も選べます。</li>
+        <li>Safariの共有ボタンから「ホーム画面に追加」しておくと、アプリのように使えます。</li></ul>
+      <h3>2. 各ホールで入力</h3>
+      <ul>
+        <li><b>ティーショット</b>：左ラフ／FW／右ラフ／OB／1ペナ／池。パー3でペナルティがあったときだけ、OB・1ペナ・池を選びます。パー3は <b>風 → 番手 → ピンに対して縦の距離</b>。</li>
+        <li><b>グリーン</b>：「ピン位置」をタップ → 「乗った位置」をタップ。外したら外側のボタンを押し、続けて「寄せた後」にパットを打った場所をタップ。</li>
+        <li><b>ファーストパット</b>：カップまでの歩数（1歩＝65cm）。<b>上り・下り</b>と<b>ライン</b>も選びます。</li>
+        <li><b>打数・パット</b>：＋を1回押すとパーから始まります。下にパー・ボギーなどが出ます。</li>
+        <li><b>一番悔やまれる1打</b>と<b>ひとことメモ</b>は分かる範囲で。</li>
+        <li>入力はタップするたびにスマホに保存されます。途中で閉じても、次に開けば続きから再開します。</li></ul>
+      <h3>3. ラウンド後</h3>
+      <ul><li>「振り返り」タブを開き、<b>「このラウンドをみんなの蓄積に保存」</b>を押します。保存したラウンドが、次回からのアドバイスとグリーン学習に使われます。</li></ul>
+    </div>
+    <div class="panel help">
+      <h2>わかること</h2>
+      <h3>ラウンドの振り返り</h3>
+      <ul>
+        <li>スコア、パット数、FWキープ率、パーオン率</li>
+        <li>どこで何打失ったか（ティーショット／セカンド／アプローチ／パット）</li>
+        <li><b>総評と最優先の課題</b>（どこで何打失ったかを％で）、良かったこと、分野別の詳しい分析（ティーショット・寄せ・パット・流れ・難易度別）</li>
+        <li><b>次回の成田ハイツリー攻略プラン</b>（打数を落としたホールの攻め方）、練習メニュー、次回の目標、これまでのラウンドとの比較</li>
+        <li>グリーン上：ピンに対して手前・奥のどちらに外しやすいか、上り・下り別／ライン別の平均パット</li>
+        <li>パー3：風と番手とショート・オーバーの傾向</li></ul>
+      <h3>データがたまると</h3>
+      <ul>
+        <li>各ホールの上に<b>アドバイス</b>：あなたのこのホールの平均とクセ（右ラフが多い、パー3でショートが続く、3パットが多いなど）</li>
+        <li>みんなのデータから、そのホールの平均と<b>18ホール中の難しさ</b></li>
+        <li><b>グリーンの傾き</b>を推定し、ピン位置を入れると上りが残る<b>狙い目の区画</b>を表示</li></ul>
+      <h3>保存されるデータ</h3>
+      <ul>
+        <li>みんなの共有データに送るのは、打数・パット・ピン位置・ボール位置・上り下りだけです。</li>
+        <li>名前・メモ・番手・ティーショットの結果などは、あなたのスマホの中だけに残ります。</li></ul>
+    </div>
+    <button class="btn primary" id="helpClose">入力に戻る</button>
+  </section>
+</div>
+
+<script>
+const COURSES={"OUT":[5,4,4,3,4,5,4,3,4],"IN":[5,4,4,4,4,3,5,3,4]};
+// ホール情報（楽天GORA・GDO）：[HDCP, ゴールド, ブラック, ブルー, ホワイト, グリーン]
+const HI={"OUT":[[9,525,500,464,464,392],[3,443,421,403,362,348],[15,421,391,371,318,318],[13,186,180,164,144,144],[7,399,373,357,357,344],[1,575,536,516,489,418],[11,422,411,392,361,321],[17,174,163,143,111,111],[5,415,392,364,338,338]],
+"IN":[[10,521,492,449,449,375],[16,400,354,338,338,338],[4,424,406,394,378,258],[2,396,351,328,297,237],[8,368,325,316,316,316],[14,197,183,164,144,144],[6,547,496,473,473,453],[18,191,179,151,132,132],[12,418,375,353,353,333]]};
+const TB={gold:1,black:2,blue:3,white:4,green:5},TBN={gold:"ゴールド",black:"ブラック",blue:"ブルー",white:"ホワイト",green:"グリーン"};
+const hinfo=(c,k)=>{const x=(HI[c]||[])[k]||[0,0,0,0,0,0];return {hdcp:x[0],yd:x[TB[R.teebox||"white"]]}};
+// ティーショット：OBは2打罰、1ペナ（黄杭）と池は1打罰
+const PENS=["ob","p1","water"];
+const penOf=t=>t==="ob"?2:(t==="p1"||t==="water")?1:0;
+const penName=t=>t==="ob"?"OB":t==="p1"?"1ペナ":"池";
+function teeIco(k){
+  const a='class="ico" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"';
+  if(k==="left")return `<svg ${a} fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 19.5C14 13.5 13 9 6 5"/><path d="M12 4.5L6 5l2.6 5.5"/><circle cx="14" cy="21.6" r="1.6" fill="currentColor" stroke="none"/></svg>`;
+  if(k==="right")return `<svg ${a} fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 19.5C10 13.5 11 9 18 5"/><path d="M12 4.5L18 5l-2.6 5.5"/><circle cx="10" cy="21.6" r="1.6" fill="currentColor" stroke="none"/></svg>`;
+  if(k==="fw")return `<svg ${a} fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>`;
+  if(k==="ob"||k==="p1")return `<svg ${a}><path d="M9 3.5h6v13l-3 4.5-3-4.5z" fill="${k==="ob"?"#FFFFFF":"#F2C230"}" stroke="#2A2F2C" stroke-width="1.4" stroke-linejoin="round"/><line x1="9" y1="7" x2="15" y2="7" stroke="#2A2F2C" stroke-width="1"/></svg>`;
+  return `<svg ${a}><ellipse cx="12" cy="14" rx="10" ry="6" fill="#3E8FCB" stroke="#2A6E9F" stroke-width="1.2"/><path d="M6.5 13.5q1.6-1.4 3.2 0t3.2 0M10.5 16.5q1.6-1.4 3.2 0t3.2 0" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+}
+const TEE=[["left","左ラフ"],["fw","FW"],["right","右ラフ"],["ob","OB"],["p1","1ペナ"],["water","池"]].map(([k,l])=>[k,teeIco(k)+`<span>${l}</span>`]);
+const PEN3=[["ob","OB"],["p1","1ペナ"],["water","池"]].map(([k,l])=>[k,teeIco(k)+`<span>${l}</span>`]);
+const CLUBS=["5W","4UT","5UT","6UT","6I","7I","8I","9I","PW","48°","52°","58°"].map(c=>[c,c]);
+const CHIPQ=[["BL","奥左"],["BR","奥右"],["C","センター"],["FL","手前左"],["FR","手前右"]];
+const WIND=[["follow","フォロー"],["none","無風"],["against","アゲインスト"]];
+const WINDN={follow:"フォロー",none:"無風",against:"アゲインスト"};
+const DIST=[["short","ショート"],["just","ちょうど"],["over","オーバー"]];
+const DISTN={short:"ショート",just:"ちょうど",over:"オーバー"};
+const FIRST=[["s","<b>〜2歩</b><small>1.5m以内</small>"],["m","<b>3〜5歩</b><small>約3m</small>"],["l","<b>6〜10歩</b><small>約5m</small>"],["xl","<b>11歩〜</b><small>7m〜</small>"]];
+const CAUSE=[["tee","ティーショット"],["second","セカンド"],["approach","アプローチ"],["putt","パット"],["judge","判断ミス"]];
+const CAT={tee:"ティーショット",second:"セカンド",approach:"アプローチ",putt:"パット",pen:"ペナルティ",judge:"判断ミス"};
+const KEY="narita-review-v1";
+const QN={C:"センター",BL:"奥左",BR:"奥右",FL:"手前左",FR:"手前右",oB:"奥にこぼれ",oF:"手前に外れ",oL:"左に外れ",oR:"右に外れ"};
+const ico=(d,b)=>`<svg class="ico" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="${b?3.2:2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const IU="M2 13L13 4M8 4H13V9",IF="M2 8H14M10 4L14 8L10 12",ID="M2 4L13 13M8 13H13V8",IH="M10 15C10 8 8 4 3 3M3 3L7 2M3 3L4 7",IS="M8 15V2M4 6L8 2L12 6",IL="M6 15C6 8 8 4 13 3M13 3L9 2M13 3L12 7";
+const SLOPE=[["upx",ico(IU,1)+"<span>激上り</span>"],["up",ico(IU)+"<span>上り</span>"],["flat",ico(IF)+"<span>平坦</span>"],["down",ico(ID)+"<span>下り</span>"],["downx",ico(ID,1)+"<span>激下り</span>"]];
+const LINE=[["hookx",ico(IH,1)+"<span>強フック</span>"],["hook",ico(IH)+"<span>フック</span>"],["straight",ico(IS)+"<span>まっすぐ</span>"],["slice",ico(IL)+"<span>スライス</span>"],["slicex",ico(IL,1)+"<span>強スライス</span>"]];
+// 「激〜」は集計では同じ向きとして扱う
+const base=v=>typeof v==="string"?v.replace(/x$/,""):v;
+let gmode="pin";
+const DR={F:0,C:1,B:2},SR={L:0,C:1,R:2};
+// 位置の数値化（奥ほど大きい／右ほど大きい）。区画：奥3・センター2・手前1、ピン用の細かい区画 P{行}{列}（行0=奥〜3=手前、列0=左〜3=右）
+// 真上・真下・真左・真右の位置（グリーン上の％座標）
+const AX={V0:[50,10],V1:[50,25],V2:[50,75],V3:[50,90],H0:[10,50],H1:[25,50],H2:[75,50],H3:[90,50],X0:[25,25],X1:[75,25],X2:[25,75],X3:[75,75]};
+Object.assign(QN,{V0:"真上（奥側）",V1:"真上（センター寄り）",V2:"真下（センター寄り）",V3:"真下（手前側）",H0:"真左（外側）",H1:"真左（センター寄り）",H2:"真右（センター寄り）",H3:"真右（外側）",X0:"奥左の真ん中",X1:"奥右の真ん中",X2:"手前左の真ん中",X3:"手前右の真ん中"});
+const dRank=q=>q==="C"?2:AX[q]?4-AX[q][1]/25:q[0]==="P"?3.5-(+q[1]):(q[0]==="B"?3:1),sRank=q=>q==="C"?2:AX[q]?AX[q][0]/25:q[0]==="P"?(+q[2])+0.5:(q[1]==="R"?3:1);
+const sg3=v=>v>0.75?1:v<-0.75?-1:0;
+const quadOf=k=>!k||k[0]!=="P"?k:((+k[1])<2?"B":"F")+((+k[2])<2?"L":"R");
+for(let r=0;r<4;r++)for(let c=0;c<4;c++)QN["P"+r+c]=`${r<2?"奥":"手前"}${c<2?"左":"右"}の${r%2?"手前":"奥"}${c%2?"右":"左"}寄り`;
+const HKEY="narita-history-v1";
+function slopeOf(pin,ball,t,rnd){
+  if(pin===ball)return rnd()<0.5?"flat":(t.fb>0?"up":"down");
+  let v=0;
+  if(pin[0]!==ball[0])v+=(pin[0]==="B"?1:-1)*t.fb;
+  if(pin[1]!==ball[1])v+=(pin[1]==="R"?1:-1)*t.lr;
+  return v>0?"up":v<0?"down":"flat";
+}
+function sampleHistory(){
+  let seed=11;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+  const tilt={};Object.keys(COURSES).forEach(c=>COURSES[c].forEach((p,k)=>{tilt[c+k]={fb:rnd()<0.8?1:-1,lr:[-1,0,1,1][Math.floor(rnd()*4)]}}));
+  const combos=Array.from({length:8},()=>["OUT","IN"]);
+  const Q=["BL","BR","FL","FR"];
+  return combos.map(([o,n],ri)=>({id:"s"+ri,sample:true,date:`2026-${String(3+ri).padStart(2,"0")}-14`,out:o,inn:n,
+    holes:[...COURSES[o].map((p,k)=>[o,k,p]),...COURSES[n].map((p,k)=>[n,k,p])].map(([c,k,p])=>{
+      const pin=Q[Math.floor(rnd()*4)],ball=Q[Math.floor(rnd()*4)],slope=slopeOf(pin,ball,tilt[c+k],rnd);
+      const putts=slope==="down"?(rnd()<0.45?3:2):slope==="up"?(rnd()<0.2?1:2):2;
+      return {par:p,score:p+(putts-2)+Math.floor(rnd()*2),putts,pin,ball,slope};})}));
+}
+const SAMPLE=sampleHistory();
+let LOCAL;try{LOCAL=JSON.parse(localStorage.getItem(HKEY))}catch(e){LOCAL=null}
+LOCAL=Array.isArray(LOCAL)?LOCAL.filter(r=>!r.sample):[];
+function saveLocal(){try{localStorage.setItem(HKEY,JSON.stringify(LOCAL))}catch(e){}}
+let SHARED=null,PLAYERS=0,DBSTATE="none";
+const MIN_REAL=5;
+function realRounds(){return SHARED??LOCAL}
+function getHist(){return realRounds()}
+function recordsFor(c,k){return getHist().flatMap(r=>{const i=r.out===c?k:r.inn===c?9+k:-1;return i<0||!r.holes[i]?[]:[r.holes[i]]})}
+function relOf(r){
+  if(r.ball[0]==="o")return r.ball==="oF"?"ピンより手前（外れ）":r.ball==="oB"?"ピンより奥（こぼれ）":"横に外れ";
+  const dd=sg3(dRank(r.ball)-dRank(r.pin)),ds=sg3(sRank(r.ball)-sRank(r.pin));
+  if(!dd&&!ds)return "ピンと同じ区画";
+  if(dd)return dd<0?"ピンより手前":"ピンより奥";
+  return "ピンの横";
+}
+// パットを打った位置：乗ったならその区画、外したなら寄せた後の区画
+function putPos(r){if(!r.ball)return null;return r.ball[0]!=="o"?r.ball:(r.chip||null)}
+// 共有データでは「外れ方>寄せた後」を1つの欄に入れて送る（例 oF>BL）
+function normRound(r){return {...r,holes:r.holes.map(h=>{if(h&&typeof h.ball==="string"&&h.ball.includes(">")){const [a,b]=h.ball.split(">");return {...h,ball:a,chip:b}}return h})}}
+function learn(c,k){
+  const recs=recordsFor(c,k);let fb=0,lr=0,n=0;const st={};
+  recs.forEach(r=>{
+    if(!r.pin||!r.ball)return;
+    if(r.putts!=null){const rel=relOf(r);(st[rel]??={n:0,p:0,t:0});st[rel].n++;st[rel].p+=r.putts;if(r.putts>=3)st[rel].t++}
+    const pp=putPos(r);
+    const sl=base(r.slope);
+    if(!pp||!sl||sl==="flat")return;
+    const sgn=(sl==="up"?1:-1)*(/x$/.test(r.slope)?1.5:1),ddv=sg3(dRank(r.pin)-dRank(pp)),dsv=sg3(sRank(r.pin)-sRank(pp)),w=ddv&&dsv?0.5:1;
+    if(!ddv&&!dsv)return;
+    if(ddv)fb+=w*sgn*ddv;
+    if(dsv)lr+=w*sgn*dsv;
+    n++;});
+  return {fb,lr,n,st,rounds:recs.length};
+}
+function tiltText(L){
+  const a=[];if(L.fb>=1)a.push("奥が高い");if(L.fb<=-1)a.push("手前が高い");if(L.lr>=1)a.push("右が高い");if(L.lr<=-1)a.push("左が高い");
+  return a.length?a.join("・"):"傾きははっきりしない";
+}
+function recommend(c,k,pin){
+  const L=learn(c,k);
+  if(L.n<3)return {L,none:true};
+  const dH=L.fb>=1?"B":L.fb<=-1?"F":null,sH=L.lr>=1?"R":L.lr<=-1?"L":null;
+  const lowD=dH?(dH==="B"?"F":"B"):null,lowS=sH?(sH==="R"?"L":"R"):null;
+  // ピンの縦・横の位置（真ん中の線上なら C）
+  const pd=dRank(pin)>2.25?"B":dRank(pin)<1.75?"F":"C",ps=sRank(pin)>2.25?"R":sRank(pin)<1.75?"L":"C";
+  const d=lowD||(pd==="C"?"F":pd),ss=lowS?[lowS]:(ps==="C"?["L","R"]:[ps]);
+  let recs=ss.map(x=>d+x);
+  let avoid=(dH||sH)?recs.map(r=>(r[0]==="F"?"B":"F")+(r[1]==="L"?"R":"L")).filter(a=>!recs.includes(a)):[];
+  const low=[dH?(dH==="B"?"手前":"奥"):"",sH?(sH==="R"?"左":"右"):""].filter(Boolean).join("・");
+  return {L,recs,avoid,low};
+}
+
+function blankHole(par){return {par,score:null,putts:null,tee:null,pen:0,bunker:0,first:null,cause:null,memo:"",chip:null,wind:null,club:null,dist:null,pin:null,ball:null,slope:null,line:null}}
+function blankRound(out="OUT",inn="IN"){return {id:"r"+Date.now(),out,inn,cur:0,start:0,sample:false,holes:[...COURSES[out],...COURSES[inn]].map(blankHole)}}
+function sampleRound(){
+  const r=blankRound();r.sample=true;
+  const d=[[6,2,"right",0,0,"l"],[4,2,"fw",0,0,"xl"],[5,3,null,0,1,"xl",null,"バンカーから出すだけ。その後3パット"],[7,2,"ob",2,0,"l","tee","ドライバーを右OB"],
+   [5,2,"fw",0,0,"m","second"],[4,1,"left",0,0,"m",null,"寄せワン"],[6,2,"fw",0,0,"l"],[6,3,"left",0,0,"l"],[4,2,null,0,0,"xl"],
+   [5,2,"right",0,0,"l"],[5,2,"fw",0,0,"l"],[6,3,"fw",0,0,"xl",null,"下りのファーストを強く打ちすぎた"],[3,2,null,0,0,"xl"],[7,2,"ob",2,0,"s","judge","右がOBなのにドライバー。3Wで良かった"],
+   [5,2,"left",0,1,"m"],[6,3,"left",1,0,"l",null,"左の池"],[4,2,null,0,0,"l"],[7,2,"fw",0,0,"m","approach","疲れてアプローチをザックリ"]];
+  d.forEach((x,i)=>Object.assign(r.holes[i],{score:x[0],putts:x[1],tee:x[2],pen:x[3],bunker:x[4],first:x[5],cause:x[6]||null,memo:x[7]||""}));
+  const G=[["BR","FL","up","straight"],["BL","FR","up","slice"],["FL","BR","down","hook"],["FR","FR","flat","straight"],["BL","oF","up","hook"],["FR","oL","up","straight"],["BR","FL","up","slice"],["FL","BL","down","slice"],["BR","FR","up","hook"],
+   ["BL","FL","up","straight"],["FR","FR","flat","slice"],["FR","BR","down","slice"],["BL","FL","up","hook"],["FL","FL","flat","straight"],["BR","oF","up","hook"],["FL","BL","down","slice"],["BR","oF","up","straight"],["BL","FR","up","hook"]];
+  G.forEach((x,i)=>Object.assign(r.holes[i],{pin:x[0],ball:x[1],slope:x[2],line:x[3]}));
+  return r;
+}
+let R;
+try{R=JSON.parse(localStorage.getItem(KEY))}catch(e){R=null}
+if(!R||!R.holes||R.sample)R=blankRound();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(R))}catch(e){}}
+
+const $=id=>document.getElementById(id);
+function markCls(h){if(h.score==null)return "e";const d=h.score-h.par;return d<=-2?"u2":d===-1?"u":d===0?"":d===1?"b":"d"}
+function gir(h){return h.score!=null&&h.putts!=null&&(h.score-h.putts)<=h.par-2}
+function courseOf(i){return i<9?R.out:R.inn}
+
+function ORDER(){const st=(Object.keys(COURSES).length<=2&&R.start===9)?9:0;return Array.from({length:18},(_,k)=>(st+k)%18)}
+const cn=c=>c==="OUT"||c==="IN"?c:c+"コース";
+function renderHnav(){
+  const el=$("hnav");if(!el)return;
+  const o=ORDER(),many=Object.keys(COURSES).length>2;
+  el.innerHTML=[o.slice(0,9),o.slice(9)].map(row=>`<div class="hrow"><span class="hlab">${many?courseOf(row[0]):(row[0]<9?"OUT":"IN")}</span>${row.map(i=>{const h=R.holes[i];
+    return `<button class="hn2${i===R.cur?" cur":""}${h.score!=null?" done":""}" data-h="${i}" aria-label="${courseOf(i)} ${many?(i<9?i+1:i-8):i+1}番">${many?(i<9?i+1:i-8):i+1}</button>`}).join("")}</div>`).join("");
+}
+function renderStart(){
+  const el=$("startPanel");if(!el)return;
+  if(Object.keys(COURSES).length>2){el.hidden=true;return}
+  const fresh=R.holes.every(h=>h.score==null);
+  if(!fresh){el.hidden=true;return}
+  const st=R.start===9?9:0;
+  el.innerHTML=`<span class="label">スタートコース</span><div class="startsel">
+    <button class="chip" data-start="0" aria-pressed="${st===0}">${cn(R.out)}スタート（1番〜）</button>
+    <button class="chip" data-start="9" aria-pressed="${st===9}">${cn(R.inn)}スタート（10番〜）</button></div>
+    <p class="note">最初の打数を入れるまでは変更できます。</p>`;
+  el.hidden=false;
+}
+const ovr=d=>d>0?"+"+d:d===0?"±0":""+d;
+const RES={"-3":"アルバトロス","-2":"イーグル","-1":"バーディー","0":"パー","1":"ボギー","2":"ダブルボギー","3":"トリプルボギー"};
+function runText(i){
+  const o=ORDER();let d=0,n=0;for(const k of o.slice(0,o.indexOf(i)+1)){const h=R.holes[k];if(h.score!=null){d+=h.score-h.par;n++}}
+  const h=R.holes[i];
+  const cls=d>0?"pos":d<0?"neg":"";
+  if(h.score!=null){const x=h.score-h.par;return `<span class="res">${RES[x]??(x>0?"+"+x:x)}</span><span>ここまで <b class="${cls} num">${ovr(d)}</b></span>`}
+  return n?`<span>前のホールまで <b class="${cls} num">${ovr(d)}</b></span>`:"";
+}
+function renderHeader(){
+  const played=R.holes.filter(h=>h.score!=null);
+  const tot=played.reduce((a,h)=>a+h.score,0), par=played.reduce((a,h)=>a+h.par,0);
+  const d=tot-par;
+  $("tot").textContent=played.length?ovr(d):"±0";
+  $("tot").className="num "+(d>0?"pos":d<0?"neg":"");
+  $("totSub").textContent=played.length?`${played.length}H終了・${tot}打`:`PAR ${R.holes.reduce((a,h)=>a+h.par,0)}`;
+}
+function renderStrip(){
+  if(!$("strip"))return;
+  let html='<div class="side">OUT '+R.out+'</div>';
+  R.holes.forEach((h,i)=>{
+    if(i===9)html+='<div class="side">IN '+R.inn+'</div>';
+    html+=`<button class="hb${i===R.cur?" on":""}" data-h="${i}" aria-label="${i+1}番ホール"><span class="n">${i+1}</span><span class="mark ${markCls(h)}">${h.score??"·"}</span></button>`;
+  });
+  $("strip").innerHTML=html;
+}
+function chipRow(field,opts,val,dis){
+  return `<div class="chips">${opts.map(([k,l])=>`<button class="chip" data-f="${field}" data-v="${k}" aria-pressed="${val===k}"${dis?" disabled":""}>${l}</button>`).join("")}</div>`;
+}
+function tileRow(field,opts,val,n){return `<div class="tiles"${n?` style="grid-template-columns:repeat(${n},minmax(0,1fr))"`:""}>${opts.map(([k,l])=>`<button class="tile${/x$/.test(k)?" hot":""}" data-f="${field}" data-v="${k}" aria-pressed="${val===k}">${l}</button>`).join("")}</div>`}
+function stepper(field,label,val,sub,def){
+  const pre=val==null&&def!=null;
+  return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?(pre?" pre":" empty"):""}">${val??(pre?def:"–")}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
+}
+function scoreSub(h){
+  if(h.score==null)return `<span class="hint">パー（＋−で変更）</span>`;
+  const x=h.score-h.par,name=RES[x]??(x>0?`+${x}`:`${x}`);
+  return `<span class="${x>0?"pos":x<0?"neg":"even"}">${name}</span>`;
+}
+let warn=null;
+// グリーン〜パット数の未入力チェック
+function missingOf(h){
+  const m=[];
+  if(!h.pin)m.push("ピン位置");
+  if(!h.ball)m.push("乗った位置");
+  else if(h.ball[0]==="o"&&!h.chip&&h.putts!==0)m.push("寄せた後の位置");
+  if(h.putts!==0){if(!h.first)m.push("ファーストパット");if(!h.slope)m.push("上り・下り");if(!h.line)m.push("ライン");}
+  if(h.score==null)m.push("打数");
+  if(h.putts==null)m.push("パット");
+  return m;
+}
+function renderHole(){
+  renderHnav();renderStart();renderAdvice();
+  const ord=ORDER(),pos=ord.indexOf(R.cur);
+  const i=R.cur,h=R.holes[i],p3=h.par===3;
+  const g=gir(h);
+  let auto=[];
+  if(h.score!=null&&h.putts!=null){auto.push(g?"パーオン":"パーオンならず");
+    if(!g&&h.score<=h.par)auto.push("リカバリー成功");
+    if(h.putts>=3)auto.push("3パット");}
+  const cc=courseOf(i),ck=i<9?i:i-9;
+  const rc=h.pin?recommend(cc,ck,h.pin):null;
+  const off=!!(h.ball&&h.ball[0]==="o");
+  const gn=greenNotes(cc,ck);
+  if(gmode==="chip"&&!off)gmode="ball";
+  $("holePanel").innerHTML=`
+    <div class="holehead"><div class="hgrp"><div class="cs">${courseOf(i)}・${hinfo(courseOf(i),i%9).yd}y・HDCP${hinfo(courseOf(i),i%9).hdcp}</div><div class="hn num">${i+1}番<span class="hpar">パー${h.par}</span></div></div><div class="hr"><div class="run">${runText(i)}</div></div></div>
+    ${p3?`<div class="grp"><span class="label">風</span>${chipRow("wind",WIND,h.wind)}</div>
+    <div class="grp"><span class="label">ティーショットの番手</span>${chipRow("club",CLUBS,h.club)}</div>
+    <div class="grp"><span class="label">ピンに対して縦の距離</span>${chipRow("dist",DIST,h.dist)}</div>`
+    :`<div class="grp"><span class="label">ティーショット</span>${tileRow("tee",TEE,h.tee,6)}</div>`}
+    ${p3?`<div class="grp"><span class="label">ペナルティ（あった場合だけ）</span>${tileRow("tee",PEN3,h.tee,3)}</div>`:""}
+    <div class="grp"><span class="label">グリーン（上が奥）</span>
+      <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button>${off?`<button data-gm="chip" aria-pressed="${gmode==="chip"}">寄せた後</button>`:""}</div>
+      ${gnBox(gn)}
+      ${greenPad(h,rc,gn)}
+      <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?QN[h.pin]:"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?QN[h.ball]:"未入力"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${QN[h.chip]}</span>`:""}</div>
+      ${recBox(h,rc)}
+    </div>
+    <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${tileRow("first",FIRST,h.first,4)}</div>
+    <div class="grp"><span class="label">上り・下り</span>${tileRow("slope",SLOPE,h.slope)}</div>
+    <div class="grp"><span class="label">ライン</span>${tileRow("line",LINE,h.line)}</div>
+    <div class="steps">${stepper("score","打数",h.score,scoreSub(h),h.par)}${""}${stepper("putts","パット",h.putts,null,2)}</div>
+    ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
+    <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
+    <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：二段グリーンで奥が高い／受けグリーン／右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
+    ${(()=>{if(!warn||warn.i!==i)return "";const ms=missingOf(h);if(!ms.length)return "";
+      return `<div class="warn" id="warnbox" role="alert"><b>未入力の項目があります</b><span>${ms.join("、")}</span>
+      <div class="wbtns"><button class="btn" data-warnclose="1">入力に戻る</button><button class="btn primary" data-go="${warn.go}" data-force="1">このまま${warn.go==="rev"?"振り返りへ":"次へ"}</button></div></div>`})()}
+    <div class="nav">${pos===0?"<span></span>":`<button class="btn" data-go="-1">← ${ord[pos-1]+1}番</button>`}
+    ${pos===17?`<button class="btn primary" data-go="rev">振り返りを見る</button>`:`<button class="btn primary" data-go="1">${ord[pos+1]+1}番へ →</button>`}</div>`;
+}
+// 過去のメモ（このスマホに保存したラウンド）からグリーンの特徴を読み取る
+function greenNotes(c,k){
+  const ms=LOCAL.flatMap(r=>{const i=r.out===c?k:r.inn===c?9+k:-1;const h=i<0||!r.holes?null:r.holes[i];return h&&h.memo?[h.memo]:[]});
+  if(!ms.length)return null;
+  const t=ms.join("／"),has=re=>re.test(t);
+  const f={tags:[],step:null,dir:null};
+  if(has(/[二2２]段|[三3３]段|段がある|段差/)){f.step=has(/[三3３]段/)?"三段":"二段";}
+  if(has(/奥(が|の方が)?高/))f.dir="B";else if(has(/手前(が|の方が)?高/))f.dir="F";else if(has(/左(が|の方が)?高/))f.dir="L";else if(has(/右(が|の方が)?高/))f.dir="R";
+  if(f.step)f.tags.push(f.step+"グリーン"+(f.dir?`（${{B:"奥",F:"手前",L:"左",R:"右"}[f.dir]}が高い）`:""));
+  else if(f.dir)f.tags.push({B:"奥",F:"手前",L:"左",R:"右"}[f.dir]+"が高い");
+  if(has(/受け/))f.tags.push("受けグリーン");
+  if(has(/砲台/))f.tags.push("砲台グリーン");
+  if(has(/速い|速かった|高速/))f.tags.push("速い");
+  if(has(/重い|遅い/))f.tags.push("重い");
+  if(has(/芝目/))f.tags.push("芝目が強い");
+  f.last=ms[ms.length-1];
+  return f.tags.length||f.last?f:null;
+}
+function gnBox(f){
+  if(!f)return "";
+  return `<div class="gfeat">${f.tags.map(t=>`<span class="gtag">${t}</span>`).join("")}${f.last?`<span class="glast">前回のメモ：${f.last.replace(/</g,"&lt;").slice(0,60)}</span>`:""}</div>`;
+}
+function greenPad(h,rc,gn){
+  const recQ=k=>!!(rc&&rc.recs&&rc.recs.includes(k)),avQ=k=>!!(rc&&rc.avoid&&rc.avoid.includes(k)),pm=gmode==="pin";
+  const line=n=>n===1?"2px solid var(--card)":(n<3?"1px dashed var(--line)":"0");
+  let cells="";
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){const k="P"+r+c,q=quadOf(k);
+    cells+=`<button class="gc${recQ(q)?" rec":""}${avQ(q)?" avoid":""}" data-gq="${k}" aria-label="${QN[k]}" style="border-right:${line(c)};border-bottom:${line(r)}"></button>`}
+  const POS={BL:[25,25],BR:[75,25],FL:[25,75],FR:[75,75],C:[50,50]};
+  const at=k=>!k?null:AX[k]?AX[k]:k[0]==="P"?[((+k[2])+.5)*25,((+k[1])+.5)*25]:(POS[k]||null);
+  const mk=(k,html,cls)=>{const p=at(k);return p?`<span class="mk ${cls}" style="left:${p[0]}%;top:${p[1]}%">${html}</span>`:""};
+  const labels=pm?"":["BL","BR","FL","FR"].map(q=>`<span class="ql" style="left:${POS[q][0]}%;top:${POS[q][1]+(q[0]==="B"?-12:12)}%">${recQ(q)?"<em>狙い目</em>":""}${QN[q]}</span>`).join("");
+  let marks=mk(h.pin,'<span class="fl">⚑</span>','mflag');
+  if(h.ball&&h.ball[0]!=="o")marks+=mk(h.ball,'<span class="bl"></span>','mball');
+  if(h.ball&&h.ball[0]==="o"&&h.chip)marks+=mk(h.chip,'<span class="cp">寄</span>','mchip');
+  const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode!=="ball"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
+    let step="";
+  if(gn&&gn.step){const v=gn.dir==="L"||gn.dir==="R";const hi=gn.dir?{B:"奥",F:"手前",L:"左",R:"右"}[gn.dir]+"が高い":"段";
+    step=`<span class="gstep ${v?"v":"h"}"></span><span class="gstepl ${v?"v":"h"}">${gn.step}・${hi}</span>`;}
+  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","")}<div class="gcwrap"><div class="green g16">${cells}</div>${step}${labels}<button class="cbtn" data-gq="C" aria-label="センター"><span>センター</span></button>${Object.keys(AX).map(k=>`<button class="axb" data-gq="${k}" aria-label="${QN[k]}" style="left:${AX[k][0]}%;top:${AX[k][1]}%"></button>`).join("")}${marks}</div>${o("oR","")}<span></span>${o("oF","")}<span></span></div>`;
+}
+function recBox(h,rc){
+  const i=R.cur,cc=courseOf(i),ck=i<9?i:i-9;
+  if(!h.pin)return "";
+  if(rc.none)return "";
+  const st=Object.entries(rc.L.st).filter(([k,o])=>o.n>=2).sort((a,b)=>a[1].p/a[1].n-b[1].p/b[1].n).slice(0,3);
+  return `<div class="recbox"><b>狙い目：${rc.recs.map(k=>QN[k]).join("・")}${rc.low?`（ピンより${rc.low}側）`:""}</b>
+    <span>このグリーンは${tiltText(rc.L)}傾向です。ここに止めれば上りのパットが残ります。${rc.avoid.length?`${rc.avoid.map(k=>QN[k]).join("・")}に乗ると下りになりやすいです。`:""}</span>
+    ${st.length?`<span class="sub">過去の平均パット：${st.map(([k,o])=>`${k} ${(o.p/o.n).toFixed(1)}（${o.n}回）`).join("／")}</span>`:""}
+    <span class="sub">傾斜データ ${rc.L.n}件から推定</span></div>`;
+}
+function histNote(){
+  const n=realRounds().length,mix=n<MIN_REAL;
+  const head=SHARED?`みんなの共有データ：${PLAYERS}人・${n}ラウンド`:DBSTATE==="loading"?"共有データを読み込み中…":DBSTATE==="slow"?`共有データを読み込めませんでした。この端末の記録（${n}ラウンド）で表示しています`:`この端末の記録：${n}ラウンド（共有の保存先が未設定です）`;
+  $("histNote").textContent=head+"。";
+}
+function refreshShared(){
+  histNote();
+  const a=document.activeElement;
+  if(!$("viewIn").hidden&&!(a&&a.id==="memo"))renderHole();
+  if(!$("viewRev").hidden)renderReview();
+}
+// ===== 共有の保存先（Googleスプレッドシート）=====
+// スプレッドシートの「ウェブアプリ」URLをここに入れる
+const GAS_URL="https://script.google.com/macros/s/AKfycbxuZmJ7__E9dEw8zjoD3_L4-xAhg9Y0Wsto9rSDcNwuj2DgXu4EfjKdhCtvr6d4o7zI/exec";
+const CLUB="narita";
+let PID=null;
+try{PID=localStorage.getItem("golf-player-id")}catch(e){}
+if(!PID){PID="p"+Math.random().toString(36).slice(2,10)+Date.now().toString(36);try{localStorage.setItem("golf-player-id",PID)}catch(e){}}
+async function loadShared(){
+  if(!GAS_URL){DBSTATE="none";histNote();return}
+  DBSTATE="loading";histNote();
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),12000);
+  try{
+    const res=await fetch(GAS_URL+"?club="+CLUB,{signal:ctl.signal});
+    const j=await res.json();
+    if(!j.ok)throw new Error("bad");
+    SHARED=(j.rounds||[]).filter(r=>r&&Array.isArray(r.holes)).map(normRound);PLAYERS=j.players||0;DBSTATE="ok";
+  }catch(e){SHARED=null;DBSTATE="slow"}
+  finally{clearTimeout(t)}
+  refreshShared();
+  if(DBSTATE==="ok"&&!syncing)syncPending();
+}
+// 圏外のときに保存したラウンドを、電波が戻ったら送る
+let syncing=false;
+async function syncPending(){
+  const P=LOCAL.filter(r=>r.pending);if(!P.length)return;
+  syncing=true;let sent=0;
+  for(const r of P){
+    const snap={id:r.id,date:r.date,out:r.out,inn:r.inn,holes:r.holes.map(h=>({par:h.par,score:h.score,putts:h.putts,pin:h.pin,ball:h.ball&&h.ball[0]==="o"&&h.chip?h.ball+">"+h.chip:h.ball,slope:h.slope}))};
+    try{const res=await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({club:CLUB,player:PID,round:snap})});
+      const j=await res.json();if(j.ok){LOCAL=LOCAL.map(x=>x.id===r.id?{...x,pending:false}:x);saveLocal();sent++}}catch(e){break}
+  }
+  syncing=false;
+  if(sent)await loadShared();
+}
+loadShared();
+window.addEventListener("online",()=>loadShared());
+function recsIn(list,c,k){return list.flatMap(r=>{const i=r.out===c?k:r.inn===c?9+k:-1;return i<0||!r.holes||!r.holes[i]?[]:[r.holes[i]]}).filter(h=>h&&h.score!=null)}
+const avgOf=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const f1=v=>(v>0?"+":v<0?"−":"±")+Math.abs(v).toFixed(1);
+function adviceFor(i){
+  const c=courseOf(i),k=i<9?i:i-9,h=R.holes[i],par=h.par,out=[];
+  const S=recsIn(getHist(),c,k),P=recsIn(LOCAL,c,k);
+  // みんなのデータ
+  if(SHARED&&S.length>=3){
+    const av=[];for(let j=0;j<18;j++){const cc=courseOf(j),kk=j<9?j:j-9,x=recsIn(getHist(),cc,kk);if(x.length>=3)av.push([j,avgOf(x.map(r=>r.score-r.par))])}
+    const mine=avgOf(S.map(r=>r.score-r.par)),rank=av.sort((a,b)=>b[1]-a[1]).findIndex(x=>x[0]===i)+1;
+    out.push(`みんなの平均 <b>${f1(mine)}</b>（${S.length}ラウンド）${av.length>=9?`・難しさ ${rank}位／${av.length}ホール中`:""}`);
+    const t3=S.filter(r=>r.putts>=3).length;
+    if(t3/S.length>=0.3)out.push(`みんなも${Math.round(t3/S.length*100)}%で3パット。グリーンが難しいホールです。`);
+  }
+  const L=learn(c,k);if(L.n>=3&&(Math.abs(L.fb)>=1||Math.abs(L.lr)>=1))out.push(`グリーンは${tiltText(L)}傾向。低い側に止めて上りを残しましょう。`);
+  // 自分のデータ
+  if(P.length>=2){
+    out.push(`あなたの平均 <b>${f1(avgOf(P.map(r=>r.score-r.par)))}</b>（${P.length}回）・ベスト ${Math.min(...P.map(r=>r.score))}`);
+    if(par>3){
+      const T=P.filter(r=>r.tee),lf=T.filter(r=>r.tee==="left").length,rt=T.filter(r=>r.tee==="right").length,ob=T.filter(r=>PENS.includes(r.tee)).length;
+      if(T.length>=2){
+        if(ob>=1)out.push(`ティーショットでOB・ペナが${T.length}回中${ob}回。ドライバーにこだわらず、3W・UTで安全に。`);
+        if(rt>=lf+2||(rt>=2&&lf===0))out.push(`右ラフが${T.length}回中${rt}回。ティーを右サイドに立て、左を向いて打ちましょう。`);
+        else if(lf>=rt+2||(lf>=2&&rt===0))out.push(`左ラフが${T.length}回中${lf}回。ティーを左サイドに立て、右を向いて打ちましょう。`);
+        else if(T.filter(r=>r.tee==="fw").length*2>T.length)out.push(`FWキープ率が高いホール。いつもどおりで大丈夫です。`);
+      }
+    }else{
+      const Q=P.filter(r=>r.club||r.dist),last=Q[Q.length-1];
+      if(last)out.push(`前回：${last.wind?WINDN[last.wind]+"・":""}${last.club||"番手未入力"} → ${last.dist?DISTN[last.dist]:"結果未入力"}`);
+      const sh=Q.filter(r=>r.dist==="short").length,ov=Q.filter(r=>r.dist==="over").length;
+      if(Q.length>=2&&sh*2>Q.length)out.push(`このホールはショートが${Q.length}回中${sh}回。前回より1番手大きく。`);
+      else if(Q.length>=2&&ov*2>Q.length)out.push(`このホールはオーバーが${Q.length}回中${ov}回。前回より1番手小さく。`);
+    }
+    const t3=P.filter(r=>r.putts>=3).length;
+    if(t3>=2)out.push(`このホールで3パットが${P.length}回中${t3}回。ファーストパットは寄せる意識で。`);
+    const D=P.filter(r=>r.pin&&r.ball);let ds=0,dov=0;
+    D.forEach(r=>{if(r.ball==="oF")ds++;else if(r.ball==="oB")dov++;else if(r.ball[0]!=="o"){const v=sg3(dRank(r.ball)-dRank(r.pin));if(v<0)ds++;if(v>0)dov++}});
+    if(D.length>=2&&ds*2>D.length)out.push(`グリーンを狙うショットはピン手前が${D.length}回中${ds}回。もう少し奥まで。`);
+    else if(D.length>=2&&dov*2>D.length)out.push(`グリーンを狙うショットはピン奥が${D.length}回中${dov}回。奥からは下りが残ります。`);
+  }
+  return out;
+}
+function renderAdvice(){
+  const el=$("advice");if(!el)return;
+  const a=adviceFor(R.cur);
+  if(!a.length){el.hidden=true;el.innerHTML="";return}
+  el.innerHTML=`<span class="label">${R.cur+1}番のアドバイス</span><ul>${a.map(t=>`<li>${t}</li>`).join("")}</ul>`;el.hidden=false;
+}
+function renderInput(){
+  $("sampleNote").hidden=!R.sample;
+  {const tc=$("teeC");if(tc)tc.value=R.teebox||"white";}
+  ["outC","inC"].forEach(id=>{$(id).innerHTML=Object.keys(COURSES).map(k=>`<option${(id==="outC"?R.out:R.inn)===k?" selected":""}>${k}</option>`).join("")});
+  renderStrip();renderHole();renderHeader();histNote();
+}
+
+/* ---- 分析 ---- */
+function analyze(){
+  const H=R.holes.map((h,i)=>({...h,i})).filter(h=>h.score!=null);
+  const n=H.length; if(!n)return null;
+  const s={n,score:0,par:0,putts:0,puttN:0,fwOpp:0,fw:0,left:0,right:0,ob:0,gir:0,girN:0,three:0,threeLong:0,threeShort:0,
+    pen:0,bunkerH:0,sandSave:0,scrOpp:0,scr:0,birdie:0,par3:[],par4:[],par5:[],front:0,frontN:0,back:0,backN:0,carry:0,bigs:0,
+    loss:{tee:0,second:0,approach:0,putt:0,pen:0,judge:0},longFirst:0,longFirstN:0,
+    sl:{up:{n:0,p:0,t:0},flat:{n:0,p:0,t:0},down:{n:0,p:0,t:0}},ln:{hook:{n:0,p:0,t:0},straight:{n:0,p:0,t:0},slice:{n:0,p:0,t:0}},
+    depth:{short:0,just:0,over:0},sideMiss:0,threeDown:0};
+  H.forEach((h,k)=>{
+    const d=h.score-h.par; s.score+=h.score;s.par+=h.par;
+    s["par"+h.par]?.push(d);
+    if((h.i<9)===(R.start!==9)){s.front+=d;s.frontN++}else{s.back+=d;s.backN++}
+    if(d<0)s.birdie++; if(d>=2)s.bigs++;
+    const oo=ORDER(),pp=oo.indexOf(h.i),prev=pp>0?R.holes[oo[pp-1]]:null;
+    if(pp>0&&pp!==9&&prev&&prev.score!=null&&prev.score-prev.par>=2&&d>=1)s.carry++;
+    if(h.putts!=null){s.putts+=h.putts;s.puttN++;
+      if(h.putts>=3){s.three++; if(h.first==="xl"||h.first==="l")s.threeLong++; if(h.first==="s"||h.first==="m")s.threeShort++;}
+      s.girN++; const g=gir(h); if(g)s.gir++; else {s.scrOpp++; if(d<=0)s.scr++;}}
+    if(h.putts!=null){
+      if(h.slope){const o=s.sl[base(h.slope)];o.n++;o.p+=h.putts;if(h.putts>=3){o.t++;if(base(h.slope)==="down")s.threeDown++}}
+      if(h.line){const o=s.ln[base(h.line)];o.n++;o.p+=h.putts;if(h.putts>=3)o.t++}}
+    if(h.pin&&h.ball){
+      if(h.ball==="oF")s.depth.short++; else if(h.ball==="oB")s.depth.over++;
+      else if(h.ball==="oL"||h.ball==="oR")s.sideMiss++;
+      else{const dv=sg3(dRank(h.ball)-dRank(h.pin));s.depth[dv===0?"just":(dv>0?"over":"short")]++;
+        if(sg3(sRank(h.pin)-sRank(h.ball)))s.sideMiss++;}
+    }
+    if(h.first==="xl"){s.longFirstN++; if(h.putts!=null&&h.putts<=2)s.longFirst++;}
+    if(h.par>3&&h.tee){s.fwOpp++; if(h.tee==="fw")s.fw++; if(h.tee==="left")s.left++; if(h.tee==="right")s.right++;}
+    if(PENS.includes(h.tee))s.ob++;
+    s.pen+=h.pen;
+    if(h.bunker>0){s.bunkerH++; if(d<=0)s.sandSave++;}
+    // 失点の振り分け（パー比のオーバー分）
+    let over=Math.max(0,d);
+    const pl=Math.min(over,Math.max(0,(h.putts??2)-2)); s.loss.putt+=pl; over-=pl;
+    const pn=Math.min(over,(h.pen||0)+penOf(h.tee)); s.loss[h.cause==="judge"?"judge":"pen"]+=pn; over-=pn;
+    if(over>0){
+      if(h.cause&&h.cause!=="putt"){s.loss[h.cause]+=over}
+      else{const teeMiss=h.par>3&&(h.tee==="left"||h.tee==="right"||h.tee==="ob");
+        s.loss[teeMiss?"tee":"second"]+=1; if(over>1)s.loss.approach+=over-1;}
+    }
+  });
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  s.avg3=avg(s.par3);s.avg4=avg(s.par4);s.avg5=avg(s.par5);
+  return {s,H};
+}
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const sg=v=>v>0?"+"+v:v===0?"±0":""+v;
+
+function buildInsights(s){
+  const good=[],bad=[],tasks=[];
+  // 良かった点
+  if(s.fwOpp&&pct(s.fw,s.fwOpp)>=50)good.push(`ティーショットはFWキープ率${pct(s.fw,s.fwOpp)}%。ドライバーは安定していました。`);
+  if(s.scr>=2)good.push(`パーオンを外したホールで${s.scr}回パー以上を拾えています（寄せワン力）。`);
+  if(s.sandSave>0)good.push(`バンカーに入った${s.bunkerH}ホールのうち${s.sandSave}ホールでパー以上。`);
+  if(s.birdie>0)good.push(`バーディーが${s.birdie}個ありました。`);
+  if(s.longFirstN>=2&&s.longFirst/s.longFirstN>=0.7)good.push(`11歩以上のロングパットも${s.longFirstN}回中${s.longFirst}回は2パットで収めました。`);
+  if(s.avg5!=null&&s.avg5<=0.5)good.push(`パー5は平均${sg(+s.avg5.toFixed(1))}。稼ぎどころで崩れていません。`);
+  if(s.puttN>=9&&s.putts/s.puttN<=1.8)good.push(`1ホール平均${(s.putts/s.puttN).toFixed(2)}パット。グリーン上は好調でした。`);
+
+  // 課題候補（失点の大きさで並べる）
+  const L=s.loss;
+  const av=o=>o.n?o.p/o.n:null;
+  const worstLine=Object.entries(s.ln).filter(([k,o])=>o.t>=2).sort((a,b)=>b[1].t-a[1].t)[0];
+  const lineName={hook:"フック",straight:"まっすぐの",slice:"スライス"};
+  if(s.sl.down.n>=2&&s.sl.up.n>=2&&av(s.sl.down)-av(s.sl.up)>=0.5)
+    bad.push(`下りのファーストパットは平均${av(s.sl.down).toFixed(1)}パット、上りは${av(s.sl.up).toFixed(1)}パット。下りが残ると崩れています。`);
+  else if(s.sl.up.n>=3&&av(s.sl.up)<=2)good.push(`上りのパットは平均${av(s.sl.up).toFixed(1)}パットで安定していました。`);
+  if(worstLine)bad.push(`${lineName[worstLine[0]]}ラインで3パットが${worstLine[1].t}回ありました。`);
+  const dT=s.depth.short+s.depth.just+s.depth.over;
+  if(dT>=6){
+    if(s.depth.short>=s.depth.over+3){
+      bad.push(`ピンに対して手前に止まった・外れたのが${s.depth.short}回、奥が${s.depth.over}回。縦の距離が足りていません。`);
+      tasks.push({w:s.depth.short*0.4,title:"番手選び（ショート傾向）",
+        why:`${dT}回のうち${s.depth.short}回がピンより手前でした。ピン位置に対して番手が1つ小さい可能性があります。`,
+        drill:"ピンまでの距離に5yを足して番手を選ぶ。練習場で番手ごとのキャリーを測り直しておく。",
+        metric:"ピンより手前",now:s.depth.short,to:Math.max(0,s.depth.short-3)});
+    }else if(s.depth.over>=s.depth.short+3){
+      bad.push(`ピンより奥に止まった・こぼれたのが${s.depth.over}回。オーバーが多く、下りのパットが残りやすくなっています。`);
+      tasks.push({w:s.depth.over*0.4,title:"番手選び（オーバー傾向）",
+        why:`${dT}回のうち${s.depth.over}回がピンより奥でした。奥からは下りのパットになりがちです。`,
+        drill:"手前のピンでは番手を1つ落とし、グリーン中央より手前に止める意識で打つ。",
+        metric:"ピンより奥",now:s.depth.over,to:Math.max(0,s.depth.over-3)});
+    }else if(s.depth.just/dT>=0.5)good.push(`ピンと同じ縦のゾーンに${s.depth.just}回乗せました。縦の距離感は合っています。`);
+  }
+  if(s.three>=2&&s.threeDown>=Math.ceil(s.three/2)){
+    bad.push(`3パット${s.three}回のうち${s.threeDown}回は下りのパットでした。`);
+    tasks.push({w:s.loss.putt+0.6,title:"下りのタッチと、下りを残さない攻め方",
+      why:`パットで${s.loss.putt}打を失い、その多くが下りです。${worstLine?lineName[worstLine[0]]+"ラインの下りに特に注意してください。":""}ピンより奥に乗ると下りが残ります。`,
+      drill:"下り3〜8歩を、カップを50cm以上オーバーさせない強さで各10球。コースでは、ピンの手前から上りを残すように攻める。",
+      metric:"3パット",now:s.three,to:Math.max(0,Math.floor(s.three/2))});
+  }else if(s.three>=2){
+    const long=s.threeLong>=s.threeShort;
+    bad.push(`3パットが${s.three}回。そのうち${long?s.threeLong+"回はファーストパットが6歩以上":s.threeShort+"回は5歩以内から"}でした。`);
+    tasks.push({w:L.putt+0.5,title:long?"ロングパットの距離感":"ショートパットの決定率",
+      why:`パットで${L.putt}打を失っています。${long?"入れにいくより、2打目をカップから2歩以内に残すことを優先しましょう。":"3〜5歩を外すと、そのまま3パットにつながっています。"}`,
+      drill:long?"15歩・25歩から、カップを中心に半径1歩半の円に止める練習を各10球。":"2歩半の距離をカップ周りの4方向から連続10球。外れたら最初からやり直し。",
+      metric:"3パット",now:s.three,to:Math.max(0,Math.floor(s.three/2))});
+  }
+  if(s.ob>=2){
+    bad.push(`ティーショットのOB・池が${s.ob}回。1回ごとに1〜2打を失い、スコアを一気に崩しています。`);
+    tasks.push({w:s.ob*1.5+L.judge,title:"ハザードを避けるクラブ選択",
+      why:`OB・池が${s.ob}回。ドライバーを持たない判断で、そのまま縮められる失点です。`,
+      drill:"ティーグラウンドで「OB・池がある側」を声に出してから打つ。危ないホールは3W／UTで刻む、と事前に決めておく。",
+      metric:"OB・池",now:s.ob,to:Math.max(0,s.ob-2)});
+  }
+  if(s.left+s.right>=3){
+    const side=s.left>s.right?"左":"右", sideN=Math.max(s.left,s.right);
+    if(sideN>=Math.min(s.left,s.right)+2){
+      bad.push(`ティーショットは${side}ラフへの外れが多くなっています（左ラフ${s.left}・右ラフ${s.right}）。`);
+      tasks.push({w:L.tee+0.3,title:`ティーショットの${side}ラフ`,
+        why:`曲がる方向がはっきりしているので、対策は絞れます。ティーショット起因の失点は${L.tee}打です。`,
+        drill:side==="左"?"練習場で右足前にボールを置かず、フィニッシュまで体を回し切る素振りを20回。コースではティーを打ちたい方向の左サイドに立てる。":"アドレスで右肩が前に出ていないか確認。コースではティーを右サイドに立て、左を向いて打つ。",
+        metric:"FWキープ率",now:pct(s.fw,s.fwOpp)+"%",to:Math.min(100,pct(s.fw,s.fwOpp)+15)+"%"});
+    }
+  }
+  if(s.girN>=9&&pct(s.gir,s.girN)<=25&&L.second>=3){
+    bad.push(`パーオン率${pct(s.gir,s.girN)}%。セカンド起因の失点が${L.second}打あります。`);
+    tasks.push({w:L.second,title:"セカンドショットの精度",
+      why:"フェアウェイからでもグリーンに乗らないホールが多めです。",
+      drill:"7I・UTで「グリーン中央」だけを狙う練習。ピンを狙わず、乗せる確率を上げる。",
+      metric:"パーオン",now:s.gir,to:s.gir+2});
+  }
+  if(L.approach>=3){
+    bad.push(`グリーン周りからの寄せで${L.approach}打を失っています。`);
+    tasks.push({w:L.approach,title:"グリーン周りの寄せ",
+      why:"乗らなかった後にさらに1打以上かかっているホールがあります。",
+      drill:"30yを転がし（PW）と上げ（SW）で各10球。まずは確実に乗せる方を選ぶ。",
+      metric:"リカバリー成功",now:s.scr,to:s.scr+2});
+  }
+  if(s.backN>=5&&s.frontN>=5&&s.back-s.front>=3){
+    bad.push(`後半は前半より${s.back-s.front}打多く叩いています。`);
+    tasks.push({w:(s.back-s.front)/2,title:"後半の失速",
+      why:"終盤の崩れは技術より疲労・集中の問題であることが多いです。",
+      drill:"ハーフ休憩で軽く補食と水分。後半1番ティーで素振り3回とルーティンを決め直す。",
+      metric:"後半のオーバー",now:sg(s.back),to:sg(s.back-2)});
+  }
+  {const P=R.holes.map((h,i)=>({...h,i})).filter(h=>h.par===3&&h.score!=null&&h.dist);
+   const sh=P.filter(h=>h.dist==="short").length,ov=P.filter(h=>h.dist==="over").length,ju=P.length-sh-ov;
+   const p3loss=P.reduce((a,h)=>a+Math.max(0,h.score-3),0);
+   if(P.length>=2){
+     if(sh>=ov+2){bad.push(`パー3のティーショットは${P.length}回中${sh}回ショートでした。`);
+       tasks.push({w:sh*0.4+p3loss*0.3,title:"パー3の番手選び（ショート傾向）",why:`パー3で${p3loss}打オーバー。ショートが続くのは番手が小さいサインです。`,
+         drill:"表示距離に5ヤード足して番手を選ぶ。迷ったら大きい番手で、ゆったり振る。",metric:"パー3のショート",now:sh,to:Math.max(0,sh-2)});}
+     else if(ov>=sh+2){bad.push(`パー3のティーショットは${P.length}回中${ov}回オーバーでした。`);
+       tasks.push({w:ov*0.4+p3loss*0.3,title:"パー3の番手選び（オーバー傾向）",why:`パー3で${p3loss}打オーバー。奥に外すと下りのアプローチやパットが残ります。`,
+         drill:"アドレナリンで飛ぶ分を見込んで、迷ったら小さい番手を選ぶ。打ち上げ・打ち下ろしも確認する。",metric:"パー3のオーバー",now:ov,to:Math.max(0,ov-2)});}
+     else if(ju*2>=P.length)good.push(`パー3のティーショットは${P.length}回中${ju}回、縦の距離が合っていました。`);
+   }
+   const ag=P.filter(h=>h.wind==="against"),fo=P.filter(h=>h.wind==="follow");
+   const agS=ag.filter(h=>h.dist==="short").length,foO=fo.filter(h=>h.dist==="over").length;
+   if(ag.length>=2&&agS*2>=ag.length+1)bad.push(`アゲインストの${ag.length}回中${agS}回がショート。向かい風では番手をもう1つ上げましょう。`);
+   if(fo.length>=2&&foO*2>=fo.length+1)bad.push(`フォローの${fo.length}回中${foO}回がオーバー。追い風では番手を1つ下げましょう。`);
+   const byC={};P.filter(h=>h.club).forEach(h=>{(byC[h.club]??=[]).push(h.dist)});
+   Object.entries(byC).forEach(([c,a])=>{if(a.length>=2&&a.every(x=>x==="short"))bad.push(`${c}は${a.length}回ともショート。この番手の実際の飛距離を見直しましょう。`);
+     else if(a.length>=2&&a.every(x=>x==="over"))bad.push(`${c}は${a.length}回ともオーバー。思っているより飛んでいます。`);});
+  }
+  if(s.carry>=2)bad.push(`ダブルボギー以上の直後のホールで${s.carry}回続けてボギー以上。ミスを引きずっています。`);
+  if(s.avg3!=null&&s.avg3>=1.2)bad.push(`パー3は平均${sg(+s.avg3.toFixed(1))}。ティーショット1打で決まるので、番手選びを見直す余地があります。`);
+  tasks.sort((a,b)=>b.w-a.w);
+  return {good,bad,tasks:tasks.slice(0,3)};
+}
+
+function tiltPanel(){
+  const rows=R.holes.map((h,i)=>{const c=courseOf(i),k=i<9?i:i-9,L=learn(c,k);
+    return `<span class="num">${i+1}番</span><span class="k">${c}${k+1}</span><span>${L.n>=3?tiltText(L):'<span class="k">データ不足</span>'}</span><span class="k num">${L.n}件</span>`}).join("");
+  return `<div class="panel"><h2>グリーンの傾き（蓄積データ）</h2>
+    <p class="note">このページを使う全員のラウンドで「どこから打って上り／下りだったか」を集計して推定しています。保存されるのは打数・パット・ピン位置・ボール位置・傾斜だけで、名前やメモは共有されません。</p>
+    <div class="tilt">${rows}</div></div>`;
+}
+function par3Panel(){
+  const P=R.holes.map((h,i)=>({...h,i})).filter(h=>h.par===3&&(h.club||h.dist||h.wind));
+  if(!P.length)return "";
+  return `<div class="panel"><h2>パー3のティーショット</h2><div class="p3tbl">
+    ${P.map(h=>`<span class="num">${h.i+1}番</span><span class="k">${h.wind?WINDN[h.wind]:"–"}</span><span>${h.club||"–"}</span><span class="${h.dist==="short"?"neg":h.dist==="over"?"pos":""}">${h.dist?DISTN[h.dist]:"–"}</span><span class="num">${h.score!=null?(RES[h.score-h.par]??ovr(h.score-h.par)):"–"}</span>`).join("")}
+  </div></div>`;
+}
+function dGreen(s){
+  const dT=s.depth.short+s.depth.just+s.depth.over;
+  const slN=s.sl.up.n+s.sl.flat.n+s.sl.down.n, lnN=s.ln.hook.n+s.ln.straight.n+s.ln.slice.n;
+  if(!dT&&!slN&&!lnN)return "";
+  const row=(k,o)=>o.n?`<span class="k">${k}</span><span>${o.n}ホール${o.t?`（<span class="hl">3パット${o.t}</span>）`:""}</span><span class="x num">${(o.p/o.n).toFixed(1)}</span>`:"";
+  const mx=Math.max(1,s.depth.short,s.depth.just,s.depth.over);
+  const bar=(k,v,top)=>`<div class="bar${top?" top":""}"><span>${k}</span><div class="track"><div class="fill" style="width:${v/mx*100}%"></div></div><span class="v num">${v}回</span></div>`;
+  const big=Math.max(s.depth.short,s.depth.over);
+  return `<div class="panel"><h2>グリーン上のデータ</h2>
+    ${dT?`<span class="label">ピンに対して縦のどこに乗ったか</span><div class="bars">${bar("手前",s.depth.short,s.depth.short===big&&big>s.depth.just)}${bar("ピンと同じゾーン",s.depth.just,false)}${bar("奥",s.depth.over,s.depth.over===big&&big>s.depth.just)}</div>`:""}
+    ${slN?`<span class="label">上り・下り別　平均パット</span><div class="gtbl">${row("上り",s.sl.up)}${row("平坦",s.sl.flat)}${row("下り",s.sl.down)}</div>`:""}
+    ${lnN?`<span class="label">ライン別　平均パット</span><div class="gtbl">${row("フック",s.ln.hook)}${row("まっすぐ",s.ln.straight)}${row("スライス",s.ln.slice)}</div>`:""}
+  </div>`;
+}
+const HK=["par","score","putts","pin","ball","slope"];
+function isSaved(){return realRounds().some(r=>String(r.id)===String(R.id)&&Array.isArray(r.holes)&&r.holes.length===18&&r.holes.every((h,i)=>HK.every(k=>(h[k]??null)===(R.holes[i][k]??null))))}
+function finishPanel(s){
+  const miss=ORDER().filter(i=>R.holes[i].score==null);
+  if(miss.length===18)return "";
+  if(miss.length)return `<div class="panel"><h2>まだ入力していないホール</h2>
+    <p class="note">タップするとそのホールの入力に戻ります。途中で閉じても、入力した内容はこのスマホに残っています。</p>
+    <div class="chips">${miss.map(i=>`<button class="chip" data-jump="${i}">${i+1}番</button>`).join("")}</div></div>`;
+  const d=s.score-s.par,saved=isSaved();
+  return `<div class="panel finish"><span class="label">ROUND COMPLETE</span>
+    <h2>18ホール終了、お疲れさまでした</h2>
+    <div class="fscore"><b class="num">${s.score}</b><span class="num">${sg(d)}</span><span class="k">${s.puttN?s.putts+"パット":""}</span></div>
+    ${saved&&LOCAL.some(r=>r.id===R.id&&r.pending)?`<p class="note">このスマホには保存済みです。共有データへは、電波が戻ったら自動で送ります。</p><button class="btn" data-revnew="1">新しいラウンドを始める</button>`
+      :saved?`<p class="note">このラウンドはみんなの蓄積に保存済みです。</p><button class="btn" data-revnew="1">新しいラウンドを始める</button>`
+      :`<p class="note">保存すると、グリーンの傾きの学習に加わります（名前とメモは送られません）。</p><button class="btn primary" data-revsave="1">このラウンドをみんなの蓄積に保存</button>`}
+    <p class="note" id="revSaveMsg" hidden></p></div>`;
+}
+/* ===== 課題発見（ワンタップ課題発見と同じ分析） ===== */
+const TMAP={fw:"FW",left:"L",right:"R",ob:"OB",p1:"P",water:"W"};
+const kSum=a=>a.reduce((x,y)=>x+y,0),kAvg=a=>a.length?kSum(a)/a.length:0,kHn=h=>`${h.no}番`;
+const kPen=t=>t==="OB"?2:(t==="P"||t==="W")?1:0,kPenN=t=>t==="OB"?"OB":t==="P"?"1ペナ":"池";
+function kOrder(r){const st=r.start===9?9:0;return Array.from({length:18},(_,k)=>(st+k)%18)}
+function kH(r){
+  return kOrder(r).map((i,pos)=>{const h=r.holes[i];if(!h||h.score==null)return null;const c=i<9?r.out:r.inn,k=i%9,x=(HI[c]||[])[k]||[0,0,0,0,0];
+    return {i,pos,course:c,no:i+1,par:h.par,hdcp:x[0],yd:x[TB[r.teebox||"white"]],s:h.score,p:h.putts??2,t:TMAP[h.tee]||null}}).filter(Boolean);
+}
+function kOwn(c,no){let n=0,ob=0,w=0,fw=0,par=0;
+  LOCAL.filter(r=>r.id!==R.id).forEach(r=>kH(r).forEach(h=>{if(h.course===c&&h.no===no){n++;par=h.par;if(h.t==="OB")ob++;if(h.t==="P"||h.t==="W")w++;if(h.t==="FW")fw++;}}));
+  return {n,ob,w,fw,par};}
+function kAna(H){
+  const n=H.length,total=kSum(H.map(h=>h.s)),par=kSum(H.map(h=>h.par));
+  const out=kSum(H.filter(h=>h.pos<9).map(h=>h.s)),inn=kSum(H.filter(h=>h.pos>=9).map(h=>h.s));
+  const outN=H.filter(h=>h.pos<9).length,innN=n-outN;
+  const putts=kSum(H.map(h=>h.p));
+  const fwCh=H.filter(h=>h.par>=4&&h.t&&!["OB","P","W"].includes(h.t)||h.par>=4&&["OB","P","W"].includes(h.t)),fwHit=fwCh.filter(h=>h.t==="FW").length;
+  const gir=H.filter(h=>h.s-h.p<=h.par-2).length,three=H.filter(h=>h.p>=3).length;
+  const obN=H.filter(h=>h.t==="OB").length,wN=H.filter(h=>h.t==="P"||h.t==="W").length;
+  const loss={approach:0,tee:0,putt:0,pen:0};
+  H.forEach(h=>{const d=h.s-h.par,pen=kPen(h.t),pl=Math.max(0,h.p-2);
+    loss.pen+=Math.min(pen,Math.max(0,d));loss.putt+=Math.min(pl,Math.max(0,d-pen));
+    let rest=Math.max(0,d-pen-pl);const g=h.s-h.p<=h.par-2;
+    if(h.par>=4&&(h.t==="L"||h.t==="R")&&!g&&rest>0){loss.tee+=1;rest-=1}
+    loss.approach+=rest;h.d=d;h.gir=g;});
+  const cnt={e:0,b:0,p:0,bo:0,db:0};H.forEach(h=>{if(h.d<=-2)cnt.e++;else if(h.d===-1)cnt.b++;else if(h.d===0)cnt.p++;else if(h.d===1)cnt.bo++;else cnt.db++;});
+  return {H,n,total,par,diff:total-par,out,inn,outN,innN,putts,avgPutt:putts/n,fwHit,fwCh:fwCh.length,gir,three,obN,wN,loss,cnt};
+}
+const KISSUE={
+  approach:{name:"アプローチ〜寄せ",title:"グリーン周りから確実に「乗せる」",
+    why:"スコア80〜100の人で一番差がつくのがここです。原因は「グリーンを外した後の1打が乗らない（ダフリ・トップ・距離不足）」か、「2打目以降で無理にピンを狙い、難しい場所に外す」のどちらかが大半です。",
+    check:"グリーンを外したら「次の1打で必ずグリーンに乗せる」が合格ライン。ピンに寄せるより、乗せることを優先してください。",
+    menu:["30y以内のランニングアプローチ（7〜9番アイアン）を20球。キャリー1/3・ラン2/3を体で覚える","芝の上なら、ラフ・左足下がりなど外しやすいライから10球ずつ。練習場ならマットの端から","50y・70y・100yの3つの距離を、番手と振り幅で打ち分ける練習を各10球"]},
+  tee:{name:"ティーショット",title:"フェアウェイに置くティーショット",
+    why:"フェアウェイを外すと、2打目が林越えやラフからになり、グリーンを狙えなくなります。左右どちらかに偏っているなら、スイングの癖が出ているサインです。",
+    check:"打つ前に、フェアウェイの中の狙う一点（木や看板）を決めてから構える。飛距離は8割で十分です。",
+    menu:["ドライバーを8割の振り幅で10球。飛距離は見ず、狙った幅に何球入るかだけ数える","UTかFWウッドでのティーショットを10球。ドライバーとの曲がり幅の差を確認する","本番と同じルーティン（素振り1回→目標確認→構えて3秒以内に打つ）で5球"]},
+  putt:{name:"パット",title:"3パットをなくす距離感",
+    why:"3パットの多くは、1打目の距離感（大きくショート・オーバー）が原因です。ラインを読むより、距離を合わせる方がスコアに直結します。",
+    check:"11歩（約7m）以上は「カップを中心に半径1歩半の円に止める」が目標。カップインは狙わなくて構いません。",
+    menu:["15歩・25歩のロングパットを各10球。半径1歩半以内に止まった数を数える","2歩半の距離を連続10球入るまで続ける","スタート前の練習グリーンでは、ラインより距離感だけを合わせる（5分で十分）"]},
+  pen:{name:"OB・ペナルティ",title:"OB・ペナルティを出さないマネジメント",
+    why:"OBは1回で2打、池や黄杭（1ペナ）でも1打を失うので、スコアへの影響が最も大きいミスです。多くは「無理なクラブ選択」と「OB側に向いて構えている」ことから起きます。",
+    check:"OBのあるホールは、ティーグラウンドのOB側に立ち、OBと反対サイドを狙う。迷ったら番手を落とす。",
+    menu:["練習場で自分の「最大の曲がり幅」を把握する（ドライバー10球の左右のブレを確認）","UT・FWウッドで、狙った方向に打ち出す練習を10球","ティーショットで番手を落とす基準（例：OBが多いホール、狭いホール）を決めておく"]}
+};
+function kReview(a,I){
+  const H=a.H,n=a.n;
+  H.forEach(h=>{h.toG=h.s-h.p;h.bon=h.toG<=h.par-1;});
+  const fwH=H.filter(h=>h.par>=4&&h.t==="FW"),missH=H.filter(h=>h.par>=4&&(h.t==="L"||h.t==="R"));
+  const L=H.filter(h=>h.t==="L").length,Rr=H.filter(h=>h.t==="R").length;
+  const penH=H.filter(h=>kPen(h.t)>0),nonGir=H.filter(h=>!h.gir),scramble=nonGir.filter(h=>h.d<=0).length;
+  const bogeyOn=H.filter(h=>h.bon).length,far=H.filter(h=>h.toG-(h.par-2)>=3),one=H.filter(h=>h.p===1).length;
+  const threeH=H.filter(h=>h.p>=3),big=H.filter(h=>h.d>=3);
+  let streak=0,best=0,bestEnd=-1;H.forEach((h,i)=>{streak=h.d>=1?streak+1:0;if(streak>best){best=streak;bestEnd=i}});
+  let bounce=0,bounceCh=0;H.forEach((h,i)=>{if(h.d>=2&&i<n-1){bounceCh++;if(H[i+1].d<=0)bounce++}});
+  const byPar=[3,4,5].map(p=>{const hs=H.filter(h=>h.par===p);return {p,n:hs.length,avg:kAvg(hs.map(h=>h.d))}});
+  const hard=H.filter(h=>h.hdcp&&h.hdcp<=3),easy=H.filter(h=>h.hdcp>=7);
+  const hardAvg=kAvg(hard.map(h=>h.d)),easyAvg=kAvg(easy.map(h=>h.d));
+  const totalLoss=kSum(Object.values(a.loss)),teeAll=a.loss.tee+a.loss.pen;
+  const merged=a.loss.tee>0&&a.loss.pen>0&&teeAll>a.loss.approach&&teeAll>a.loss.putt;
+  let keys=Object.keys(a.loss).sort((x,y)=>a.loss[y]-a.loss[x]);
+  if(merged){const lead=a.loss.pen>=a.loss.tee?"pen":"tee";keys=[lead].concat(keys.filter(k=>k!==lead))}
+  const top=totalLoss>0?keys[0]:null,pc=k=>totalLoss?Math.round(a.loss[k]/totalLoss*100):0;
+  const topV=merged?teeAll:(top?a.loss[top]:0),topPct=totalLoss?Math.round(topV/totalLoss*100):0;
+  let summary=`${a.total}（${sg(a.diff)}）。パー比${sg(a.diff)}のうち、`;
+  if(merged)summary+=`一番大きいのはティーショットのミスで、曲がり${a.loss.tee}打とOB・ペナ${a.loss.pen}打を合わせて推定${teeAll}打（約${topPct}%）です。`;
+  else summary+=top?`一番大きいのは${KISSUE[top].name}で推定${a.loss[top]}打（約${pc(top)}%）です。`:"大きなロスはありませんでした。";
+  const second=keys.slice(1).find(k=>a.loss[k]>0&&!(merged&&(k==="tee"||k==="pen")));
+  if(top&&second)summary+=`次いで${KISSUE[second].name}が${a.loss[second]}打。`;
+  if(a.outN===9&&a.innN===9&&Math.abs(a.out-a.inn)>=4)summary+=a.inn>a.out?`後半に${a.inn-a.out}打崩れたのも響きました。`:`前半の出遅れ（後半より${a.out-a.inn}打多い）が響きました。`;
+
+  const good=[];
+  if(a.avgPutt<=1.9)good.push(`パットは平均${a.avgPutt.toFixed(2)}、3パットは${a.three}回。グリーン上は安定しています。`);
+  if(a.fwCh&&a.fwHit/a.fwCh>=0.55)good.push(`フェアウェイキープ率${pct(a.fwHit,a.fwCh)}%。ティーショットで大きく崩れていません。`);
+  if(a.obN+a.wN===0)good.push("OB・ペナはゼロ。大叩きにつながるミスを防げています。");
+  if(a.cnt.e+a.cnt.b+a.cnt.p>=5)good.push(`パー以上が${a.cnt.e+a.cnt.b+a.cnt.p}ホール${a.cnt.b+a.cnt.e?`（うちバーディ以上${a.cnt.b+a.cnt.e}）`:""}。取れるホールでしっかり取れています。`);
+  if(bounceCh>=2&&bounce/bounceCh>=0.5)good.push(`ダボ以上の次のホールで、パー以上が${bounce}回。気持ちの切り替えができています。`);
+  if(scramble>=3)good.push(`パーオンしなかったホールでパーを${scramble}回拾っています。寄せとパットで粘れています。`);
+  (I.good||[]).forEach(t=>{if(/上りのパット|ピンと同じ縦|パー3/.test(t))good.push(t)});
+  if(!good.length)good.push(`${n}ホールの記録が揃ったことで、課題がはっきり数字で見えるようになりました。`);
+
+  const tee=[];
+  tee.push(`パー4・パー5の${a.fwCh}ホールで、FWキープ${a.fwHit}回（${pct(a.fwHit,a.fwCh)}%）。左ラフ${L}回・右ラフ${Rr}回・OB${a.obN}回・池/1ペナ${a.wN}回。`);
+  if(fwH.length>=2&&missH.length>=2){const g=kAvg(missH.map(h=>h.d))-kAvg(fwH.map(h=>h.d));
+    tee.push(`FWに置いたホールは平均${f1(kAvg(fwH.map(h=>h.d)))}、ラフに外したホールは平均${f1(kAvg(missH.map(h=>h.d)))}。${g>0.3?`フェアウェイを外すと1ホールあたり約${g.toFixed(1)}打損をしている計算です。`:"FWを外してもリカバリーできています。"}`)}
+  if(L>=2&&L>=Rr*2)tee.push(`ミスは左に偏っています（${L}回）。引っかけが出やすい日は、切り返しで上体が突っ込んで体の回転が止まり、手が返りすぎていることが多いです。フィニッシュまで体を回し切る意識を。`);
+  else if(Rr>=2&&Rr>=L*2)tee.push(`ミスは右に偏っています（${Rr}回）。スライス・プッシュはフェースが開いたまま当たるのが典型です。グリップを少しだけかぶせて握り、球をつかまえる意識を。`);
+  else if(L+Rr>=3)tee.push("ミスは左右両方に出ています。方向の癖よりも、リズムや力みが原因のことが多いです。8割の力で振ることを優先しましょう。");
+  if(penH.length)tee.push(`OB・ペナは${penH.map(h=>`${kHn(h)}（${kPenN(h.t)}）`).join("、")}。合計${a.obN*2+a.wN}打のロスです。`);
+
+  const appr=[];
+  appr.push(`パーオン${a.gir}/${n}（${pct(a.gir,n)}%）、ボギーオン（パーより1打多い打数で乗せる）${bogeyOn}/${n}（${pct(bogeyOn,n)}%）。90切りの目安は、ボギーオン率70%以上とよく言われます。`);
+  if(nonGir.length)appr.push(`パーオンしなかった${nonGir.length}ホールのうち、パー以上で上がれたのは${scramble}ホール（寄せワン率${pct(scramble,nonGir.length)}%）。`);
+  if(far.length)appr.push(`グリーンに乗せるまでに、パーオンより3打以上多くかかったホールが${far.length}つ（${far.map(kHn).join("、")}）。グリーン周りを行ったり来たりしている可能性が高く、一番縮めやすい部分です。`);
+
+  const putt=[];
+  putt.push(`合計${a.putts}パット（平均${a.avgPutt.toFixed(2)}）。1パット${one}回、3パット以上${threeH.length}回。`);
+  if(threeH.length)putt.push(`3パットは${threeH.map(kHn).join("、")}。${threeH.filter(h=>h.gir).length>=1?"パーオンしたホールでの3パットは、長い距離が残った可能性が高いです。ロングパットの距離感を磨きましょう。":"アプローチの後の3パットは、寄せが離れたかショートパットのミスです。2歩半の練習が効きます。"}`);
+  const gp=kAvg(H.filter(h=>h.gir).map(h=>h.p)),ngp=kAvg(nonGir.map(h=>h.p));
+  if(a.gir>=2&&nonGir.length>=2)putt.push(`パーオンしたホールは平均${gp.toFixed(1)}パット、しなかったホールは平均${ngp.toFixed(1)}パット。${ngp<gp?"寄せが近くに付いている証拠です。":"寄せの距離を詰めると、パット数も自然に減ります。"}`);
+
+  const flow=[];
+  if(a.outN===9&&a.innN===9){
+    if(a.inn-a.out>=4)flow.push(`後半に${a.inn-a.out}打落としています。昼休憩の後は体が硬くなりやすいので、後半スタート前に素振りとストレッチを5分。後半最初の3ホールは安全策で入りましょう。`);
+    else if(a.out-a.inn>=4)flow.push(`前半が後半より${a.out-a.inn}打多いです。出だしで体が温まっていない可能性があります。スタート前にアプローチとパットで距離感を合わせておくと効果的です。`);
+    else flow.push(`前半${a.out}・後半${a.inn}。前後半の差は小さく、18ホールを通して安定しています。`);}
+  if(best>=3)flow.push(`${best}ホール連続でボギー以上（${kHn(H[bestEnd-best+1])}〜${kHn(H[bestEnd])}）。悪い流れのときは、次のティーショットをFWに置くことだけに集中して流れを切りましょう。`);
+  if(big.length)flow.push(`トリプルボギー以上が${big.length}回（${big.map(h=>`${kHn(h)} ${sg(h.d)}`).join("、")}）。大叩き1回で3打以上を失います。ピンチでは「ボギーで止める」判断を最優先に。`);
+  if(bounceCh>=2&&bounce/bounceCh<0.5)flow.push(`ダボ以上の次のホールでパー以上は${bounceCh}回中${bounce}回。ミスを引きずりやすい傾向があります。ミスの後は、深呼吸してからティーに立つルーティンを決めておきましょう。`);
+
+  const holeT=[];
+  const worstPar=byPar.filter(x=>x.n).sort((x,y)=>y.avg-x.avg)[0];
+  holeT.push(byPar.filter(x=>x.n).map(x=>`パー${x.p} 平均${f1(x.avg)}`).join("・")+"。");
+  if(worstPar&&worstPar.avg>=1)holeT.push({3:"パー3で一番苦戦しています。ティーショットがそのままグリーンを狙う1打なので、ショートしやすい人は1番手大きめを選びましょう。",4:"パー4で一番苦戦しています。2打目が長く残りやすいので、ボギーオン（3打でグリーン）を基準に組み立てるのが現実的です。",5:"パー5で一番苦戦しています。2打目で無理をせず、3打目を得意な距離から打てるように刻むのが近道です。"}[worstPar.p]);
+  if(easy.length&&hard.length){
+    if(easyAvg>=1&&easyAvg>=hardAvg-0.3)holeT.push(`易しいホール（HDCP7〜9）でも平均${f1(easyAvg)}。難ホールの平均${f1(hardAvg)}と差がありません。易しいホールの取りこぼしを減らすのが、一番効率よくスコアを縮める方法です。`);
+    else holeT.push(`難ホール（HDCP1〜3）で平均${f1(hardAvg)}、易しいホール（HDCP7〜9）で平均${f1(easyAvg)}。難ホールはボギーで十分という意識で、大叩きを防ぎましょう。`);}
+
+  // グリーン・パー3（詳しい入力から分かったこと）
+  const green=(I.bad||[]).filter(t=>/下り|上り|ライン|ピンより|ピンと同じ|パー3|アゲインスト|フォロー|回とも/.test(t));
+
+  const plan=H.slice().filter(h=>h.d>=2).sort((x,y)=>(y.d-x.d)||(x.hdcp-y.hdcp)).slice(0,3).map(h=>{
+    const o=kOwn(h.course,h.no),gh=R.holes[h.i];let t=`今日は${sg(h.d)}。`;
+    if(kPen(h.t))t+=`ティーショットが${kPenN(h.t)}。次回はUTかFWウッドで、${h.t==="P"?"ペナルティエリア":kPenN(h.t)}と反対サイドを狙いましょう。`;
+    else if(h.t==="L"||h.t==="R")t+=`ティーショットを${h.t==="L"?"左":"右"}に外してから崩れました。次回は${h.t==="L"?"右":"左"}サイドを狙い、2打目は確実に前へ。`;
+    else if(h.p>=3)t+=`${h.p}パット。グリーンに乗ったら、まず2パットで上がることを優先。`;
+    else t+=`グリーンまで${h.toG}打かかりました。2打目以降は無理にピンを狙わず、グリーンの広い側へ。`;
+    if(gh&&gh.pin&&gh.ball&&gh.ball[0]!=="o"&&relOf(gh)==="ピンより奥"&&base(gh.slope)==="down")t+="奥に乗って下りが残りました。次回はピンの手前に止めて上りを残しましょう。";
+    if(o.n>=3&&o.ob+o.w>=2)t+=`（これまで${o.n}回中${o.ob+o.w}回OB・ペナ）`;
+    if(h.hdcp&&h.hdcp<=3)t+=` HDCP${h.hdcp}の難ホールなので、ボギーで上がれば十分です。`;
+    if(h.par===5)t+=" パー5は3打目勝負。2打目は得意な距離を残すことを優先。";
+    const gn=greenNotes(h.course,h.i%9);if(gn&&gn.tags.length)t+=`（グリーン：${gn.tags.join("・")}）`;
+    return {title:`${kHn(h)}（パー${h.par}・${h.yd}y）`,t};});
+
+  const goals=[];const cap=t=>t>0?`${t}回以下`:"0回";
+  if(top&&n===18)goals.push(["スコア",`${a.total}`,`${a.total-Math.max(2,Math.min(5,Math.ceil(topV/2)))}`]);
+  keys.filter(k=>a.loss[k]>0).slice(0,3).forEach(k=>{
+    if(k==="approach")goals.push(bogeyOn<Math.round(n*0.7)?["ボギーオン",`${pct(bogeyOn,n)}%`,`${pct(Math.min(n,bogeyOn+3),n)}%`]:["パーオン",`${pct(a.gir,n)}%`,`${pct(Math.min(n,a.gir+2),n)}%`]);
+    if(k==="tee"&&a.fwCh)goals.push(["FWキープ",`${pct(a.fwHit,a.fwCh)}%`,`${pct(Math.min(a.fwCh,a.fwHit+2),a.fwCh)}%`]);
+    if(k==="putt")goals.push(["3パット",`${a.three}回`,cap(Math.max(0,Math.min(1,a.three-1)))]);
+    if(k==="pen")goals.push(["OB・ペナ",`${a.obN+a.wN}回`,cap(Math.max(0,a.obN+a.wN-1))]);});
+
+  const menu=top?KISSUE[top].menu.slice():[];
+  if(merged){const o=top==="tee"?"pen":"tee";menu.push(`（${KISSUE[o].name}）${KISSUE[o].menu[0]}`)}
+  if(top&&second)menu.push(`（${KISSUE[second].name}）${KISSUE[second].menu[0]}`);
+  (I.tasks||[]).filter(t=>/下り|番手選び/.test(t.title)).forEach(t=>menu.push(`（${t.title}）${t.drill}`));
+
+  const pool=LOCAL.filter(x=>x.id!==R.id&&Array.isArray(x.holes)&&x.holes.every(h=>h&&h.score!=null)).slice(-5);
+  let comp=null;
+  if(pool.length&&n===18){const P=pool.map(r=>kAna(kH(r)));const pb=P.map(q=>q.H.filter(h=>h.s-h.p<=h.par-1).length);
+    const row=(label,now,before,lower,fmt)=>({label,now:fmt(now),before:fmt(before),better:lower?now<before-0.05:now>before+0.05,worse:lower?now>before+0.05:now<before-0.05});
+    const fm=v=>v.toFixed(Number.isInteger(v)?0:1);
+    comp={k:pool.length,rows:[row("スコア",a.total,kAvg(P.map(q=>q.total)),true,fm),row("FWキープ",pct(a.fwHit,a.fwCh),kAvg(P.map(q=>pct(q.fwHit,q.fwCh))),false,v=>Math.round(v)+"%"),
+      row("ボギーオン",pct(bogeyOn,18),kAvg(pb.map(x=>pct(x,18))),false,v=>Math.round(v)+"%"),row("パット",a.putts,kAvg(P.map(q=>q.putts)),true,fm),row("OB・ペナ",a.obN+a.wN,kAvg(P.map(q=>q.obN+q.wN)),true,fm)]};}
+
+  const issue=top?Object.assign({v:topV,pct:topPct},KISSUE[top]):null;
+  if(issue&&merged){issue.title="ティーショットのミスを減らす";issue.why=`左右への曲がり（${a.loss.tee}打）とOB・ペナ（${a.loss.pen}打）を合わせると、ロスの一番大きな原因です。`+KISSUE[top].why;}
+  const others=top?keys.slice(1).filter(k=>a.loss[k]>0&&!(merged&&(k==="tee"||k==="pen"))).map(k=>({name:KISSUE[k].name,v:a.loss[k]})):[];
+  return {summary,good:good.slice(0,4),issue,others,sections:[["ティーショット",tee],["2打目〜グリーンまで",appr],["パット",putt],["グリーン・パー3（詳しい入力から）",green],["流れ・メンタル",flow],["ホールの傾向",holeT]],plan,goals,menu,comp};
+}
+function kadaiView(I){
+  const H=kH(R);
+  if(H.length<9)return `<div class="panel"><h2>課題発見</h2><p class="note">9ホール以上の打数を入れると、総評と課題が表示されます。</p></div>`;
+  const a=kAna(H),rv=kReview(a,I);
+  const ul=arr=>`<ul class="kpts">${arr.map(t=>`<li>${t}</li>`).join("")}</ul>`;
+  const LN={approach:"アプローチ〜寄せ",tee:"ティーショット",putt:"パット",pen:"OB・ペナ"};
+  const cats=Object.entries(a.loss).filter(([k,x])=>x>0).sort((x,y)=>y[1]-x[1]),mx=Math.max(1,...cats.map(c=>c[1]));
+  return `
+  <div class="panel"><span class="label">総評</span><p class="ktext">${rv.summary}</p>
+    ${cats.length?`<div class="bars">${cats.map(([k,x],j)=>`<div class="bar${j===0?" top":""}"><span>${LN[k]}</span><div class="track"><div class="fill" style="width:${x/mx*100}%"></div></div><span class="v num">${x}打</span></div>`).join("")}</div>`:""}</div>
+  ${rv.issue?`<div class="panel kissue"><span class="label">最優先の課題（ロスの約${rv.issue.pct}%）</span><h2>${rv.issue.title}</h2>
+    <p class="ktext">${rv.issue.why}</p><p class="ktext"><b>次回のチェックポイント：</b>${rv.issue.check}</p>
+    ${rv.others.length?`<p class="note">そのほかのロス：${rv.others.map(o=>`${o.name} +${o.v}打`).join(" / ")}</p>`:""}</div>`:""}
+  <div class="panel"><span class="label">良かったこと</span>${ul(rv.good)}</div>
+  ${rv.goals.length?`<div class="panel"><h2>次回の目標</h2><div class="goal num">${rv.goals.map(([l,nn,t])=>`<span>${l}</span><span>${nn}</span><span class="arrow">→</span><span class="to">${t}</span>`).join("")}</div></div>`:""}
+  <div class="panel"><h2>分野別の詳細</h2>${rv.sections.filter(x=>x[1].length).map(([t,arr])=>`<div class="ksub"><span class="label">${t}</span>${ul(arr)}</div>`).join("")}</div>
+  ${rv.plan.length?`<div class="panel"><h2>次回の成田ハイツリー攻略プラン</h2>${rv.plan.map(p=>`<div class="ksub"><b>${p.title}</b><p class="ktext">${p.t}</p></div>`).join("")}</div>`:""}
+  ${rv.menu.length?`<div class="panel"><h2>次の練習メニュー</h2>${rv.menu.map((m,k)=>`<div class="kmenu"><span class="kn">${k+1}</span><span>${m}</span></div>`).join("")}</div>`:""}
+  ${rv.comp?`<div class="panel"><h2>これまでとの比較</h2><p class="note">直近${rv.comp.k}ラウンドの平均との比較</p>
+    <div class="kcmp"><span></span><span class="k">これまで</span><span class="k">今回</span><span></span>${rv.comp.rows.map(x=>`<span>${x.label}</span><span class="k num">${x.before}</span><b class="num">${x.now}</b><span class="kbadge ${x.better?"up":x.worse?"down":""}">${x.better?"良化":x.worse?"悪化":"横ばい"}</span>`).join("")}</div></div>`:""}`;
+}
+function renderReview(){
+  const v=$("viewRev"); const A=analyze();
+  if(!A){v.innerHTML=`<div class="panel"><h2>まだ入力がありません</h2><p class="note">「入力」タブで打数を入れると、ここに振り返りと課題が表示されます。</p></div>`;return}
+  const {s}=A, I=buildInsights(s), d=s.score-s.par;
+  const cats=Object.entries(s.loss).filter(([k,x])=>x>0).sort((a,b)=>b[1]-a[1]);
+  const maxL=Math.max(1,...cats.map(c=>c[1]));
+  const card=(from)=>{let h="";for(let i=from;i<from+9;i++)h+=`<div class="h">${i+1}</div>`;for(let i=from;i<from+9;i++)h+=`<div class="p">${R.holes[i].par}</div>`;
+    for(let i=from;i<from+9;i++){const x=R.holes[i];h+=`<div><span class="mark ${markCls(x)}">${x.score??"·"}</span></div>`}return h};
+  const saved=I.tasks.reduce((a,t)=>{const m=t.metric;if(m==="3パット")return a+(t.now-t.to);if(m==="OB・池")return a+(t.now-t.to)*2;return a+1},0);
+  const memos=R.holes.map((h,i)=>({i,m:h.memo.trim()})).filter(x=>x.m);
+  v.innerHTML=`
+  ${R.sample?`<div class="sample">サンプルのラウンドの分析です。</div>`:""}
+  ${finishPanel(s)}
+  <div class="panel">
+    <div class="holehead"><h2>${R.out}→${R.inn}　${s.n}ホール</h2><div class="cs num">${s.score}（${sg(d)}）</div></div>
+    <div class="sum num">
+      <div><b>${s.puttN?s.putts:"–"}</b><span>パット</span></div>
+      <div><b>${s.fwOpp?pct(s.fw,s.fwOpp)+"%":"–"}</b><span>FWキープ</span></div>
+      <div><b>${s.girN?pct(s.gir,s.girN)+"%":"–"}</b><span>パーオン</span></div>
+      <div><b>${s.three}</b><span>3パット</span></div>
+    </div>
+    <div style="overflow-x:auto"><div class="card18">${card(0)}</div></div>
+    <div style="overflow-x:auto"><div class="card18">${card(9)}</div></div>
+    <p class="note">○バーディー　□ボギー　二重□ダブルボギー以上</p>
+  </div>
+
+  ${kadaiView(I)}
+
+  ${(dGreen(s))}
+  ${par3Panel()}
+  ${tiltPanel()}
+
+  ${memos.length?`<div class="panel"><h2>ホールメモ</h2><div class="memos">${memos.map(x=>`<div><span class="hn num">${x.i+1}番</span><span>${x.m.replace(/</g,"&lt;")}</span></div>`).join("")}</div></div>`:""}
+  `;
+}
+
+/* ---- 操作 ---- */
+function show(tab){
+  const rev=tab==="rev",hp=tab==="help";
+  $("tabIn").setAttribute("aria-selected",tab==="in");$("tabRev").setAttribute("aria-selected",rev);
+  $("viewIn").hidden=tab!=="in";$("viewRev").hidden=!rev;$("viewHelp").hidden=!hp;
+  if(rev)renderReview();
+  window.scrollTo({top:0});
+}
+$("tabIn").onclick=()=>show("in");$("helpBtn").onclick=()=>show("help");$("helpClose").onclick=()=>show("in");$("tabRev").onclick=()=>show("rev");
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button");if(!t)return;
+  const h=R.holes[R.cur];
+  if(t.dataset.jump!=null){R.cur=+t.dataset.jump;gmode="pin";save();show("in");renderInput();return}
+  if(t.dataset.revsave){$("saveRound").click();return}
+  if(t.dataset.revnew){show("in");$("confirmBox").hidden=false;$("confirmBox").scrollIntoView({block:"center"});return}
+  if(t.dataset.start!=null){R.start=+t.dataset.start;R.cur=R.start;gmode="pin";save();renderInput();return}
+  if(t.dataset.gm){gmode=t.dataset.gm;renderHole();return}
+  if(t.dataset.gq){let k=t.dataset.gq;
+    if(gmode==="pin"){if(k[0]==="o")return;h.pin=h.pin===k?null:k;if(h.pin&&!h.ball)gmode="ball";}
+    else if(gmode==="chip"){if(k[0]==="o")return;h.chip=h.chip===k?null:k;}
+    else{h.ball=h.ball===k?null:k;if(h.ball&&h.ball[0]==="o"&&!h.chip)gmode="chip";}
+    save();renderHole();return}
+  if(t.dataset.h!=null){warn=null;R.cur=+t.dataset.h;gmode="pin";renderInput();save();return}
+  if(t.dataset.s){
+    const f=t.dataset.s,dd=+t.dataset.d;
+    if(f==="score"){h.score=Math.min(15,Math.max(1,(h.score??h.par)+dd));}
+    else if(f==="putts"){h.putts=Math.min(6,Math.max(0,(h.putts??2)+dd));}
+    else if(f==="par"){h.par=Math.min(6,Math.max(3,h.par+dd));if(h.par===3)h.tee=null;}
+    else h[f]=Math.min(9,Math.max(0,h[f]+dd));
+    save();renderInput();return}
+  if(t.dataset.f){const f=t.dataset.f;h[f]=h[f]===t.dataset.v?null:t.dataset.v;save();renderHole();return}
+  if(t.dataset.warnclose){warn=null;renderHole();return}
+  if(t.dataset.go){
+    // 次へ進むとき、触っていない打数・パットは表示どおり（パー・2パット）で記録する
+    if(t.dataset.go!=="-1"){if(h.score==null)h.score=h.par;if(h.putts==null)h.putts=2;save();}
+    if(t.dataset.go!=="-1"&&!t.dataset.force&&missingOf(h).length){warn={i:R.cur,go:t.dataset.go};renderHole();const w=$("warnbox");if(w)w.scrollIntoView({block:"center"});return}
+    warn=null;
+    if(t.dataset.go==="rev"){show("rev");return}{const o=ORDER();R.cur=o[Math.min(17,Math.max(0,o.indexOf(R.cur)+(+t.dataset.go)))]}gmode="pin";save();renderInput();
+    window.scrollTo({top:0,left:0,behavior:"instant"});return}
+});
+document.addEventListener("input",e=>{if(e.target.id==="memo"){R.holes[R.cur].memo=e.target.value;save()}});
+function changeCourse(){
+  let o=$("outC").value,i=$("inC").value;
+  // 同じコースを両方に選んだら、もう一方と入れ替える
+  if(o===i){if(o!==R.out)i=R.out;else o=R.inn;}
+  if(o!==R.out){R.out=o;COURSES[o].forEach((p,k)=>R.holes[k].par=p)}
+  if(i!==R.inn){R.inn=i;COURSES[i].forEach((p,k)=>R.holes[k+9].par=p)}
+  save();renderInput();
+}
+$("outC").onchange=changeCourse;$("inC").onchange=changeCourse;
+$("teeC").onchange=()=>{R.teebox=$("teeC").value;save();renderInput()};
+$("newBtn").onclick=()=>{$("confirmBox").hidden=false};
+$("noNew").onclick=()=>{$("confirmBox").hidden=true};
+$("yesNew").onclick=()=>{$("resumeNote").hidden=true;R=blankRound(R.out,R.inn);save();$("confirmBox").hidden=true;renderInput()};
+function setMsg(t){const m=$("saveMsg");m.textContent=t;m.hidden=false;const r=$("revSaveMsg");if(r){r.textContent=t;r.hidden=false}}
+$("saveRound").onclick=async()=>{
+  R.id??="r"+Date.now();
+  const played=R.holes.filter(h=>h.score!=null).length,m={set textContent(t){setMsg(t)},set hidden(v){}};
+  m.hidden=false;
+  if(played<18){m.textContent="18ホールすべての打数を入れてから保存してください。";return}
+  const d=new Date(),date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const snap={id:R.id,date,out:R.out,inn:R.inn,holes:R.holes.map(h=>({par:h.par,score:h.score,putts:h.putts,pin:h.pin,ball:h.ball&&h.ball[0]==="o"&&h.chip?h.ball+">"+h.chip:h.ball,slope:h.slope}))};
+  const full={...snap,holes:R.holes.map(h=>({...h}))};
+  LOCAL=[...LOCAL.filter(r=>r.id!==R.id),full];saveLocal();
+  if(GAS_URL){
+    $("saveRound").disabled=true;m.textContent="共有データに保存しています…";
+    try{
+      const res=await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({club:CLUB,player:PID,round:snap})});
+      const j=await res.json();
+      if(!j.ok)throw new Error(j.error||"bad");
+      LOCAL=LOCAL.map(r=>r.id===R.id?{...r,pending:false}:r);saveLocal();
+      m.textContent=j.updated?"共有データの自分のラウンドを今回の内容で更新しました。":`共有データに保存しました。${played}ホール分のグリーン情報が、みんなの学習に加わります。`;
+      await loadShared();
+    }catch(e){
+      LOCAL=LOCAL.map(r=>r.id===R.id?{...r,pending:true}:r);saveLocal();
+      m.textContent="今は共有データに送れませんでした（圏外・機内モードなど）。この端末には保存済みで、次に電波があるときに開けば自動で送ります。";
+    }finally{$("saveRound").disabled=false}
+  }else{
+    m.textContent="この端末に保存しました。共有の保存先が未設定のため、他の人の学習には加わりません。";
+  }
+  histNote();renderHole();
+  if(!$("viewRev").hidden)renderReview();
+};
+
+(()=>{const n=R.holes.filter(h=>h.score!=null).length;
+  if(!R.sample&&n>0&&n<18){
+    const nx=ORDER().find(j=>R.holes[j].score==null);if(nx!=null)R.cur=nx;
+    const el=$("resumeNote");el.textContent=`前回の続きから再開しました（${n}ホール入力済み）。${R.cur+1}番から入力できます。`;el.hidden=false;}
+})();
+renderInput();
+// ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
+const APP_VERSION="2026.11.12-1741";
+async function checkUpdate(){
+  try{
+    const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
+    const j=await r.json();
+    if(!j.v||j.v===APP_VERSION)return;
+    let tried=null;try{tried=sessionStorage.getItem("review-reload")}catch(e){}
+    if(tried===j.v)return;
+    try{sessionStorage.setItem("review-reload",j.v)}catch(e){}
+    await fetch(location.pathname,{cache:"reload"}).catch(()=>{});
+    location.reload();
+  }catch(e){}
+}
+checkUpdate();
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+</script>
+
+</body></html>
