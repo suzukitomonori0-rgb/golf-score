@@ -345,7 +345,7 @@ h2{margin:0;font-size:16px;font-weight:700}
         <li>Safariの共有ボタンから「ホーム画面に追加」しておくと、アプリのように使えます。</li></ul>
       <h3>2. 各ホールで入力</h3>
       <ul>
-        <li><b>ティーショット</b>：FWキープ／左ラフ／右ラフ／OB・池。パー3は <b>風 → 番手 → ピンに対して縦の距離</b>。</li>
+        <li><b>ティーショット</b>：左ラフ／FW／右ラフ／OB／1ペナ／池。パー3でペナルティがあったときだけ、OB・1ペナ・池を選びます。パー3は <b>風 → 番手 → ピンに対して縦の距離</b>。</li>
         <li><b>グリーン</b>：「ピン位置」をタップ → 「乗った位置」をタップ。外したら外側のボタンを押し、続けて「寄せた後」にパットを打った場所をタップ。</li>
         <li><b>ファーストパット</b>：カップまでの歩数（1歩＝65cm）。<b>上り・下り</b>と<b>ライン</b>も選びます。</li>
         <li><b>打数・パット</b>：＋を1回押すとパーから始まります。下にパー・ボギーなどが出ます。</li>
@@ -379,7 +379,19 @@ h2{margin:0;font-size:16px;font-weight:700}
 
 <script>
 const COURSES={"OUT":[4,4,4,5,3,4,4,3,5],"IN":[5,4,3,4,4,4,3,4,5]};
-const TEE=[["fw","FWキープ"],["left","左ラフ"],["right","右ラフ"],["ob","OB・池"]];
+// ティーショット：OBは2打罰、1ペナ（黄杭）と池は1打罰
+const PENS=["ob","p1","water"];
+const penOf=t=>t==="ob"?2:(t==="p1"||t==="water")?1:0;
+function teeIco(k){
+  const a='class="ico" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"';
+  if(k==="left")return `<svg ${a} fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 19.5C14 13.5 13 9 6 5"/><path d="M12 4.5L6 5l2.6 5.5"/><circle cx="14" cy="21.6" r="1.6" fill="currentColor" stroke="none"/></svg>`;
+  if(k==="right")return `<svg ${a} fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 19.5C10 13.5 11 9 18 5"/><path d="M12 4.5L18 5l-2.6 5.5"/><circle cx="10" cy="21.6" r="1.6" fill="currentColor" stroke="none"/></svg>`;
+  if(k==="fw")return `<svg ${a} fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>`;
+  if(k==="ob"||k==="p1")return `<svg ${a}><path d="M9 3.5h6v13l-3 4.5-3-4.5z" fill="${k==="ob"?"#FFFFFF":"#F2C230"}" stroke="#2A2F2C" stroke-width="1.4" stroke-linejoin="round"/><line x1="9" y1="7" x2="15" y2="7" stroke="#2A2F2C" stroke-width="1"/></svg>`;
+  return `<svg ${a}><ellipse cx="12" cy="14" rx="10" ry="6" fill="#3E8FCB" stroke="#2A6E9F" stroke-width="1.2"/><path d="M6.5 13.5q1.6-1.4 3.2 0t3.2 0M10.5 16.5q1.6-1.4 3.2 0t3.2 0" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+}
+const TEE=[["left","左ラフ"],["fw","FW"],["right","右ラフ"],["ob","OB"],["p1","1ペナ"],["water","池"]].map(([k,l])=>[k,teeIco(k)+`<span>${l}</span>`]);
+const PEN3=[["ob","OB"],["p1","1ペナ"],["water","池"]].map(([k,l])=>[k,teeIco(k)+`<span>${l}</span>`]);
 const CLUBS=["5W","4UT","5UT","6UT","6I","7I","8I","9I","PW","48°","52°","58°"].map(c=>[c,c]);
 const CHIPQ=[["BL","奥左"],["BR","奥右"],["C","センター"],["FL","手前左"],["FR","手前右"]];
 const WIND=[["follow","フォロー"],["none","無風"],["against","アゲインスト"]];
@@ -591,7 +603,8 @@ function renderHole(){
     ${p3?`<div class="grp"><span class="label">風</span>${chipRow("wind",WIND,h.wind)}</div>
     <div class="grp"><span class="label">ティーショットの番手</span>${chipRow("club",CLUBS,h.club)}</div>
     <div class="grp"><span class="label">ピンに対して縦の距離</span>${chipRow("dist",DIST,h.dist)}</div>`
-    :`<div class="grp"><span class="label">ティーショット</span>${chipRow("tee",TEE,h.tee)}</div>`}
+    :`<div class="grp"><span class="label">ティーショット</span>${tileRow("tee",TEE,h.tee,6)}</div>`}
+    ${p3?`<div class="grp"><span class="label">ペナルティ（あった場合だけ）</span>${tileRow("tee",PEN3,h.tee,3)}</div>`:""}
     <div class="grp"><span class="label">グリーン（上が奥）</span>
       <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button>${off?`<button data-gm="chip" aria-pressed="${gmode==="chip"}">寄せた後</button>`:""}</div>
       ${gnBox(gn)}
@@ -729,9 +742,9 @@ function adviceFor(i){
   if(P.length>=2){
     out.push(`あなたの平均 <b>${f1(avgOf(P.map(r=>r.score-r.par)))}</b>（${P.length}回）・ベスト ${Math.min(...P.map(r=>r.score))}`);
     if(par>3){
-      const T=P.filter(r=>r.tee),lf=T.filter(r=>r.tee==="left").length,rt=T.filter(r=>r.tee==="right").length,ob=T.filter(r=>r.tee==="ob").length;
+      const T=P.filter(r=>r.tee),lf=T.filter(r=>r.tee==="left").length,rt=T.filter(r=>r.tee==="right").length,ob=T.filter(r=>PENS.includes(r.tee)).length;
       if(T.length>=2){
-        if(ob>=1)out.push(`ティーショットでOB・池が${T.length}回中${ob}回。ドライバーにこだわらず、3W・UTで安全に。`);
+        if(ob>=1)out.push(`ティーショットでOB・ペナが${T.length}回中${ob}回。ドライバーにこだわらず、3W・UTで安全に。`);
         if(rt>=lf+2||(rt>=2&&lf===0))out.push(`右ラフが${T.length}回中${rt}回。ティーを右サイドに立て、左を向いて打ちましょう。`);
         else if(lf>=rt+2||(lf>=2&&rt===0))out.push(`左ラフが${T.length}回中${lf}回。ティーを左サイドに立て、右を向いて打ちましょう。`);
         else if(T.filter(r=>r.tee==="fw").length*2>T.length)out.push(`FWキープ率が高いホール。いつもどおりで大丈夫です。`);
@@ -792,13 +805,14 @@ function analyze(){
         if(sg3(sRank(h.pin)-sRank(h.ball)))s.sideMiss++;}
     }
     if(h.first==="xl"){s.longFirstN++; if(h.putts!=null&&h.putts<=2)s.longFirst++;}
-    if(h.par>3&&h.tee){s.fwOpp++; if(h.tee==="fw")s.fw++; if(h.tee==="left")s.left++; if(h.tee==="right")s.right++; if(h.tee==="ob")s.ob++;}
+    if(h.par>3&&h.tee){s.fwOpp++; if(h.tee==="fw")s.fw++; if(h.tee==="left")s.left++; if(h.tee==="right")s.right++;}
+    if(PENS.includes(h.tee))s.ob++;
     s.pen+=h.pen;
     if(h.bunker>0){s.bunkerH++; if(d<=0)s.sandSave++;}
     // 失点の振り分け（パー比のオーバー分）
     let over=Math.max(0,d);
     const pl=Math.min(over,Math.max(0,(h.putts??2)-2)); s.loss.putt+=pl; over-=pl;
-    const pn=Math.min(over,h.pen); s.loss[h.cause==="judge"?"judge":"pen"]+=pn; over-=pn;
+    const pn=Math.min(over,(h.pen||0)+penOf(h.tee)); s.loss[h.cause==="judge"?"judge":"pen"]+=pn; over-=pn;
     if(over>0){
       if(h.cause&&h.cause!=="putt"){s.loss[h.cause]+=over}
       else{const teeMiss=h.par>3&&(h.tee==="left"||h.tee==="right"||h.tee==="ob");
@@ -863,11 +877,11 @@ function buildInsights(s){
       metric:"3パット",now:s.three,to:Math.max(0,Math.floor(s.three/2))});
   }
   if(s.ob>=2){
-    bad.push(`ティーショットのOB・池が${s.ob}回。1回ごとに1〜2打を失い、スコアを一気に崩しています。`);
+    bad.push(`ティーショットのOB・ペナが${s.ob}回。1回ごとに1〜2打を失い、スコアを一気に崩しています。`);
     tasks.push({w:s.ob*1.5+L.judge,title:"ハザードを避けるクラブ選択",
-      why:`OB・池が${s.ob}回。ドライバーを持たない判断で、そのまま縮められる失点です。`,
-      drill:"ティーグラウンドで「OB・池がある側」を声に出してから打つ。危ないホールは3W／UTで刻む、と事前に決めておく。",
-      metric:"OB・池",now:s.ob,to:Math.max(0,s.ob-2)});
+      why:`OB・ペナが${s.ob}回。ドライバーを持たない判断で、そのまま縮められる失点です。`,
+      drill:"ティーグラウンドで「OB・ペナがある側」を声に出してから打つ。危ないホールは3W／UTで刻む、と事前に決めておく。",
+      metric:"OB・ペナ",now:s.ob,to:Math.max(0,s.ob-2)});
   }
   if(s.left+s.right>=3){
     const side=s.left>s.right?"左":"右", sideN=Math.max(s.left,s.right);
@@ -979,7 +993,7 @@ function renderReview(){
   const maxL=Math.max(1,...cats.map(c=>c[1]));
   const card=(from)=>{let h="";for(let i=from;i<from+9;i++)h+=`<div class="h">${i+1}</div>`;for(let i=from;i<from+9;i++)h+=`<div class="p">${R.holes[i].par}</div>`;
     for(let i=from;i<from+9;i++){const x=R.holes[i];h+=`<div><span class="mark ${markCls(x)}">${x.score??"·"}</span></div>`}return h};
-  const saved=I.tasks.reduce((a,t)=>{const m=t.metric;if(m==="3パット")return a+(t.now-t.to);if(m==="OB・池")return a+(t.now-t.to)*2;return a+1},0);
+  const saved=I.tasks.reduce((a,t)=>{const m=t.metric;if(m==="3パット")return a+(t.now-t.to);if(m==="OB・ペナ")return a+(t.now-t.to)*2;return a+1},0);
   const memos=R.holes.map((h,i)=>({i,m:h.memo.trim()})).filter(x=>x.m);
   v.innerHTML=`
   ${R.sample?`<div class="sample">サンプルのラウンドの分析です。</div>`:""}
@@ -1118,7 +1132,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.12-1544";
+const APP_VERSION="2026.11.12-1552";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
