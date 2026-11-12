@@ -352,7 +352,7 @@ h2{margin:0;font-size:16px;font-weight:700}
         <li>Safariの共有ボタンから「ホーム画面に追加」しておくと、アプリのように使えます。</li></ul>
       <h3>2. 各ホールで入力</h3>
       <ul>
-        <li><b>ティーショット</b>：FWキープ／左ラフ／右ラフ／OB・池。パー3は <b>風 → 番手 → ピンに対して縦の距離</b>。</li>
+        <li><b>ティーショット</b>：左ラフ／FWキープ／右ラフ／OB・池。パー3は <b>風 → 番手 → ピンに対して縦の距離</b>。</li>
         <li><b>グリーン</b>：「ピン位置」をタップ → 「乗った位置」をタップ。外したら外側のボタンを押し、続けて「寄せた後」にパットを打った場所をタップ。</li>
         <li><b>ファーストパット</b>：カップまでの歩数（1歩＝65cm）。<b>上り・下り</b>と<b>ライン</b>も選びます。</li>
         <li><b>打数・パット</b>：＋を1回押すとパーから始まります。下にパー・ボギーなどが出ます。</li>
@@ -386,7 +386,7 @@ h2{margin:0;font-size:16px;font-weight:700}
 
 <script>
 const COURSES={"西":[5,4,3,4,4,4,5,4,3],"南":[4,5,4,3,4,4,4,3,5],"東":[4,4,4,3,5,3,5,4,4]};
-const TEE=[["fw","FWキープ"],["left","左ラフ"],["right","右ラフ"],["ob","OB・池"]];
+const TEE=[["left","左ラフ"],["fw","FWキープ"],["right","右ラフ"],["ob","OB・池"]];
 const CLUBS=["5W","4UT","5UT","6UT","6I","7I","8I","9I","PW","48°","52°","58°"].map(c=>[c,c]);
 const CHIPQ=[["BL","奥左"],["BR","奥右"],["C","センター"],["FL","手前左"],["FR","手前右"]];
 const WIND=[["follow","フォロー"],["none","無風"],["against","アゲインスト"]];
@@ -1129,7 +1129,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.12-1539";
+const APP_VERSION="2026.11.12-1543";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
