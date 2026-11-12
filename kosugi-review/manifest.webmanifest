@@ -1,2 +1,2 @@
 {"name":"小杉CC攻略","short_name":"小杉CC攻略","start_url":"./","scope":"./","display":"standalone","background_color":"#ecf3f2","theme_color":"#0f6a70",
-"icons":[{"src":"../kodama/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"../kodama/icon-512.png","sizes":"512x512","type":"image/png"}]}
+"icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]}

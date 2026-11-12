@@ -10,6 +10,16 @@
 <link rel="apple-touch-icon" href="../koga/apple-touch-icon.png">
 <link rel="icon" href="../koga/icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<meta name="description" content="古河ゴルフリンクスのスコア入力・振り返り・グリーン攻略アプリ">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="古河GL攻略">
+<meta property="og:title" content="古河GL攻略">
+<meta property="og:description" content="古河ゴルフリンクスのスコア入力・振り返り・グリーン攻略アプリ">
+<meta property="og:url" content="https://suzukitomonori0-rgb.github.io/golf-score/koga-review/">
+<meta property="og:image" content="https://suzukitomonori0-rgb.github.io/golf-score/koga-review/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <title>古河GL攻略</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
@@ -1108,7 +1118,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.10-2251";
+const APP_VERSION="2026.11.12-1314";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
