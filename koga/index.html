@@ -100,6 +100,14 @@ td.hcell{background:color-mix(in srgb,var(--green) 12%,transparent)}
 .selw.draft{border-style:dashed}.selw.draft b{color:var(--muted)}
 .selw:focus-within{outline:2px solid var(--flag);outline-offset:2px}
 .selw select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;-webkit-appearance:none;appearance:none;border:0;cursor:pointer}
+.stp{flex:0 0 auto;display:flex;align-items:stretch;height:52px;border-radius:10px;background:var(--sunk);border:1.5px solid var(--line);overflow:hidden}
+.stp.draft{border-style:dashed}.stp.draft .sv b{color:var(--muted)}
+.stp .sb{width:38px;border:0;background:transparent;font:inherit;font-size:24px;font-weight:700;color:var(--green);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.stp .sb:active{background:var(--line)}
+.stp .sb:disabled{color:var(--line)}
+.stp .sv{width:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.stp .sv b{font-family:var(--f-num);font-size:26px;font-weight:700;line-height:1}
+.stp .sv small{font-size:9.5px;font-weight:700;color:var(--muted);line-height:1.2;white-space:nowrap}
 .net{width:44px;text-align:center;font-size:11px;color:var(--muted);line-height:1.1}
 .net b{display:block;font-family:var(--f-num);font-size:22px;color:var(--ink)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -334,7 +342,6 @@ function renderHole(C){
   const cards=ps.map(i=>{
     const pl=S.players[i],st=strokes(pl.hc,h);
     const val=H.s[i]??par;
-    const opts=[];for(let v=1;v<=par+7;v++){const d=v-par;opts.push(`<option value="${v}"${v===val?' selected':''}>${v}　${relName(d)}</option>`)}
     const lead=H.done&&C.hb[h]&&C.hb[h].w===i;
     const medChips=['g','s','b','i','d'].map(k=>{
       const on=H.oly[i]===k;
@@ -346,7 +353,7 @@ function renderHole(C){
         <div class="pname"><b>${esc(pl.name)}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}${lead?' <span class="mk hb">○</span>':''}</b>
           <span>HC ${esc(pl.hc)}${st?` <span class="hcb">ハンデ ${st}打</span>`:' · ハンデなし'}</span></div>
         <div class="net">ネット<b>${H.done||H.s[i]!=null?val-st:'–'}</b></div>
-        <label class="selw${H.done||H.s[i]!=null?'':' draft'}"><b>${val}</b><small>${relName(val-par)}</small><select data-score="${i}" aria-label="${esc(pl.name)}のスコア">${opts.join('')}</select></label>
+        <div class="stp${H.done||H.s[i]!=null?'':' draft'}"><button class="sb" data-step="${i}:-1" aria-label="${esc(pl.name)}のスコアを1つ減らす"${val<=1?' disabled':''}>−</button><div class="sv" aria-live="polite"><b>${val}</b><small>${relName(val-par)}</small></div><button class="sb" data-step="${i}:1" aria-label="${esc(pl.name)}のスコアを1つ増やす"${val>=par+9?' disabled':''}>＋</button></div>
       </div>
       <div class="chips">${medChips}<span class="sep"></span>
         <button class="chip sand" aria-pressed="${!!H.sand[i]}" data-sand="${i}">砂イチ<span class="p">3</span></button>
@@ -513,6 +520,7 @@ app.addEventListener('click',e=>{
   if(d.go!==undefined){S.view='hole';go(+d.go);return}
   const h=hole(),H=S.holes[h];
   if(d.oly){const[i,k]=d.oly.split(':');H.oly[+i]=H.oly[+i]===k?'':k;save();render();return}
+  if(d.step){const[i,k]=d.step.split(':').map(Number);const par=COURSE[h].p;const v=(H.s[i]??par)+k;if(v<1||v>par+9)return;H.s[i]=v;save();render();return}
   if(d.sand){const i=+d.sand;H.sand[i]=!H.sand[i];save();render();return}
   if(d.np!==undefined){H.np=+d.np;if(H.np>=0&&H.miss)H.miss[H.np]=false;save();render();return}
   if(d.miss!==undefined){const i=+d.miss;if(!H.miss)H.miss=[false,false,false,false];H.miss[i]=!H.miss[i];save();render();return}
