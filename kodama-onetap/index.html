@@ -67,6 +67,7 @@ p { margin: 0; }
 .c3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
 .c4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
 .c5 { grid-template-columns: repeat(5, minmax(0,1fr)); }
+.c6 { grid-template-columns: repeat(6, minmax(0,1fr)); gap: 6px; }
 .chip { min-height: 50px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-size: 16px; font-weight: 700; padding: 0 4px; }
 .chip.on { background: var(--green); color: var(--on-green); border-color: var(--green); }
 .chip.sm { min-height: 44px; font-size: 14px; }
@@ -138,7 +139,7 @@ p { margin: 0; }
 .mini div { background: var(--surface2); border-radius: 10px; padding: 6px 2px; display: flex; flex-direction: column; align-items: center; }
 .mini span { font-size: 10px; color: var(--muted); font-weight: 700; }
 .mini b { font-size: 17px; font-weight: 900; line-height: 1.3; }
-.dir { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 4px; text-align: center; }
+.dir { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 4px; text-align: center; }
 .dir div { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; color: var(--muted); padding: 4px 0; border-radius: 10px; }
 .dir div.hot { background: var(--warn-bg); color: var(--warn-fg); }
 .dir b { font-size: 15px; color: var(--fg); }
@@ -233,7 +234,10 @@ const C = {
   '東': [[4,8,317,300,300,0,0],[4,2,360,332,319,50,0],[4,5,325,315,300,75,0],[3,4,148,148,128,100,0],[5,1,456,440,419,67,0],[3,7,136,124,110,75,25],[5,3,510,486,452,57,0],[4,6,355,338,323,0,0],[4,9,350,350,335,0,20]]
 };
 const TEE = { back: ['バック', 2], reg: ['レギュラー', 3], front: ['フロント', 4] };
-const TEESHOT = [['OB','OB'],['L','左'],['FW','FW'],['R','右'],['W','池']];
+const TEESHOT = [['OB','OB'],['P','1ペナ'],['L','左'],['FW','FW'],['R','右'],['W','池']];
+const PEN1 = t => t === 'W' || t === 'P';            // 1打罰（池・黄杭）
+const penOf = t => t === 'OB' ? 2 : PEN1(t) ? 1 : 0;  // ティーショットの罰打
+const penName = t => t === 'OB' ? 'OB' : t === 'P' ? '1ペナ' : '池';
 const KEY = 'kodama-onetap-v1';
 const SAMPLE_VER = 2; // サンプルを入れ替えたら上げる（自分の記録は残す）
 const OWN_MIN = 3; // 自分の実績に切り替える最低ラウンド数
@@ -243,7 +247,7 @@ function own(course, no) {
   let n = 0, ob = 0, w = 0, fw = 0, par = 0;
   S.rounds.filter(r => !r.sample).forEach(r => r.holes.forEach((h, i) => {
     const f = info(r, i);
-    if (f.course === course && f.no === no && h) { n++; par = f.par; if (h.t === 'OB') ob++; if (h.t === 'W') w++; if (h.t === 'FW') fw++; }
+    if (f.course === course && f.no === no && h) { n++; par = f.par; if (h.t === 'OB') ob++; if (PEN1(h.t)) w++; if (h.t === 'FW') fw++; }
   }));
   return { n, ob, w, fw, par };
 }
@@ -251,7 +255,7 @@ function riskHints(h) {
   const out = [];
   const o = own(h.course, h.no);
   if (o.n >= OWN_MIN) {
-    out.push([o.ob + o.w >= Math.ceil(o.n / 3) ? 'warn' : '', `あなたのOB・池 ${o.ob + o.w}/${o.n}回`]);
+    out.push([o.ob + o.w >= Math.ceil(o.n / 3) ? 'warn' : '', `あなたのOB・ペナ ${o.ob + o.w}/${o.n}回`]);
     if (o.par >= 4) out.push(['', `FWキープ ${o.fw}/${o.n}回`]);
   } else {
     if (h.ob >= 40) out.push(['warn', 'OB多発']); else if (h.ob >= 20) out.push(['', 'OB注意']);
@@ -271,6 +275,10 @@ function teeIcon(k, s) {
   if (k === 'OB') return `<svg class="ti" ${a}>
     <line x1="3" y1="21.5" x2="21" y2="21.5" stroke="#5E8A4E" stroke-width="2" stroke-linecap="round"></line>
     <path d="M9 3.5h6v13l-3 4.5-3-4.5z" fill="#FFFFFF" stroke="#2A2F2C" stroke-width="1.4" stroke-linejoin="round"></path>
+    <line x1="9" y1="7" x2="15" y2="7" stroke="#2A2F2C" stroke-width="1"></line></svg>`;
+  if (k === 'P') return `<svg class="ti" ${a}>
+    <line x1="3" y1="21.5" x2="21" y2="21.5" stroke="#5E8A4E" stroke-width="2" stroke-linecap="round"></line>
+    <path d="M9 3.5h6v13l-3 4.5-3-4.5z" fill="#F2C230" stroke="#2A2F2C" stroke-width="1.4" stroke-linejoin="round"></path>
     <line x1="9" y1="7" x2="15" y2="7" stroke="#2A2F2C" stroke-width="1"></line></svg>`;
   if (k === 'W') return `<svg class="ti" ${a}>
     <path d="M5 9c-.5-2 .2-4 1-5M7.5 9c0-2 .6-3.6 1.6-4.6" fill="none" stroke="#5E8A4E" stroke-width="1.6" stroke-linecap="round"></path>
@@ -335,11 +343,11 @@ function analyze(r) {
   const fwCh = H.filter(h => h.par >= 4), fwHit = fwCh.filter(h => h.t === 'FW').length;
   const gir = H.filter(h => h.s - h.p <= h.par - 2).length;
   const three = H.filter(h => h.p >= 3).length;
-  const obN = H.filter(h => h.t === 'OB').length, wN = H.filter(h => h.t === 'W').length;
+  const obN = H.filter(h => h.t === 'OB').length, wN = H.filter(h => PEN1(h.t)).length;
   const loss = { approach: 0, tee: 0, putt: 0, pen: 0 };
   H.forEach(h => {
     const d = h.s - h.par;
-    const pen = h.t === 'OB' ? 2 : h.t === 'W' ? 1 : 0;
+    const pen = penOf(h.t);
     const pl = Math.max(0, h.p - 2);
     loss.pen += Math.min(pen, Math.max(0, d));
     loss.putt += Math.min(pl, Math.max(0, d - pen));
@@ -369,8 +377,8 @@ const ISSUE = {
     why: '3パットの多くは、1打目の距離感（大きくショート・オーバー）が原因です。ラインを読むより、距離を合わせる方がスコアに直結します。',
     check: '10m以上は「カップを中心に半径1mの円に止める」が目標。カップインは狙わなくて構いません。',
     menu: ['10m・15mのロングパットを各10球。半径1m以内に止まった数を数える', '1.5mのパットを連続10球入るまで続ける', 'スタート前の練習グリーンでは、ラインより距離感だけを合わせる（5分で十分）'] },
-  pen: { name: 'OB・池', title: 'OB・池を出さないマネジメント',
-    why: 'OBは1回で2打、池でも1打を失うので、スコアへの影響が最も大きいミスです。多くは「無理なクラブ選択」と「OB側に向いて構えている」ことから起きます。',
+  pen: { name: 'OB・ペナルティ', title: 'OB・ペナルティを出さないマネジメント',
+    why: 'OBは1回で2打、池や黄杭（1ペナ）でも1打を失うので、スコアへの影響が最も大きいミスです。多くは「無理なクラブ選択」と「OB側に向いて構えている」ことから起きます。',
     check: 'OBのあるホールは、ティーグラウンドのOB側に立ち、OBと反対サイドを狙う。迷ったら番手を落とす。',
     menu: ['練習場で自分の「最大の曲がり幅」を把握する（ドライバー10球の左右のブレを確認）', 'UT・FWウッドで、狙った方向に打ち出す練習を10球', 'ティーショットで番手を落とす基準（例：OB率の高いホール、狭いホール）を決めておく'] }
 };
@@ -385,7 +393,7 @@ function review(r, a) {
   H.forEach(h => { h.toG = h.s - h.p; h.bon = h.toG <= h.par - 1; });
   const fwH = H.filter(h => h.par >= 4 && h.t === 'FW'), missH = H.filter(h => h.par >= 4 && (h.t === 'L' || h.t === 'R'));
   const L = H.filter(h => h.t === 'L').length, R = H.filter(h => h.t === 'R').length;
-  const penH = H.filter(h => h.t === 'OB' || h.t === 'W');
+  const penH = H.filter(h => penOf(h.t) > 0);
   const nonGir = H.filter(h => !h.gir);
   const scramble = nonGir.filter(h => h.d <= 0).length;
   const bogeyOn = H.filter(h => h.bon).length;
@@ -402,7 +410,7 @@ function review(r, a) {
   const hardAvg = avg(hard.map(h => h.d)), easyAvg = avg(easy.map(h => h.d));
 
   // 総評
-  // ティーショットの曲がりとOB・池はどちらもティーショットのミス。合算で比べて最優先の課題を決める
+  // ティーショットの曲がりとOB・ペナはどちらもティーショットのミス。合算で比べて最優先の課題を決める
   const totalLoss = sum(Object.values(a.loss));
   const teeAll = a.loss.tee + a.loss.pen;
   const merged = a.loss.tee > 0 && a.loss.pen > 0 && teeAll > a.loss.approach && teeAll > a.loss.putt;
@@ -413,7 +421,7 @@ function review(r, a) {
   const topV = merged ? teeAll : (top ? a.loss[top] : 0);
   const topPct = totalLoss ? Math.round(topV / totalLoss * 100) : 0;
   let summary = `${a.total}（${sgn(a.diff)}）。パー比${sgn(a.diff)}のうち、`;
-  if (merged) summary += `一番大きいのはティーショットのミスで、曲がり${a.loss.tee}打とOB・池${a.loss.pen}打を合わせて推定${teeAll}打（約${topPct}%）です。`;
+  if (merged) summary += `一番大きいのはティーショットのミスで、曲がり${a.loss.tee}打とOB・ペナ${a.loss.pen}打を合わせて推定${teeAll}打（約${topPct}%）です。`;
   else summary += top ? `一番大きいのは${ISSUE[top].name}で推定${a.loss[top]}打（約${pct(top)}%）です。` : '大きなロスはありませんでした。';
   const second = keys.slice(1).find(k => a.loss[k] > 0 && !(merged && (k === 'tee' || k === 'pen')));
   if (top && second) summary += `次いで${ISSUE[second].name}が${a.loss[second]}打。`;
@@ -423,7 +431,7 @@ function review(r, a) {
   const good = [];
   if (a.avgPutt <= 1.9) good.push(`パットは平均${a.avgPutt.toFixed(2)}、3パットは${a.three}回。グリーン上は安定しています。`);
   if (a.fwCh && a.fwHit / a.fwCh >= 0.55) good.push(`フェアウェイキープ率${pctS(a.fwHit, a.fwCh)}%。ティーショットで大きく崩れていません。`);
-  if (a.obN + a.wN === 0) good.push('OB・池はゼロ。大叩きにつながるミスを防げています。');
+  if (a.obN + a.wN === 0) good.push('OB・ペナはゼロ。大叩きにつながるミスを防げています。');
   if (a.cnt.e + a.cnt.b + a.cnt.p >= 5) good.push(`パー以上が${a.cnt.e + a.cnt.b + a.cnt.p}ホール${a.cnt.b + a.cnt.e ? `（うちバーディ以上${a.cnt.b + a.cnt.e}）` : ''}。取れるホールでしっかり取れています。`);
   if (bounceCh >= 2 && bounce / bounceCh >= 0.5) good.push(`ダボ以上の次のホールで、パー以上が${bounce}回。気持ちの切り替えができています。`);
   if (scramble >= 3) good.push(`パーオンしなかったホールでパーを${scramble}回拾っています。寄せとパットで粘れています。`);
@@ -431,7 +439,7 @@ function review(r, a) {
 
   // 分野別の詳細
   const tee = [];
-  tee.push(`パー4・パー5の${a.fwCh}ホールで、FWキープ${a.fwHit}回（${pctS(a.fwHit, a.fwCh)}%）。左${L}回・右${R}回・OB${a.obN}回・池${a.wN}回。`);
+  tee.push(`パー4・パー5の${a.fwCh}ホールで、FWキープ${a.fwHit}回（${pctS(a.fwHit, a.fwCh)}%）。左${L}回・右${R}回・OB${a.obN}回・池/1ペナ${a.wN}回。`);
   if (fwH.length >= 2 && missH.length >= 2) {
     const g = avg(missH.map(h => h.d)) - avg(fwH.map(h => h.d));
     tee.push(`FWに置いたホールは平均${f1(avg(fwH.map(h => h.d)))}、左右に外したホールは平均${f1(avg(missH.map(h => h.d)))}。${g > 0.3 ? `フェアウェイを外すと1ホールあたり約${g.toFixed(1)}打損をしている計算です。` : 'FWを外してもリカバリーできています。'}`);
@@ -439,7 +447,7 @@ function review(r, a) {
   if (L >= 2 && L >= R * 2) tee.push(`ミスは左に偏っています（${L}回）。引っかけが出やすい日は、切り返しで上体が突っ込んで体の回転が止まり、手が返りすぎていることが多いです。フィニッシュまで体を回し切る意識を。`);
   else if (R >= 2 && R >= L * 2) tee.push(`ミスは右に偏っています（${R}回）。スライス・プッシュはフェースが開いたまま当たるのが典型です。グリップを少しだけかぶせて握り、球をつかまえる意識を。`);
   else if (L + R >= 3) tee.push('ミスは左右両方に出ています。方向の癖よりも、リズムや力みが原因のことが多いです。8割の力で振ることを優先しましょう。');
-  if (penH.length) tee.push(`OB・池は${penH.map(h => `${hn(h)}（${h.t === 'OB' ? 'OB' : '池'}）`).join('、')}。合計${a.obN * 2 + a.wN}打のロスです。`);
+  if (penH.length) tee.push(`OB・ペナは${penH.map(h => `${hn(h)}（${penName(h.t)}）`).join('、')}。合計${a.obN * 2 + a.wN}打のロスです。`);
 
   const appr = [];
   appr.push(`パーオン${a.gir}/18（${pctS(a.gir, 18)}%）、ボギーオン（パーより1打多い打数で乗せる）${bogeyOn}/18（${pctS(bogeyOn, 18)}%）。90切りの目安は、ボギーオン率70%以上とよく言われます。`);
@@ -476,11 +484,11 @@ function review(r, a) {
   const plan = H.slice().filter(h => h.d >= 2).sort((x, y) => (y.d - x.d) || (x.hdcp - y.hdcp)).slice(0, 3).map(h => {
     const o = own(h.course, h.no);
     let t = `今日は${sgn(h.d)}。`;
-    if (h.t === 'OB' || h.t === 'W') t += `ティーショットが${h.t === 'OB' ? 'OB' : '池'}。次回はUTかFWウッドで、${h.t === 'OB' ? 'OB' : '池'}と反対サイドを狙いましょう。`;
+    if (penOf(h.t)) t += `ティーショットが${penName(h.t)}。次回はUTかFWウッドで、${h.t === 'P' ? 'ペナルティエリア' : penName(h.t)}と反対サイドを狙いましょう。`;
     else if (h.t === 'L' || h.t === 'R') t += `ティーショットを${h.t === 'L' ? '左' : '右'}に外してから崩れました。次回は${h.t === 'L' ? '右' : '左'}サイドを狙い、2打目は確実に前へ。`;
     else if (h.p >= 3) t += `${h.p}パット。グリーンに乗ったら、まず2パットで上がることを優先。`;
     else t += `グリーンまで${h.toG}打かかりました。2打目以降は無理にピンを狙わず、グリーンの広い側へ。`;
-    if (o.n >= OWN_MIN && o.ob + o.w >= 2) t += `（これまで${o.n}回中${o.ob + o.w}回OB・池）`;
+    if (o.n >= OWN_MIN && o.ob + o.w >= 2) t += `（これまで${o.n}回中${o.ob + o.w}回OB・ペナ）`;
     else if (o.n < OWN_MIN && h.ob >= 20) t += '（OBが出やすいホール）';
     if (h.hdcp <= 3) t += ` HDCP${h.hdcp}の難ホールなので、ボギーで上がれば十分です。`;
     if (h.par === 5) t += ' パー5は3打目勝負。2打目は得意な距離を残すことを優先。';
@@ -495,7 +503,7 @@ function review(r, a) {
     if (k === 'tee') goals.push(['FWキープ', `${pctS(a.fwHit, a.fwCh)}%`, `${pctS(Math.min(a.fwCh, a.fwHit + 2), a.fwCh)}%`]);
     const cap = t => t > 0 ? `${t}回以下` : '0回';
     if (k === 'putt') goals.push(['3パット', `${a.three}回`, cap(Math.max(0, Math.min(1, a.three - 1)))]);
-    if (k === 'pen') goals.push(['OB・池', `${a.obN + a.wN}回`, cap(Math.max(0, a.obN + a.wN - 1))]);
+    if (k === 'pen') goals.push(['OB・ペナ', `${a.obN + a.wN}回`, cap(Math.max(0, a.obN + a.wN - 1))]);
   });
 
   // 練習メニュー（1位の課題を3つ、2位の課題から1つ）
@@ -515,12 +523,12 @@ function review(r, a) {
       row('FWキープ', pctS(a.fwHit, a.fwCh), avg(P.map(p => pctS(p.fwHit, p.fwCh))), false, v => Math.round(v) + '%'),
       row('ボギーオン', pctS(bogeyOn, 18), avg(pb.map(x => pctS(x, 18))), false, v => Math.round(v) + '%'),
       row('パット', a.putts, avg(P.map(p => p.putts)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1)),
-      row('OB・池', a.obN + a.wN, avg(P.map(p => p.obN + p.wN)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1))
+      row('OB・ペナ', a.obN + a.wN, avg(P.map(p => p.obN + p.wN)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1))
     ] };
   }
 
   const issue = top ? Object.assign({ v: topV, pct: topPct }, ISSUE[top]) : null;
-  if (issue && merged) { issue.title = 'ティーショットのミスを減らす'; issue.why = `左右への曲がり（${a.loss.tee}打）とOB・池（${a.loss.pen}打）を合わせると、ロスの一番大きな原因です。` + ISSUE[top].why; }
+  if (issue && merged) { issue.title = 'ティーショットのミスを減らす'; issue.why = `左右への曲がり（${a.loss.tee}打）とOB・ペナ（${a.loss.pen}打）を合わせると、ロスの一番大きな原因です。` + ISSUE[top].why; }
   const others = top ? keys.slice(1).filter(k => a.loss[k] > 0 && !(merged && (k === 'tee' || k === 'pen'))).map(k => ({ name: ISSUE[k].name, v: a.loss[k], pct: pct(k) })) : [];
   return { summary, good: good.slice(0, 3), issue, others, sections: [['ティーショット', tee], ['2打目〜グリーンまで', appr], ['パット', putt], ['流れ・メンタル', flow], ['ホールの傾向', holeT]], plan, goals, menu, comp };
 }
@@ -623,12 +631,12 @@ function todayCard(r) {
   if (!n) return `<div class="today"><div class="today-h"><h2>今日の傾向</h2></div><p class="muted small">1ホール記録すると、ここに今日の傾向が出ます。</p></div>`;
   const ch = H.filter(h => h.par >= 4);
   const c = k => ch.filter(h => h.t === k).length;
-  const fw = c('FW'), L = c('L'), R = c('R'), ob = c('OB'), w = c('W');
+  const fw = c('FW'), L = c('L'), R = c('R'), ob = c('OB'), w = c('W'), pn = c('P');
   const gir = H.filter(h => h.s - h.p <= h.par - 2).length;
   const putts = sum(H.map(h => h.p)), three = H.filter(h => h.p >= 3).length;
-  const pen = ob * 2 + w;
+  const pen = ob * 2 + w + pn;
   let appr = 0;
-  H.forEach(h => { const d = h.s - h.par, pp = h.t === 'OB' ? 2 : h.t === 'W' ? 1 : 0;
+  H.forEach(h => { const d = h.s - h.par, pp = penOf(h.t);
     let rest = Math.max(0, d - pp - Math.max(0, h.p - 2));
     if (h.par >= 4 && (h.t === 'L' || h.t === 'R') && h.s - h.p > h.par - 2 && rest > 0) rest--;
     appr += rest; });
@@ -636,13 +644,13 @@ function todayCard(r) {
   if (n >= 3) {
     if (L >= 2 && L > R) tips.push(`左へのミスが${L}回。次のティーショットはフェアウェイの右サイドを狙いましょう。`);
     else if (R >= 2 && R > L) tips.push(`右へのミスが${R}回。次のティーショットはフェアウェイの左サイドを狙いましょう。`);
-    if (ob + w >= 2) tips.push(`OB・池が${ob + w}回。危ないホールは番手を落として、まず前に運ぶことを優先。`);
+    if (ob + w + pn >= 2) tips.push(`OB・ペナルティが${ob + w + pn}回。危ないホールは番手を落として、まず前に運ぶことを優先。`);
     if (three >= 2) tips.push(`3パットが${three}回。ロングパットはカップを狙わず、距離を合わせることだけに集中。`);
     if (appr >= 3 && appr >= pen && appr >= three) tips.push(`グリーン周りでここまで約${appr}打のロス。寄せは転がしで、まず確実に乗せましょう。`);
     if (!tips.length) tips.push('大きなミスの偏りはありません。このリズムのまま進みましょう。');
   }
   const cell = (k, v, hot) => `<div class="${hot ? 'hot' : ''}">${teeIcon(k, 18)}<b>${v}</b></div>`;
-  const most = Math.max(L, R, ob, w);
+  const most = Math.max(L, R, ob, w, pn);
   return `<section class="today" aria-label="今日の傾向">
     <div class="today-h"><h2>今日の傾向</h2><span class="muted small">ここまで${n}ホール</span></div>
     <div class="mini">
@@ -652,7 +660,7 @@ function todayCard(r) {
       <div><span>3パット</span><b>${three}</b></div>
     </div>
     ${ch.length ? `<div class="grp"><span class="label">ティーショットの行き先</span><div class="dir">
-      ${cell('OB', ob, ob > 0 && ob === most)}${cell('L', L, L >= 2 && L === most)}${cell('FW', fw, false)}${cell('R', R, R >= 2 && R === most)}${cell('W', w, w > 0 && w === most)}
+      ${cell('OB', ob, ob > 0 && ob === most)}${cell('P', pn, pn > 0 && pn === most)}${cell('L', L, L >= 2 && L === most)}${cell('FW', fw, false)}${cell('R', R, R >= 2 && R === most)}${cell('W', w, w > 0 && w === most)}
     </div></div>` : ''}
     ${n < 3 ? '<p class="muted small">3ホール記録すると、プレー中のアドバイスが出ます。</p>'
       : tips.slice(0, 1).map(t => `<p class="tip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.5 5.5L20 11l-5.5 2.5L12 19l-2.5-5.5L4 11l5.5-2.5z"></path></svg><span>${t}</span></p>`).join('')}
@@ -687,7 +695,7 @@ function vPlay() {
           <div class="val"><b>${d.s}</b><span style="color:${col}">${nm}</span></div>
           <button class="plus" data-a="inc" aria-label="1打増やす">＋</button></div></div>
       <div class="grp"><span class="label">パット数</span><div class="chips c5">${putts}</div></div>
-      ${h.par >= 4 ? `<div class="grp"><span class="label">ティーショット</span><div class="chips c5">${tees}</div></div>`
+      ${h.par >= 4 ? `<div class="grp"><span class="label">ティーショット</span><div class="chips c6">${tees}</div></div>`
         : `<p class="auto">パー3はティーショット入力なし。パーオンで評価します。</p>`}
       ${todayCard(r)}
     </div>
@@ -713,7 +721,7 @@ function vResult() {
       <tr><td class="rl">ティー</td>${hs.map(h => `<td class="${h.t === 'FW' ? '' : 'muted'}" style="${h.t === 'FW' ? 'color:var(--good)' : ''}">${h.t ? teeIcon(h.t, 16) : '<span class="muted small">–</span>'}</td>`).join('')}<td></td></tr>
     </tbody></table>`; };
   const L = a.loss, maxL = Math.max(1, ...Object.values(L));
-  const lossRows = [['approach', 'アプローチ〜寄せ', 'var(--bar-dbl)'], ['tee', 'ティーショット（FWを外した）', 'var(--accent)'], ['putt', 'パット（3パット以上）', 'var(--bar-bogey)'], ['pen', 'OB・池', 'var(--bar-par)']]
+  const lossRows = [['approach', 'アプローチ〜寄せ', 'var(--bar-dbl)'], ['tee', 'ティーショット（FWを外した）', 'var(--accent)'], ['putt', 'パット（3パット以上）', 'var(--bar-bogey)'], ['pen', 'OB・ペナ', 'var(--bar-par)']]
     .map(([k, l, c]) => `<div class="loss-row"><div class="t"><span>${l}</span><span>+${L[k]}打</span></div><div class="track"><div class="fill" style="width:${Math.round(L[k] / maxL * 100)}%;background:${c}"></div></div></div>`).join('');
 
   const analysis = `
@@ -721,7 +729,7 @@ function vResult() {
       <div class="tile"><span>FWキープ</span><b>${a.fwCh ? Math.round(a.fwHit / a.fwCh * 100) : 0}%</b><span>パー4・5</span></div>
       <div class="tile"><span>パーオン</span><b>${Math.round(a.gir / 18 * 100)}%</b><span>全18H</span></div>
       <div class="tile"><span>平均パット</span><b>${a.avgPutt.toFixed(2)}</b><span>3パット ${a.three}</span></div>
-      <div class="tile"><span>OB・池</span><b>${a.obN + a.wN}</b><span>+${a.obN * 2 + a.wN}打</span></div>
+      <div class="tile"><span>OB・ペナ</span><b>${a.obN + a.wN}</b><span>+${a.obN * 2 + a.wN}打</span></div>
     </div>
     <div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2>どこで打数を失ったか</h2><span class="muted small">パー比 ${sgn(a.diff)} の内訳（推定）</span></div>
       ${lossRows}
@@ -748,7 +756,7 @@ function shareText(r) {
   const a = analyze(r), rv = review(r, a);
   return [`【児玉CC ${r.out}→${r.in}】${md(r.date)} ${a.total}（${sgn(a.diff)}）`,
     `OUT ${a.out} / IN ${a.inn} · パット${a.putts}`,
-    `FWキープ${a.fwCh ? Math.round(a.fwHit / a.fwCh * 100) : 0}% · パーオン${a.gir}/18 · OB・池${a.obN + a.wN}`,
+    `FWキープ${a.fwCh ? Math.round(a.fwHit / a.fwCh * 100) : 0}% · パーオン${a.gir}/18 · OB・ペナ${a.obN + a.wN}`,
     rv.issue ? `次回の課題：${rv.issue.title}` : ''].filter(Boolean).join('\n');
 }
 
