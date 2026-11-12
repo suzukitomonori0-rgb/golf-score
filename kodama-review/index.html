@@ -260,6 +260,7 @@ h2{margin:0;font-size:16px;font-weight:700}
 .warn{background:var(--over-soft);border:1px solid var(--over);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .warn b{color:var(--over)}
 .wbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.stp .v.pre{color:var(--muted);font-weight:700}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -572,11 +573,12 @@ function chipRow(field,opts,val,dis){
   return `<div class="chips">${opts.map(([k,l])=>`<button class="chip" data-f="${field}" data-v="${k}" aria-pressed="${val===k}"${dis?" disabled":""}>${l}</button>`).join("")}</div>`;
 }
 function tileRow(field,opts,val,n){return `<div class="tiles"${n?` style="grid-template-columns:repeat(${n},minmax(0,1fr))"`:""}>${opts.map(([k,l])=>`<button class="tile${/x$/.test(k)?" hot":""}" data-f="${field}" data-v="${k}" aria-pressed="${val===k}">${l}</button>`).join("")}</div>`}
-function stepper(field,label,val,sub){
-  return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?" empty":""}">${val??"–"}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
+function stepper(field,label,val,sub,def){
+  const pre=val==null&&def!=null;
+  return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?(pre?" pre":" empty"):""}">${val??(pre?def:"–")}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
 }
 function scoreSub(h){
-  if(h.score==null)return `<span class="hint">＋でパー（${h.par}）から</span>`;
+  if(h.score==null)return `<span class="hint">パー（＋−で変更）</span>`;
   const x=h.score-h.par,name=RES[x]??(x>0?`+${x}`:`${x}`);
   return `<span class="${x>0?"pos":x<0?"neg":"even"}">${name}</span>`;
 }
@@ -623,7 +625,7 @@ function renderHole(){
     <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${tileRow("first",FIRST,h.first,4)}</div>
     <div class="grp"><span class="label">上り・下り</span>${tileRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${tileRow("line",LINE,h.line)}</div>
-    <div class="steps">${stepper("score","打数",h.score,scoreSub(h))}${""}${stepper("putts","パット",h.putts)}</div>
+    <div class="steps">${stepper("score","打数",h.score,scoreSub(h),h.par)}${""}${stepper("putts","パット",h.putts,null,2)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：二段グリーンで奥が高い／受けグリーン／右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
@@ -1080,14 +1082,16 @@ document.addEventListener("click",e=>{
   if(t.dataset.h!=null){warn=null;R.cur=+t.dataset.h;gmode="pin";renderInput();save();return}
   if(t.dataset.s){
     const f=t.dataset.s,dd=+t.dataset.d;
-    if(f==="score"){h.score=h.score==null?h.par:Math.min(15,Math.max(1,h.score+dd));}
-    else if(f==="putts"){h.putts=h.putts==null?2:Math.min(6,Math.max(0,h.putts+dd));}
+    if(f==="score"){h.score=Math.min(15,Math.max(1,(h.score??h.par)+dd));}
+    else if(f==="putts"){h.putts=Math.min(6,Math.max(0,(h.putts??2)+dd));}
     else if(f==="par"){h.par=Math.min(6,Math.max(3,h.par+dd));if(h.par===3)h.tee=null;}
     else h[f]=Math.min(9,Math.max(0,h[f]+dd));
     save();renderInput();return}
   if(t.dataset.f){const f=t.dataset.f;h[f]=h[f]===t.dataset.v?null:t.dataset.v;save();renderHole();return}
   if(t.dataset.warnclose){warn=null;renderHole();return}
   if(t.dataset.go){
+    // 次へ進むとき、触っていない打数・パットは表示どおり（パー・2パット）で記録する
+    if(t.dataset.go!=="-1"){if(h.score==null)h.score=h.par;if(h.putts==null)h.putts=2;save();}
     if(t.dataset.go!=="-1"&&!t.dataset.force&&missingOf(h).length){warn={i:R.cur,go:t.dataset.go};renderHole();const w=$("warnbox");if(w)w.scrollIntoView({block:"center"});return}
     warn=null;
     if(t.dataset.go==="rev"){show("rev");return}{const o=ORDER();R.cur=o[Math.min(17,Math.max(0,o.indexOf(R.cur)+(+t.dataset.go)))]}gmode="pin";save();renderInput();
@@ -1143,7 +1147,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.12-1552";
+const APP_VERSION="2026.11.12-1702";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
