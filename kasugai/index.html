@@ -271,10 +271,10 @@ function compute(){
     if(par===3){
       const has=H.np>=0&&H.np<n;
       const killers=ps.filter(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par).slice(0,1),kill=killers.length>0;
-      if(has&&kill)killers.forEach(i=>{pts[i].np+=1});
+      if(kill)killers.forEach(i=>{pts[i].np+=1});
       if(has&&H.s[H.np]<=par&&!kill){const v=1+npc;pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
-      else{const half=ord.indexOf(h)<9?ord.slice(0,9):ord.slice(9);const nth=half.filter(x=>COURSE[x].p===3).indexOf(h)+1;const why=!has?'none':H.s[H.np]>par?'bogey':'kill';
-        if(nth>=2){npc=0;npr[h]={c:0,why,lost:true,killers:has?killers:[]}}else{npc++;npr[h]={c:npc,why,killers:has?killers:[]}}}
+      else{const half=ord.indexOf(h)<9?ord.slice(0,9):ord.slice(9);const nth=half.filter(x=>COURSE[x].p===3).indexOf(h)+1;const why=kill?'kill':!has?'none':'bogey';
+        if(nth>=2){npc=0;npr[h]={c:0,why,lost:true,killers}}else{npc++;npr[h]={c:npc,why,killers}}}
     }
   }
   const sets=ps.map(()=>({ittsu:0,kan:0}));

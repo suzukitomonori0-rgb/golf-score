@@ -365,9 +365,9 @@ function compute(){
     if(par===3){
       const has=H.np>=0&&H.np<n;
       const killers=ps.filter(i=>i!==H.np&&H.miss&&H.miss[i]&&H.s[i]<=par).slice(0,1),kill=killers.length>0;
-      if(has&&kill)killers.forEach(i=>{pts[i].np+=1});
+      if(kill)killers.forEach(i=>{pts[i].np+=1});
       if(has&&H.s[H.np]<=par&&!kill){const v=3*(1+npc);pts[H.np].np+=v;npr[h]={w:H.np,v};npc=0}
-      else{npc++;npr[h]={c:npc,why:!has?'none':H.s[H.np]>par?'bogey':'kill',killers:has?killers:[]}}
+      else{npc++;npr[h]={c:npc,why:kill?'kill':!has?'none':'bogey',killers}}
     }
   }
   const sets=ps.map(()=>({ittsu:0,kan:0}));
