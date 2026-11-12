@@ -491,8 +491,8 @@ function review(r, a) {
   const goals = [];
   if (top) goals.push(['スコア', `${a.total}`, `${a.total - Math.max(2, Math.min(5, Math.ceil(topV / 2)))}`]);
   keys.filter(k => a.loss[k] > 0).slice(0, 3).forEach(k => {
-    if (k === 'approach') goals.push(bogeyOn < 13 ? ['ボギーオン', `${bogeyOn}/18`, `${Math.min(18, bogeyOn + 3)}/18`] : ['パーオン', `${a.gir}/18`, `${Math.min(18, a.gir + 2)}/18`]);
-    if (k === 'tee') goals.push(['FWキープ', `${a.fwHit}/${a.fwCh}`, `${Math.min(a.fwCh, a.fwHit + 2)}/${a.fwCh}`]);
+    if (k === 'approach') goals.push(bogeyOn < 13 ? ['ボギーオン', `${pctS(bogeyOn, 18)}%`, `${pctS(Math.min(18, bogeyOn + 3), 18)}%`] : ['パーオン', `${pctS(a.gir, 18)}%`, `${pctS(Math.min(18, a.gir + 2), 18)}%`]);
+    if (k === 'tee') goals.push(['FWキープ', `${pctS(a.fwHit, a.fwCh)}%`, `${pctS(Math.min(a.fwCh, a.fwHit + 2), a.fwCh)}%`]);
     const cap = t => t > 0 ? `${t}回以下` : '0回';
     if (k === 'putt') goals.push(['3パット', `${a.three}回`, cap(Math.max(0, Math.min(1, a.three - 1)))]);
     if (k === 'pen') goals.push(['OB・池', `${a.obN + a.wN}回`, cap(Math.max(0, a.obN + a.wN - 1))]);
@@ -513,7 +513,7 @@ function review(r, a) {
     comp = { k: pool.length, rows: [
       row('スコア', a.total, avg(P.map(p => p.total)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1)),
       row('FWキープ', pctS(a.fwHit, a.fwCh), avg(P.map(p => pctS(p.fwHit, p.fwCh))), false, v => Math.round(v) + '%'),
-      row('ボギーオン', bogeyOn, avg(pb), false, v => v.toFixed(Number.isInteger(v) ? 0 : 1)),
+      row('ボギーオン', pctS(bogeyOn, 18), avg(pb.map(x => pctS(x, 18))), false, v => Math.round(v) + '%'),
       row('パット', a.putts, avg(P.map(p => p.putts)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1)),
       row('OB・池', a.obN + a.wN, avg(P.map(p => p.obN + p.wN)), true, v => v.toFixed(Number.isInteger(v) ? 0 : 1))
     ] };
@@ -646,8 +646,8 @@ function todayCard(r) {
   return `<section class="today" aria-label="今日の傾向">
     <div class="today-h"><h2>今日の傾向</h2><span class="muted small">ここまで${n}ホール</span></div>
     <div class="mini">
-      <div><span>FWキープ</span><b>${fw}/${ch.length}</b></div>
-      <div><span>パーオン</span><b>${gir}/${n}</b></div>
+      <div><span>FWキープ</span><b>${ch.length ? pctS(fw, ch.length) + '%' : '–'}</b></div>
+      <div><span>パーオン</span><b>${pctS(gir, n)}%</b></div>
       <div><span>平均パット</span><b>${(putts / n).toFixed(1)}</b></div>
       <div><span>3パット</span><b>${three}</b></div>
     </div>
@@ -718,8 +718,8 @@ function vResult() {
 
   const analysis = `
     <div class="tiles">
-      <div class="tile"><span>FWキープ</span><b>${a.fwCh ? Math.round(a.fwHit / a.fwCh * 100) : 0}%</b><span>${a.fwHit}/${a.fwCh}</span></div>
-      <div class="tile"><span>パーオン</span><b>${Math.round(a.gir / 18 * 100)}%</b><span>${a.gir}/18</span></div>
+      <div class="tile"><span>FWキープ</span><b>${a.fwCh ? Math.round(a.fwHit / a.fwCh * 100) : 0}%</b><span>パー4・5</span></div>
+      <div class="tile"><span>パーオン</span><b>${Math.round(a.gir / 18 * 100)}%</b><span>全18H</span></div>
       <div class="tile"><span>平均パット</span><b>${a.avgPutt.toFixed(2)}</b><span>3パット ${a.three}</span></div>
       <div class="tile"><span>OB・池</span><b>${a.obN + a.wN}</b><span>+${a.obN * 2 + a.wN}打</span></div>
     </div>
