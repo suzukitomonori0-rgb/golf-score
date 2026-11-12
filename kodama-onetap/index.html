@@ -103,6 +103,33 @@ p { margin: 0; }
 .stepper .val b { font-size: 42px; font-weight: 900; line-height: 1.1; }
 .stepper .val span { font-size: 13px; font-weight: 700; }
 .auto { display: flex; gap: 8px; align-items: center; background: var(--surface2); border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+
+/* ホール入力は1画面に収める */
+.screen { display: flex; flex-direction: column; height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+.screen .ph { padding-block: 10px; gap: 8px; }
+.screen .ph-top { gap: 8px; align-items: flex-start; }
+.screen .ph-top button { flex: none; }
+.screen .ph-no { font-size: 34px; }
+.screen .ph-total b { font-size: 40px; }
+.screen .dots { gap: 5px; }
+.screen .dot { height: 26px; border-radius: 13px; }
+.screen .main { flex: 1; min-height: 0; overflow-y: auto; padding-block: 12px; gap: 10px; }
+.grp { display: flex; flex-direction: column; gap: 4px; }
+.grp > .label { font-size: 11px; }
+.screen .stepper { padding: 6px; }
+.screen .stepper button { width: 52px; height: 52px; }
+.screen .stepper .val b { font-size: 34px; }
+.screen .chip { min-height: 44px; }
+.screen .chip.tee { min-height: 54px; gap: 1px; font-size: 12px; }
+.screen .auto { padding: 8px 12px; }
+.screen .today { padding: 10px 12px; gap: 8px; }
+.screen .mini b { font-size: 15px; line-height: 1.25; }
+.screen .dir div { padding: 2px 0; }
+.screen .bar { position: static; border-top: 1px solid var(--line); padding-block: 10px; }
+.navrow { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; }
+.btn.back { background: var(--surface); color: var(--green); border: 1px solid var(--line); font-size: 20px; }
+.btn.back:disabled { opacity: 0.35; cursor: default; }
+.btn { min-height: 52px; }
 /* today's tendency (live during play) */
 .today { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .today-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
@@ -287,7 +314,7 @@ function samples() {
 }
 
 // ---- State & storage (この端末のブラウザに保存)
-const S = { view: 'home', rounds: [], cur: null, viewId: null, hole: 0, draft: null, arm: null, tab: 'review', msg: '', copied: false,
+const S = { drafts: {}, view: 'home', rounds: [], cur: null, viewId: null, hole: 0, draft: null, arm: null, tab: 'review', msg: '', copied: false,
   setup: { out: '西', in: '南', tee: 'reg', weather: '晴', wind: '弱' } };
 function load() {
   try { const d = JSON.parse(localStorage.getItem(KEY) || 'null');
@@ -624,11 +651,11 @@ function todayCard(r) {
       <div><span>平均パット</span><b>${(putts / n).toFixed(1)}</b></div>
       <div><span>3パット</span><b>${three}</b></div>
     </div>
-    ${ch.length ? `<div><span class="label">ティーショットの行き先</span><div class="dir">
+    ${ch.length ? `<div class="grp"><span class="label">ティーショットの行き先</span><div class="dir">
       ${cell('OB', ob, ob > 0 && ob === most)}${cell('L', L, L >= 2 && L === most)}${cell('FW', fw, false)}${cell('R', R, R >= 2 && R === most)}${cell('W', w, w > 0 && w === most)}
     </div></div>` : ''}
     ${n < 3 ? '<p class="muted small">3ホール記録すると、プレー中のアドバイスが出ます。</p>'
-      : tips.slice(0, 2).map(t => `<p class="tip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.5 5.5L20 11l-5.5 2.5L12 19l-2.5-5.5L4 11l5.5-2.5z"></path></svg><span>${t}</span></p>`).join('')}
+      : tips.slice(0, 1).map(t => `<p class="tip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.5 5.5L20 11l-5.5 2.5L12 19l-2.5-5.5L4 11l5.5-2.5z"></path></svg><span>${t}</span></p>`).join('')}
   </section>`;
 }
 
@@ -645,27 +672,28 @@ function vPlay() {
   riskHints(h).forEach(x => hints.push(x));
   const dots = r.holes.map((x, j) => `<button class="dot ${j === i ? 'here' : x ? 'done' : ''}" data-a="go" data-v="${j}" aria-label="${info(r, j).course}${info(r, j).no}番へ">${j + 1}</button>`).join('');
   const putts = [0, 1, 2, 3, 4].map(p => `<button class="chip ${d.p === p ? 'on' : ''}" data-a="putt" data-v="${p}">${p === 4 ? '4+' : p}</button>`).join('');
-  const tees = TEESHOT.map(([k, l]) => `<button class="chip tee ${d.t === k ? 'on' : ''}" data-a="tee" data-v="${k}" aria-pressed="${d.t === k}">${teeIcon(k, 24)}<span aria-hidden="true">${l}</span></button>`).join('');
+  const tees = TEESHOT.map(([k, l]) => `<button class="chip tee ${d.t === k ? 'on' : ''}" data-a="tee" data-v="${k}" aria-pressed="${d.t === k}">${teeIcon(k, 22)}<span aria-hidden="true">${l}</span></button>`).join('');
   const last = i === 17;
-  return `<div class="ph wrap">
-      <div class="ph-top"><span>児玉CC · ${r.out}→${r.in} · ${TEE[r.tee][0]}</span><button data-a="home">中断</button></div>
+  return `<div class="screen"><div class="ph wrap">
+      <div class="ph-top"><div class="hints">${hints.map(([c, t]) => `<span class="hint ${c}">${t}</span>`).join('')}</div><button data-a="home">中断</button></div>
       <div class="ph-hole"><div class="ph-left"><span class="ph-no">${h.course}${h.no}<small>番</small></span><span class="pill">PAR ${h.par}</span><span class="pill">${h.yd}y</span></div>
         <div class="ph-total"><span>${n}H 合計</span><div><b>${tot}</b><em>${n ? sgn(tot - tp) : '±0'}</em></div></div></div>
-      <div class="hints">${hints.map(([c, t]) => `<span class="hint ${c}">${t}</span>`).join('')}</div>
       <div class="dots">${dots}</div>
     </div>
     <div class="main wrap stack">
       ${S.msg ? `<div class="msg" role="status">${esc(S.msg)}</div>` : ''}
-      <div class="stack" style="gap:8px"><span class="label">スコア</span>
+      <div class="grp"><span class="label">スコア</span>
         <div class="stepper"><button data-a="dec" aria-label="1打減らす">−</button>
           <div class="val"><b>${d.s}</b><span style="color:${col}">${nm}</span></div>
           <button class="plus" data-a="inc" aria-label="1打増やす">＋</button></div></div>
-      <div class="stack" style="gap:8px"><span class="label">パット数</span><div class="chips c5">${putts}</div></div>
-      ${h.par >= 4 ? `<div class="stack" style="gap:8px"><span class="label">ティーショット</span><div class="chips c5">${tees}</div></div>`
+      <div class="grp"><span class="label">パット数</span><div class="chips c5">${putts}</div></div>
+      ${h.par >= 4 ? `<div class="grp"><span class="label">ティーショット</span><div class="chips c5">${tees}</div></div>`
         : `<p class="auto">パー3はティーショット入力なし。パーオンで評価します。</p>`}
       ${todayCard(r)}
     </div>
-    <div class="bar wrap"><button class="btn primary" data-a="next">${last ? '記録してラウンド終了' : '記録して次のホールへ →'}</button></div>`;
+    <div class="bar wrap"><div class="navrow">
+      <button class="btn back" data-a="prev" aria-label="前のホールに戻る" ${i === 0 ? 'disabled' : ''}>◀</button>
+      <button class="btn primary" data-a="next">${last ? '記録してラウンド終了' : '記録して次のホールへ →'}</button></div></div></div>`;
 }
 
 function mark(d, s) {
@@ -726,6 +754,7 @@ function shareText(r) {
 
 // ---- Actions
 function draftFor(i) {
+  if (S.drafts[i]) return Object.assign({}, S.drafts[i]);
   const x = S.cur.holes[i]; if (x) return Object.assign({}, x);
   const par = info(S.cur, i).par; return { s: par, p: 2, t: par === 3 ? null : 'FW' };
 }
@@ -742,15 +771,16 @@ function act(a, v) {
     case 'start': {
       const t = new Date(); const p = n => String(n).padStart(2, '0');
       S.cur = Object.assign({ id: Date.now(), date: `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`, holes: Array(18).fill(null) }, S.setup);
-      S.hole = 0; S.draft = draftFor(0); S.view = 'play'; save(); break; }
+      S.drafts = {}; S.hole = 0; S.draft = draftFor(0); S.view = 'play'; save(); break; }
     case 'resume': { const f = S.cur.holes.findIndex(x => !x); S.hole = f < 0 ? 17 : f; S.draft = draftFor(S.hole); S.view = 'play'; break; }
     case 'discard': if (S.arm === 'cur') { S.cur = null; S.arm = null; save(); } else S.arm = 'cur'; break;
-    case 'go': S.hole = Number(v); S.draft = draftFor(S.hole); break;
+    case 'go': S.drafts[S.hole] = S.draft; S.hole = Number(v); S.draft = draftFor(S.hole); break;
+    case 'prev': if (S.hole > 0) { S.drafts[S.hole] = S.draft; S.hole--; S.draft = draftFor(S.hole); } break;
     case 'inc': S.draft.s = Math.min(15, S.draft.s + 1); break;
     case 'dec': S.draft.s = Math.max(1, S.draft.s - 1); if (S.draft.p > S.draft.s) S.draft.p = S.draft.s; break;
     case 'putt': S.draft.p = Number(v); if (S.draft.p >= S.draft.s) S.draft.s = S.draft.p + 1; break;
     case 'next': {
-      S.cur.holes[S.hole] = Object.assign({}, S.draft); save();
+      S.cur.holes[S.hole] = Object.assign({}, S.draft); delete S.drafts[S.hole]; save();
       const miss = S.cur.holes.findIndex(x => !x);
       if (S.hole < 17 && (miss < 0 || miss > S.hole)) { S.hole++; S.draft = draftFor(S.hole); }
       else if (miss >= 0) { S.hole = miss; S.draft = draftFor(miss); S.msg = `${info(S.cur, miss).course}${info(S.cur, miss).no}番（${miss + 1}H目）が未入力です。入力するとラウンドを終了できます。`; }

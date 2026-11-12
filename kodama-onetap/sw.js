@@ -1,4 +1,4 @@
-const C="onetap-v1";
+const C="onetap-v2";
 // 初回に画面一式を保存しておき、機内モードでも開けるようにする
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(["./","./manifest.webmanifest"])).catch(()=>{}).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
