@@ -276,6 +276,8 @@ h2{margin:0;font-size:16px;font-weight:700}
 .kbadge.down{background:var(--over-soft);color:var(--over)}
 .stp .v.pre{color:var(--muted);font-weight:700}
 .hsteps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.7}
+.kwhy summary{font-size:13px;color:var(--green);font-weight:700;cursor:pointer}
+.kwhy ul{margin-top:6px}
 .finish{border-color:var(--green)}
 .fscore{display:flex;align-items:baseline;gap:12px}
 .fscore b{font-size:40px;font-weight:900;line-height:1}
@@ -1067,15 +1069,15 @@ function kAna(H){
   return {H,n,total,par,diff:total-par,out,inn,outN,innN,putts,avgPutt:putts/n,fwHit,fwCh:fwCh.length,gir,three,obN,wN,loss,cnt};
 }
 const KISSUE={
-  approach:{name:"アプローチ〜寄せ",title:"グリーン周りから確実に「乗せる」",
+  approach:{name:"グリーンに乗せるまで（2打目・寄せ）",title:"グリーン周りから確実に「乗せる」",
     why:"スコア80〜100の人で一番差がつくのがここです。原因は「グリーンを外した後の1打が乗らない（ダフリ・トップ・距離不足）」か、「2打目以降で無理にピンを狙い、難しい場所に外す」のどちらかが大半です。",
     check:"グリーンを外したら「次の1打で必ずグリーンに乗せる」が合格ライン。ピンに寄せるより、乗せることを優先してください。",
     menu:["30y以内のランニングアプローチ（7〜9番アイアン）を20球。キャリー1/3・ラン2/3を体で覚える","芝の上なら、ラフ・左足下がりなど外しやすいライから10球ずつ。練習場ならマットの端から","50y・70y・100yの3つの距離を、番手と振り幅で打ち分ける練習を各10球"]},
-  tee:{name:"ティーショット",title:"フェアウェイに置くティーショット",
+  tee:{name:"ティーショットの曲がり",title:"フェアウェイに置くティーショット",
     why:"フェアウェイを外すと、2打目が林越えやラフからになり、グリーンを狙えなくなります。左右どちらかに偏っているなら、スイングの癖が出ているサインです。",
     check:"打つ前に、フェアウェイの中の狙う一点（木や看板）を決めてから構える。飛距離は8割で十分です。",
     menu:["ドライバーを8割の振り幅で10球。飛距離は見ず、狙った幅に何球入るかだけ数える","UTかFWウッドでのティーショットを10球。ドライバーとの曲がり幅の差を確認する","本番と同じルーティン（素振り1回→目標確認→構えて3秒以内に打つ）で5球"]},
-  putt:{name:"パット",title:"3パットをなくす距離感",
+  putt:{name:"パット（3パット以上）",title:"3パットをなくす距離感",
     why:"3パットの多くは、1打目の距離感（大きくショート・オーバー）が原因です。ラインを読むより、距離を合わせる方がスコアに直結します。",
     check:"11歩（約7m）以上は「カップを中心に半径1歩半の円に止める」が目標。カップインは狙わなくて構いません。",
     menu:["15歩・25歩のロングパットを各10球。半径1歩半以内に止まった数を数える","2歩半の距離を連続10球入るまで続ける","スタート前の練習グリーンでは、ラインより距離感だけを合わせる（5分で十分）"]},
@@ -1103,11 +1105,14 @@ function kReview(a,I){
   if(merged){const lead=a.loss.pen>=a.loss.tee?"pen":"tee";keys=[lead].concat(keys.filter(k=>k!==lead))}
   const top=totalLoss>0?keys[0]:null,pc=k=>totalLoss?Math.round(a.loss[k]/totalLoss*100):0;
   const topV=merged?teeAll:(top?a.loss[top]:0),topPct=totalLoss?Math.round(topV/totalLoss*100):0;
-  let summary=`${a.total}（${sg(a.diff)}）。パー比${sg(a.diff)}のうち、`;
-  if(merged)summary+=`一番大きいのはティーショットのミスで、曲がり${a.loss.tee}打とOB・ペナ${a.loss.pen}打を合わせて推定${teeAll}打（約${topPct}%）です。`;
-  else summary+=top?`一番大きいのは${KISSUE[top].name}で推定${a.loss[top]}打（約${pc(top)}%）です。`:"大きなロスはありませんでした。";
   const second=keys.slice(1).find(k=>a.loss[k]>0&&!(merged&&(k==="tee"||k==="pen")));
-  if(top&&second)summary+=`次いで${KISSUE[second].name}が${a.loss[second]}打。`;
+  let summary=`今日のスコアは${a.total}で、パーより${a.diff>0?a.diff+"打多い":a.diff<0?(-a.diff)+"打少ない":"ちょうどパーの"}結果でした。`;
+  if(totalLoss>0){
+    summary+=totalLoss===a.diff?`その${totalLoss}打の原因を分けると、`:`バーディーなどで取り返した分を除き、パーより多く打ったホールの余分な打数は合計${totalLoss}打。その原因を分けると、`;
+    if(merged)summary+=`いちばん多いのはティーショットのミスで${teeAll}打（OB・ペナルティで${a.loss.pen}打、ラフに曲げたことで${a.loss.tee}打）です。`;
+    else summary+=`いちばん多いのは「${KISSUE[top].name}」で${a.loss[top]}打です。`;
+    if(second)summary+=`次に多いのは「${KISSUE[second].name}」で${a.loss[second]}打です。`;
+  }else summary+="パーより多く打ったホールはありませんでした。";
   if(a.outN===9&&a.innN===9&&Math.abs(a.out-a.inn)>=4)summary+=a.inn>a.out?`後半に${a.inn-a.out}打崩れたのも響きました。`:`前半の出遅れ（後半より${a.out-a.inn}打多い）が響きました。`;
 
   const good=[];
@@ -1197,21 +1202,27 @@ function kReview(a,I){
   const issue=top?Object.assign({v:topV,pct:topPct},KISSUE[top]):null;
   if(issue&&merged){issue.title="ティーショットのミスを減らす";issue.why=`左右への曲がり（${a.loss.tee}打）とOB・ペナ（${a.loss.pen}打）を合わせると、ロスの一番大きな原因です。`+KISSUE[top].why;}
   const others=top?keys.slice(1).filter(k=>a.loss[k]>0&&!(merged&&(k==="tee"||k==="pen"))).map(k=>({name:KISSUE[k].name,v:a.loss[k]})):[];
-  return {summary,good:good.slice(0,4),issue,others,sections:[["ティーショット",tee],["2打目〜グリーンまで",appr],["パット",putt],["グリーン・パー3（詳しい入力から）",green],["流れ・メンタル",flow],["ホールの傾向",holeT]],plan,goals,menu,comp};
+  return {lossTotal:totalLoss,summary,good:good.slice(0,4),issue,others,sections:[["ティーショット",tee],["2打目〜グリーンまで",appr],["パット",putt],["グリーン・パー3（詳しい入力から）",green],["流れ・メンタル",flow],["ホールの傾向",holeT]],plan,goals,menu,comp};
 }
 function kadaiView(I){
   const H=kH(R);
   if(H.length<9)return `<div class="panel"><h2>課題発見</h2><p class="note">9ホール以上の打数を入れると、総評と課題が表示されます。</p></div>`;
   const a=kAna(H),rv=kReview(a,I);
   const ul=arr=>`<ul class="kpts">${arr.map(t=>`<li>${t}</li>`).join("")}</ul>`;
-  const LN={approach:"アプローチ〜寄せ",tee:"ティーショット",putt:"パット",pen:"OB・ペナ"};
+  const LN={approach:"グリーンに乗せるまで",tee:"ティーショットの曲がり",putt:"パット",pen:"OB・ペナルティ"};
   const cats=Object.entries(a.loss).filter(([k,x])=>x>0).sort((x,y)=>y[1]-x[1]),mx=Math.max(1,...cats.map(c=>c[1]));
   return `
   <div class="panel"><span class="label">総評</span><p class="ktext">${rv.summary}</p>
-    ${cats.length?`<div class="bars">${cats.map(([k,x],j)=>`<div class="bar${j===0?" top":""}"><span>${LN[k]}</span><div class="track"><div class="fill" style="width:${x/mx*100}%"></div></div><span class="v num">${x}打</span></div>`).join("")}</div>`:""}</div>
-  ${rv.issue?`<div class="panel kissue"><span class="label">最優先の課題（ロスの約${rv.issue.pct}%）</span><h2>${rv.issue.title}</h2>
+    ${cats.length?`<div class="bars">${cats.map(([k,x],j)=>`<div class="bar${j===0?" top":""}"><span>${LN[k]}</span><div class="track"><div class="fill" style="width:${x/mx*100}%"></div></div><span class="v num">${x}打</span></div>`).join("")}</div>
+    <p class="note">パーより余分に打った${rv.lossTotal}打が、何が原因だったかを入力から分けた目安です。</p>
+    <details class="kwhy"><summary>打数の分け方</summary><ul class="kpts">
+      <li><b>OB・ペナルティ</b>：OBは2打、池・1ペナは1打として数えます。</li>
+      <li><b>パット</b>：3パット以上だったとき、2パットより多く打った分です。</li>
+      <li><b>ティーショットの曲がり</b>：ラフに外して、パーオンできなかったホールの1打分です。</li>
+      <li><b>グリーンに乗せるまで</b>：それ以外の余分な打数です。2打目や寄せがグリーンに乗らなかった分にあたります。</li></ul></details>`:""}</div>
+  ${rv.issue?`<div class="panel kissue"><span class="label">いちばんの課題（余分に打った${rv.lossTotal}打のうち${rv.issue.v}打）</span><h2>${rv.issue.title}</h2>
     <p class="ktext">${rv.issue.why}</p><p class="ktext"><b>次回のチェックポイント：</b>${rv.issue.check}</p>
-    ${rv.others.length?`<p class="note">そのほかのロス：${rv.others.map(o=>`${o.name} +${o.v}打`).join(" / ")}</p>`:""}</div>`:""}
+    ${rv.others.length?`<p class="note">ほかに打数を失った原因：${rv.others.map(o=>`${o.name}で${o.v}打`).join("、")}</p>`:""}</div>`:""}
   <div class="panel"><span class="label">良かったこと</span>${ul(rv.good)}</div>
   ${rv.goals.length?`<div class="panel"><h2>次回の目標</h2><div class="goal num">${rv.goals.map(([l,nn,t])=>`<span>${l}</span><span>${nn}</span><span class="arrow">→</span><span class="to">${t}</span>`).join("")}</div></div>`:""}
   <div class="panel"><h2>分野別の詳細</h2>${rv.sections.filter(x=>x[1].length).map(([t,arr])=>`<div class="ksub"><span class="label">${t}</span>${ul(arr)}</div>`).join("")}</div>
@@ -1348,7 +1359,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.16-1556";
+const APP_VERSION="2026.11.16-2137";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
