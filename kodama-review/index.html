@@ -589,9 +589,9 @@ function chipRow(field,opts,val,dis){
   return `<div class="chips">${opts.map(([k,l])=>`<button class="chip" data-f="${field}" data-v="${k}" aria-pressed="${val===k}"${dis?" disabled":""}>${l}</button>`).join("")}</div>`;
 }
 function tileRow(field,opts,val,n){return `<div class="tiles"${n?` style="grid-template-columns:repeat(${n},minmax(0,1fr))"`:""}>${opts.map(([k,l])=>`<button class="tile${/x$/.test(k)?" hot":""}" data-f="${field}" data-v="${k}" aria-pressed="${val===k}">${l}</button>`).join("")}</div>`}
-function stepper(field,label,val,sub,def){
+function stepper(field,label,val,sub,def,cls){
   const pre=val==null&&def!=null;
-  return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?(pre?" pre":" empty"):""}">${val??(pre?def:"–")}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
+  return `<div class="stp"><span class="label">${label}</span><div class="row"><button data-s="${field}" data-d="-1" aria-label="${label}を減らす">−</button><span class="v num${val==null?(pre?" pre":" empty"):(cls?" "+cls:"")}">${val??(pre?def:"–")}</span><button data-s="${field}" data-d="1" aria-label="${label}を増やす">＋</button></div>${sub!=null?`<span class="sub">${sub}</span>`:""}</div>`;
 }
 function scoreSub(h){
   if(h.score==null)return `<span class="hint">パー（＋−で変更）</span>`;
@@ -641,7 +641,7 @@ function renderHole(){
     <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${tileRow("first",FIRST,h.first,4)}</div>
     <div class="grp"><span class="label">上り・下り</span>${tileRow("slope",SLOPE,h.slope)}</div>
     <div class="grp"><span class="label">ライン</span>${tileRow("line",LINE,h.line)}</div>
-    <div class="steps">${stepper("score","打数",h.score,scoreSub(h),h.par)}${""}${stepper("putts","パット",h.putts,null,2)}</div>
+    <div class="steps">${stepper("score","打数",h.score,scoreSub(h),h.par,h.score==null?"":h.score>h.par?"pos":h.score<h.par?"neg":"")}${""}${stepper("putts","パット",h.putts,null,2)}</div>
     ${auto.length?`<div class="auto">${auto.map(a=>`<span>${a}</span>`).join("")}</div>`:""}
     <div class="grp"><span class="label">一番悔やまれる1打（任意）</span>${chipRow("cause",CAUSE,h.cause)}</div>
     <div class="grp"><label class="label" for="memo">ひとことメモ</label><textarea id="memo" placeholder="例：二段グリーンで奥が高い／受けグリーン／右の林を怖がって左に引っかけた">${h.memo.replace(/</g,"&lt;")}</textarea></div>
@@ -1163,7 +1163,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.12-1821";
+const APP_VERSION="2026.11.16-1556";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
