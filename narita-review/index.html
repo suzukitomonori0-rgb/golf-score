@@ -1068,7 +1068,7 @@ function kAna(H){
   return {H,n,total,par,diff:total-par,out,inn,outN,innN,putts,avgPutt:putts/n,fwHit,fwCh:fwCh.length,gir,three,obN,wN,loss,cnt};
 }
 const KISSUE={
-  approach:{name:"グリーンに乗せるまで（2打目・寄せ）",title:"グリーン周りから確実に「乗せる」",
+  approach:{name:"2打目〜寄せ（パーオンより多くかかった分）",title:"グリーン周りから確実に「乗せる」",
     why:"スコア80〜100の人で一番差がつくのがここです。原因は「グリーンを外した後の1打が乗らない（ダフリ・トップ・距離不足）」か、「2打目以降で無理にピンを狙い、難しい場所に外す」のどちらかが大半です。",
     check:"グリーンを外したら「次の1打で必ずグリーンに乗せる」が合格ライン。ピンに寄せるより、乗せることを優先してください。",
     menu:["30y以内のランニングアプローチ（7〜9番アイアン）を20球。キャリー1/3・ラン2/3を体で覚える","芝の上なら、ラフ・左足下がりなど外しやすいライから10球ずつ。練習場ならマットの端から","50y・70y・100yの3つの距離を、番手と振り幅で打ち分ける練習を各10球"]},
@@ -1208,7 +1208,7 @@ function kadaiView(I){
   if(H.length<9)return `<div class="panel"><h2>課題発見</h2><p class="note">9ホール以上の打数を入れると、総評と課題が表示されます。</p></div>`;
   const a=kAna(H),rv=kReview(a,I);
   const ul=arr=>`<ul class="kpts">${arr.map(t=>`<li>${t}</li>`).join("")}</ul>`;
-  const LN={approach:"グリーンに乗せるまで",tee:"ティーショットの曲がり",putt:"パット",pen:"OB・ペナルティ"};
+  const LN={approach:"2打目〜寄せ",tee:"ティーショットの曲がり",putt:"パット",pen:"OB・ペナルティ"};
   const cats=Object.entries(a.loss).filter(([k,x])=>x>0).sort((x,y)=>y[1]-x[1]),mx=Math.max(1,...cats.map(c=>c[1]));
   return `
   <div class="panel"><span class="label">総評</span><p class="ktext">${rv.summary}</p>
@@ -1218,7 +1218,7 @@ function kadaiView(I){
       <li><b>OB・ペナルティ</b>：OBは2打、池・1ペナは1打として数えます。</li>
       <li><b>パット</b>：3パット以上だったとき、2パットより多く打った分です。</li>
       <li><b>ティーショットの曲がり</b>：ラフに外して、パーオンできなかったホールの1打分です。</li>
-      <li><b>グリーンに乗せるまで</b>：それ以外の余分な打数です。2打目や寄せがグリーンに乗らなかった分にあたります。</li></ul></details>`:""}</div>
+      <li><b>2打目〜寄せ</b>：パーオン（パー4なら2打、パー5なら3打）より、グリーンに乗るまでに多くかかった打数です。OB・ペナルティとティーショットの曲がりの分は除きます。例：パー4で3打目に乗ったら1打。</li></ul></details>`:""}</div>
   ${rv.issue?`<div class="panel kissue"><span class="label">いちばんの課題（余分に打った${rv.lossTotal}打のうち${rv.issue.v}打）</span><h2>${rv.issue.title}</h2>
     <p class="ktext">${rv.issue.why}</p><p class="ktext"><b>次回のチェックポイント：</b>${rv.issue.check}</p>
     ${rv.others.length?`<p class="note">ほかに打数を失った原因：${rv.others.map(o=>`${o.name}で${o.v}打`).join("、")}</p>`:""}</div>`:""}
@@ -1358,7 +1358,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.16-2137";
+const APP_VERSION="2026.11.16-2142";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
