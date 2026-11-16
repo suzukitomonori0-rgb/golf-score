@@ -121,6 +121,16 @@ textarea{font:inherit;width:100%;min-height:58px;padding:8px 10px;border-radius:
 .card18{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;text-align:center;overflow-x:auto}
 .card18 .h{font-size:10px;color:var(--muted)}
 .card18 .p{font-size:10px;color:var(--muted)}
+.card18{grid-template-columns:repeat(9,1fr) 1.3fr}
+.card18 .t{background:var(--paper);border-radius:4px;font-weight:800}
+.card18 div.t b{font-size:14px;line-height:24px}
+.tot{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:6px;margin-top:8px}
+.tot>div{background:var(--paper);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column;min-width:0}
+.tot>div:last-child{outline:2px solid var(--green)}
+.tot span{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tot small{font-size:10px;margin-left:3px}
+.tot b{font-size:20px;font-weight:900;line-height:1.2}
+.tot em{font-style:normal;font-size:12px;font-weight:700}
 .bars{display:flex;flex-direction:column;gap:8px}
 .bar{display:grid;grid-template-columns:112px 1fr 36px;gap:8px;align-items:center;font-size:13px}
 .bar .track{height:14px;background:var(--paper);border-radius:4px;overflow:hidden}
@@ -1239,7 +1249,13 @@ function renderReview(){
   const cats=Object.entries(s.loss).filter(([k,x])=>x>0).sort((a,b)=>b[1]-a[1]);
   const maxL=Math.max(1,...cats.map(c=>c[1]));
   const card=(from)=>{let h="";for(let i=from;i<from+9;i++)h+=`<div class="h">${i+1}</div>`;for(let i=from;i<from+9;i++)h+=`<div class="p">${R.holes[i].par}</div>`;
-    for(let i=from;i<from+9;i++){const x=R.holes[i];h+=`<div><span class="mark ${markCls(x)}">${x.score??"·"}</span></div>`}return h};
+    for(let i=from;i<from+9;i++){const x=R.holes[i];h+=`<div><span class="mark ${markCls(x)}">${x.score??"·"}</span></div>`}
+    const t=half(from);h=h.replace(/(<div class="h">\d+<\/div>)(?=<div class="p">)/,`$1<div class="h t">計</div>`).replace(/(<div class="p">\d+<\/div>)(?=<div><span)/,`$1<div class="p t">${t.par}</div>`)+`<div class="t"><b>${t.n?t.score:"·"}</b></div>`;return h};
+  // 9ホールごとの合計（入力済みのホールだけで計算）
+  const half=from=>{const hs=R.holes.slice(from,from+9),d=hs.filter(x=>x.score!=null);return{par:hs.reduce((a,x)=>a+x.par,0),n:d.length,score:d.reduce((a,x)=>a+x.score,0),diff:d.reduce((a,x)=>a+x.score-x.par,0)}};
+  const st=ORDER()[0]===9?9:0, H1=half(st), H2=half(9-st);
+  const hl=(lab,c,x)=>`<div><span>${lab}<small>${c}</small></span><b class="num">${x.n?x.score:"–"}</b><em class="num">${x.n?sg(x.diff):""}${x.n&&x.n<9?`（${x.n}H）`:""}</em></div>`;
+  const totals=`<div class="tot">${hl("前半",courseOf(st),H1)}${hl("後半",courseOf(9-st),H2)}${hl("トータル","",{n:H1.n+H2.n,score:H1.score+H2.score,diff:H1.diff+H2.diff})}</div>`;
   const saved=I.tasks.reduce((a,t)=>{const m=t.metric;if(m==="3パット")return a+(t.now-t.to);if(m==="OB・池")return a+(t.now-t.to)*2;return a+1},0);
   const memos=R.holes.map((h,i)=>({i,m:h.memo.trim()})).filter(x=>x.m);
   v.innerHTML=`
@@ -1255,6 +1271,7 @@ function renderReview(){
     </div>
     <div style="overflow-x:auto"><div class="card18">${card(0)}</div></div>
     <div style="overflow-x:auto"><div class="card18">${card(9)}</div></div>
+    ${totals}
     <p class="note">○バーディー　□ボギー　二重□ダブルボギー以上</p>
   </div>
 
@@ -1360,7 +1377,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.16-2145";
+const APP_VERSION="2026.11.16-2241";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
