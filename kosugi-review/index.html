@@ -1215,6 +1215,15 @@ function kReview(a,I){
   const others=top?keys.slice(1).filter(k=>a.loss[k]>0&&!(merged&&(k==="tee"||k==="pen"))).map(k=>({name:KISSUE[k].name,v:a.loss[k]})):[];
   return {lossTotal:totalLoss,summary,good:good.slice(0,4),issue,others,sections:[["ティーショット",tee],["2打目〜グリーンまで",appr],["パット",putt],["グリーン・パー3（詳しい入力から）",green],["流れ・メンタル",flow],["ホールの傾向",holeT]],plan,goals,menu,comp};
 }
+// ワンタップ課題発見へ、このラウンドを渡すリンク（記録はURLに入れて渡すので、ホーム画面アプリ同士でも届く）
+function onetapLink(){
+  if(R.holes.filter(h=>h.score!=null).length<16)return "";
+  const z=n=>String(n).padStart(2,"0"),t=new Date(),saved=LOCAL.find(x=>String(x.id)===String(R.id));
+  const o={id:R.id,d:(saved&&saved.date)||`${t.getFullYear()}-${z(t.getMonth()+1)}-${z(t.getDate())}`,o:R.out,i:R.inn,tb:R.teebox||"reg",
+    s:R.holes.map(h=>h.score??h.par),p:R.holes.map(h=>h.putts??2),t:R.holes.map(h=>h.tee||0)};
+  let b="";try{b=btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}catch(e){return ""}
+  return `<a class="btn primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px" href="../kosugi-onetap/#r=${b}">ワンタップ課題発見で開く</a>`;
+}
 function kadaiView(I){
   const H=kH(R);
   if(H.length<9)return `<div class="panel"><h2>課題発見</h2><p class="note">9ホール以上の打数を入れると、総評と課題が表示されます。</p></div>`;
@@ -1223,7 +1232,7 @@ function kadaiView(I){
   const LN={approach:"2打目〜寄せ",tee:"ティーショットの曲がり",putt:"パット",pen:"OB・ペナルティ"};
   const cats=Object.entries(a.loss).filter(([k,x])=>x>0).sort((x,y)=>y[1]-x[1]),mx=Math.max(1,...cats.map(c=>c[1]));
   return `
-  <div class="panel"><span class="label">総評</span><p class="ktext">${rv.summary}</p>
+  <div class="panel"><span class="label">総評</span><p class="ktext">${rv.summary}</p>${onetapLink()}
     ${cats.length?`<div class="bars">${cats.map(([k,x],j)=>`<div class="bar${j===0?" top":""}"><span>${LN[k]}</span><div class="track"><div class="fill" style="width:${x/mx*100}%"></div></div><span class="v num">${x}打</span></div>`).join("")}</div>
     <p class="note">パーより余分に打った${rv.lossTotal}打が、何が原因だったかを入力から分けた目安です。</p>
     <details class="kwhy"><summary>打数の分け方</summary><ul class="kpts">
@@ -1377,7 +1386,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.16-2241";
+const APP_VERSION="2026.11.17-0920";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});

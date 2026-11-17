@@ -329,9 +329,11 @@ const SRC = { key: 'kodama-review-v3', hkey: 'kodama-history-v1', name: '児玉C
 const TMAP2 = { fw: 'FW', left: 'L', right: 'R', ob: 'OB', p1: 'P', water: 'W' };
 function fromReview(r) {
   if (!r || !Array.isArray(r.holes) || r.holes.length !== 18 || !C[r.out] || !C[r.inn] || r.out === r.inn) return null;
-  if (r.holes.some(h => !h || h.score == null)) return null;
-  const holes = r.holes.map((h, i) => {
+  // 打数が空のホールは攻略アプリの表示どおり「パー・2パット」とみなす（2ホールまで）
+  if (r.holes.filter(h => !h || h.score == null).length > 2) return null;
+  const holes = r.holes.map((h0, i) => {
     const par = (i < 9 ? C[r.out] : C[r.inn])[i % 9][0];
+    const h = h0 && h0.score != null ? h0 : Object.assign({}, h0 || {}, { score: par, putts: 2 });
     let t = TMAP2[h.tee] || null;
     if (par === 3 && !penOf(t)) t = null;
     const p = h.putts == null ? Math.min(2, h.score - 1) : Math.min(h.putts, h.score - 1);
@@ -360,6 +362,27 @@ function importReview() {
   });
   if (added) S.notice = `${SRC.name}から${added}ラウンドを取り込みました。`;
 }
+// 攻略アプリの「ワンタップ課題発見で開く」リンク（#r=…）で渡された記録を取り込む
+function importHash() {
+  const m = location.hash.match(/^#r=([A-Za-z0-9_-]+)$/);
+  if (!m) return;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  let o = null;
+  try {
+    const b = m[1].replace(/-/g, '+').replace(/_/g, '/');
+    o = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b), c => c.charCodeAt(0))));
+  } catch (e) {}
+  const rr = o && Array.isArray(o.s) ? { id: o.id, date: o.d, out: o.o, inn: o.i, teebox: o.tb,
+    holes: o.s.map((v, k) => ({ score: v, putts: (o.p || [])[k], tee: (o.t || [])[k] || null })) } : null;
+  const x = rr && fromReview(rr);
+  if (!x) { S.notice = 'リンクから記録を読み込めませんでした。攻略アプリで18ホール入力してから、もう一度お試しください。'; return; }
+  const id = 'rv-' + rr.id;
+  S.hid = S.hid.filter(v => v !== id);
+  x.id = id; x.date = rr.date || today();
+  S.rounds = S.rounds.filter(r => r.id !== id).concat(x);
+  S.notice = `${SRC.name}のラウンド（${md(x.date)} ${x.out}→${x.in}）を取り込みました。`;
+  S.viewId = id; S.view = 'result'; S.tab = 'review';
+}
 const sameId = (a, b) => String(a) === String(b);
 function wxText(r) { return r.src === 'review' ? `${SRC.name}から` : `${r.weather}・風${r.wind}`; }
 
@@ -367,8 +390,8 @@ function load() {
   try { const d = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (d && Array.isArray(d.rounds)) {
       S.rounds = d.sv === SAMPLE_VER ? d.rounds : d.rounds.filter(r => !r.sample).concat(samples());
-      S.cur = d.cur || null; S.hid = Array.isArray(d.hid) ? d.hid : []; importReview(); save(); return; } } catch (e) {}
-  S.rounds = samples(); importReview(); save();
+      S.cur = d.cur || null; S.hid = Array.isArray(d.hid) ? d.hid : []; importReview(); importHash(); save(); return; } } catch (e) {}
+  S.rounds = samples(); importReview(); importHash(); save();
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify({ sv: SAMPLE_VER, rounds: S.rounds, cur: S.cur, hid: S.hid })); } catch (e) {} }
 
