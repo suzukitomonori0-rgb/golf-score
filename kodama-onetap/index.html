@@ -322,16 +322,55 @@ function samples() {
 }
 
 // ---- State & storage (この端末のブラウザに保存)
-const S = { drafts: {}, view: 'home', rounds: [], cur: null, viewId: null, hole: 0, draft: null, arm: null, tab: 'review', msg: '', copied: false,
+const S = { hid: [], notice: '', drafts: {}, view: 'home', rounds: [], cur: null, viewId: null, hole: 0, draft: null, arm: null, tab: 'review', msg: '', copied: false,
   setup: { out: '西', in: '南', tee: 'reg', weather: '晴', wind: '弱' } };
+// 攻略アプリで入力・保存したラウンドを取り込む（同じサイトなので、このスマホに保存された記録を直接読める）
+const SRC = { key: 'kodama-review-v3', hkey: 'kodama-history-v1', name: '児玉CC攻略' };
+const TMAP2 = { fw: 'FW', left: 'L', right: 'R', ob: 'OB', p1: 'P', water: 'W' };
+function fromReview(r) {
+  if (!r || !Array.isArray(r.holes) || r.holes.length !== 18 || !C[r.out] || !C[r.inn] || r.out === r.inn) return null;
+  if (r.holes.some(h => !h || h.score == null)) return null;
+  const holes = r.holes.map((h, i) => {
+    const par = (i < 9 ? C[r.out] : C[r.inn])[i % 9][0];
+    let t = TMAP2[h.tee] || null;
+    if (par === 3 && !penOf(t)) t = null;
+    const p = h.putts == null ? Math.min(2, h.score - 1) : Math.min(h.putts, h.score - 1);
+    return { s: h.score, p: Math.max(0, p), t };
+  });
+  return { out: r.out, in: r.inn, tee: TEE[r.teebox] ? r.teebox : 'reg', weather: '', wind: '', src: 'review', holes };
+}
+function today() { const t = new Date(), z = n => String(n).padStart(2, '0'); return `${t.getFullYear()}-${z(t.getMonth() + 1)}-${z(t.getDate())}`; }
+function importReview() {
+  let hist = [], cur = null;
+  try { hist = JSON.parse(localStorage.getItem(SRC.hkey) || '[]'); } catch (e) {}
+  try { cur = JSON.parse(localStorage.getItem(SRC.key) || 'null'); } catch (e) {}
+  if (!Array.isArray(hist)) hist = [];
+  hist = hist.filter(r => r && !r.sample);
+  // 18ホール入力済みで、まだ「保存」していないラウンドも取り込む
+  if (cur && !cur.sample && cur.id && !hist.some(r => r.id === cur.id)) hist.push(Object.assign({}, cur, { live: true }));
+  let added = 0;
+  hist.forEach(r => {
+    const id = 'rv-' + r.id;
+    if (S.hid.includes(id)) return;
+    const x = fromReview(r); if (!x) return;
+    const old = S.rounds.find(o => o.id === id);
+    x.id = id; x.date = r.date || (old && old.date) || today();
+    S.rounds = S.rounds.filter(o => o.id !== id).concat(x);
+    if (!old) added++;
+  });
+  if (added) S.notice = `${SRC.name}から${added}ラウンドを取り込みました。`;
+}
+const sameId = (a, b) => String(a) === String(b);
+function wxText(r) { return r.src === 'review' ? `${SRC.name}から` : `${r.weather}・風${r.wind}`; }
+
 function load() {
   try { const d = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (d && Array.isArray(d.rounds)) {
       S.rounds = d.sv === SAMPLE_VER ? d.rounds : d.rounds.filter(r => !r.sample).concat(samples());
-      S.cur = d.cur || null; return; } } catch (e) {}
-  S.rounds = samples();
+      S.cur = d.cur || null; S.hid = Array.isArray(d.hid) ? d.hid : []; importReview(); save(); return; } } catch (e) {}
+  S.rounds = samples(); importReview(); save();
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify({ sv: SAMPLE_VER, rounds: S.rounds, cur: S.cur })); } catch (e) {} }
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ sv: SAMPLE_VER, rounds: S.rounds, cur: S.cur, hid: S.hid })); } catch (e) {} }
 
 // ---- Analysis
 function sum(a) { return a.reduce((x, y) => x + y, 0); }
@@ -340,7 +379,7 @@ function analyze(r) {
   const total = sum(H.map(h => h.s)), par = sum(H.map(h => h.par));
   const out = sum(H.slice(0, 9).map(h => h.s)), inn = sum(H.slice(9).map(h => h.s));
   const putts = sum(H.map(h => h.p));
-  const fwCh = H.filter(h => h.par >= 4), fwHit = fwCh.filter(h => h.t === 'FW').length;
+  const fwCh = H.filter(h => h.par >= 4 && h.t), fwHit = fwCh.filter(h => h.t === 'FW').length;
   const gir = H.filter(h => h.s - h.p <= h.par - 2).length;
   const three = H.filter(h => h.p >= 3).length;
   const obN = H.filter(h => h.t === 'OB').length, wN = H.filter(h => PEN1(h.t)).length;
@@ -556,22 +595,23 @@ function reviewView(r, a) {
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function vHome() {
-  const done = S.rounds.slice().sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const done = S.rounds.slice().sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
   const list = done.map(r => { const a = analyze(r); return `
     <div class="hrow">
       <button class="open" data-a="open" data-v="${r.id}">
         <span class="sc">${a.total}</span>
         <span class="meta"><b>${md(r.date)} · ${r.out}→${r.in}${r.sample ? `<span class="tag">サンプル${r.label ? '・' + r.label : ''}</span>` : ''}</b>
-        <span class="muted small">${sgn(a.diff)} · パット${a.putts} · ${r.weather}・風${r.wind}</span></span>
+        <span class="muted small">${sgn(a.diff)} · パット${a.putts} · ${wxText(r)}</span></span>
       </button>
-      <button class="del ${S.arm === r.id ? 'arm' : ''}" data-a="del" data-v="${r.id}">${S.arm === r.id ? '本当に削除' : '削除'}</button>
+      <button class="del ${sameId(S.arm, r.id) ? 'arm' : ''}" data-a="del" data-v="${r.id}">${sameId(S.arm, r.id) ? '本当に削除' : '削除'}</button>
     </div>`; }).join('');
   let resume = '';
   if (S.cur) { const n = S.cur.holes.filter(Boolean).length; resume = `
     <button class="resume" data-a="resume"><span><span class="small">プレー中のラウンド</span><br><b>${S.cur.out}→${S.cur.in} · ${n}ホール入力済み</b></span><span style="font-weight:900">続きから →</span></button>`; }
   return `<div class="main wrap stack">
     <div><div class="eyebrow">KODAMA COUNTRY CLUB</div><h1 class="title">ワンタップ課題発見</h1>
-    <p class="muted small">1ホール最短1タップ。スコア・パット・ティーショットだけで、どこで打数を失ったかを分析します。</p></div>
+    <p class="muted small">1ホール最短1タップ。スコア・パット・ティーショットだけで、どこで打数を失ったかを分析します。${SRC.name}で入力したラウンドも自動で取り込みます。</p></div>
+    ${S.notice ? `<div class="msg" role="status">${esc(S.notice)}</div>` : ''}
     ${resume}
     ${trendCard(done)}
     <div class="card"><h2>ラウンド履歴</h2>${list ? `<div class="hist">${list}</div>` : '<p class="muted small">まだ記録がありません。下のボタンから最初のラウンドを始めましょう。</p>'}</div>
@@ -710,7 +750,7 @@ function mark(d, s) {
 }
 
 function vResult() {
-  const r = S.rounds.find(x => x.id === S.viewId);
+  const r = S.rounds.find(x => sameId(x.id, S.viewId));
   if (!r) { S.view = 'home'; return vHome(); }
   const a = analyze(r);
   const half = (k) => { const hs = a.H.slice(k * 9, k * 9 + 9); const course = k ? r.in : r.out;
@@ -742,7 +782,7 @@ function vResult() {
   const reviewHtml = reviewView(r, a);
 
   return `<div class="main wrap stack">
-    <div class="score-head"><div><span class="muted small">${md(r.date)} · 児玉CC ${r.out}→${r.in} · ${TEE[r.tee][0]} · ${r.weather}・風${r.wind}${r.sample ? `<span class="tag">サンプル${r.label ? '・' + r.label : ''}</span>` : ''}</span>
+    <div class="score-head"><div><span class="muted small">${md(r.date)} · 児玉CC ${r.out}→${r.in} · ${TEE[r.tee][0]} · ${wxText(r)}${r.sample ? `<span class="tag">サンプル${r.label ? '・' + r.label : ''}</span>` : ''}</span>
       <div><span class="big">${a.total}</span><span class="diff">${sgn(a.diff)}</span></div></div>
       <div class="small muted" style="text-align:right">OUT <b style="color:var(--fg);font-size:16px">${a.out}</b> / IN <b style="color:var(--fg);font-size:16px">${a.inn}</b><br>パット <b style="color:var(--fg);font-size:16px">${a.putts}</b></div></div>
     <div class="tabs" role="tablist"><button role="tab" aria-selected="${S.tab === 'review'}" class="${S.tab === 'review' ? 'on' : ''}" data-a="tab" data-v="review">振り返り</button><button role="tab" aria-selected="${S.tab === 'analysis'}" class="${S.tab === 'analysis' ? 'on' : ''}" data-a="tab" data-v="analysis">データ分析</button></div>
@@ -767,7 +807,7 @@ function draftFor(i) {
   const par = info(S.cur, i).par; return { s: par, p: 2, t: par === 3 ? null : 'FW' };
 }
 function act(a, v) {
-  S.msg = ''; if (a !== 'del' && a !== 'discard') S.arm = null; if (a !== 'copy') S.copied = false;
+  S.msg = ''; S.notice = ''; if (a !== 'del' && a !== 'discard') S.arm = null; if (a !== 'copy') S.copied = false;
   switch (a) {
     case 'new': S.view = 'setup'; break;
     case 'home': S.view = 'home'; break;
@@ -794,11 +834,11 @@ function act(a, v) {
       else if (miss >= 0) { S.hole = miss; S.draft = draftFor(miss); S.msg = `${info(S.cur, miss).course}${info(S.cur, miss).no}番（${miss + 1}H目）が未入力です。入力するとラウンドを終了できます。`; }
       else { const r = S.cur; delete r.arm; S.rounds.push(r); S.cur = null; S.viewId = r.id; S.tab = 'review'; S.view = 'result'; save(); }
       window.scrollTo(0, 0); break; }
-    case 'open': S.viewId = Number(v); S.tab = 'review'; S.view = 'result'; window.scrollTo(0, 0); break;
-    case 'del': { const id = Number(v); if (S.arm === id) { S.rounds = S.rounds.filter(x => x.id !== id); S.arm = null; save(); } else S.arm = id; break; }
+    case 'open': S.viewId = v; S.tab = 'review'; S.view = 'result'; window.scrollTo(0, 0); break;
+    case 'del': { if (sameId(S.arm, v)) { if (String(v).startsWith('rv-')) S.hid.push(String(v)); S.rounds = S.rounds.filter(x => !sameId(x.id, v)); S.arm = null; save(); } else S.arm = v; break; }
     case 'tab': S.tab = v; break;
     case 'copy': {
-      const r = S.rounds.find(x => x.id === S.viewId); const txt = shareText(r);
+      const r = S.rounds.find(x => sameId(x.id, S.viewId)); const txt = shareText(r);
       const fallback = () => { const ta = document.getElementById('copytxt'); ta.hidden = false; ta.value = txt; ta.rows = 4; ta.style.width = '100%'; ta.select(); };
       try { navigator.clipboard.writeText(txt).then(() => { S.copied = true; render(); }, fallback); } catch (e) { fallback(); }
       return; }
