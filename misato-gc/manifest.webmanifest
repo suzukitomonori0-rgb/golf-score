@@ -1,0 +1,22 @@
+{
+ "name": "美里ゴルフ倶楽部 週末ゴルフ",
+ "short_name": "美里GC",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#FFF4EB",
+ "theme_color": "#D2600A",
+ "lang": "ja",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  }
+ ]
+}
