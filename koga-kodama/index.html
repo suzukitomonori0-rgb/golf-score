@@ -334,7 +334,7 @@ const HKEY='koga-kodama-history-v1';
 let HIST=[];try{HIST=JSON.parse(localStorage.getItem(HKEY))||[]}catch(e){HIST=[]}
 function saveHist(){try{localStorage.setItem(HKEY,JSON.stringify(HIST))}catch(e){}}
 function fmtDate(t){const d=new Date(t);return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
-function withRec(rec,fn){const live=S;S=Object.assign(fresh(),JSON.parse(JSON.stringify(rec)));try{return fn()}finally{S=live}}
+function withRec(rec,fn){const live=S;S=Object.assign(fresh(),JSON.parse(JSON.stringify(rec)));if(!rec.roster)S.roster=S.players.map(p=>({key:p.name,name:p.name,hc:p.hc,on:true}));try{return fn()}finally{S=live}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -597,7 +597,7 @@ app.addEventListener('click',e=>{
   if(d.modal){modal=d.modal;resetArm=false;render();return}
   if(d.view){setView(d.view);return}
   if(d.end){if(!endArm){endArm=true;render();return}
-    const rec={id:Date.now(),count:S.count,players:JSON.parse(JSON.stringify(S.players)),startIn:false,front:S.front,back:S.back,rate:S.rate,holes:JSON.parse(JSON.stringify(S.holes))};
+    const rec={id:Date.now(),count:S.count,players:JSON.parse(JSON.stringify(S.players)),roster:S.roster.filter(x=>x.on).map(x=>({key:x.key,name:x.name,hc:x.hc,on:true})),startIn:false,front:S.front,back:S.back,rate:S.rate,holes:JSON.parse(JSON.stringify(S.holes))};
     HIST.unshift(rec);saveHist();
     const keep={count:S.count,roster:S.roster,players:S.players,front:S.front,back:S.back,rate:S.rate};S=Object.assign(fresh(),keep);
     endArm=false;S.view='hist';histId=rec.id;save();render();window.scrollTo(0,0);return}
