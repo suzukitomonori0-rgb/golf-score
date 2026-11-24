@@ -413,10 +413,10 @@ function renderSum(C,top=''){
       if(C.npr[h]&&C.npr[h].w===i)m+=`<span class="mk x">N${C.npr[h].v>3?C.npr[h].v:''}</span>`;
       if(H.sand[i])m+='<span class="mk x">砂</span>';
       return `<td><span class="sc${v<par?' under':''}">${v}</span>${m}</td>`}).join('')}<td style="font-size:11px;color:var(--muted)"></td></tr>`;
-  }).join('');
+  });
   const half=(hs,l)=>`<tr class="tot"><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.gross(i,hs)||'–'}</td>`).join('')}<td></td></tr>`;
-  const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows}
-    ${half(C.halves[0],'前半')}${half(C.halves[1],'後半')}${half(ord,'合計')}</tbody></table></div>
+  const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows.slice(0,9).join('')}${half(C.halves[0],'前半')}
+    ${rows.slice(9).join('')}${half(C.halves[1],'後半')}${half(ord,'合計')}</tbody></table></div>
     <div class="legend"><span><span class="mk g">金</span><span class="mk s">銀</span><span class="mk b">銅</span><span class="mk i">鉄</span><span class="mk d">ダ</span> オリンピック</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span></div>`;
 
   return `<main class="wrap">${top}

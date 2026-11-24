@@ -407,10 +407,10 @@ function renderSum(C,top=''){
       if(H.sao&&H.sao[i])m+=`<span class="mk x">${H.sao[i]==='2'?'2サ':'サ'}</span>`;
       const st=strokes(S.players[i].hc,h);
       return `<td${st?' class="hcell"':''}><span class="sc${v<par?' under':''}">${v}</span>${st?`<sup class="hsup">${'●'.repeat(st)}</sup>`:''}${m}</td>`}).join('')}<td style="font-size:11px;color:var(--muted)"></td></tr>`;
-  }).join('');
+  });
   const half=(hs,l)=>`<tr class="tot"><td class="l">${l}</td>${ps.map(i=>`<td class="sc">${C.gross(i,hs)||'–'}</td>`).join('')}<td></td></tr>`;
-  const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows}
-    ${half(C.halves[0],'前半')}${half(C.halves[1],'後半')}${half(ord,'合計')}</tbody></table></div>
+  const card=`<div class="tw"><table><thead><tr><th class="l">H</th>${ps.map(i=>`<th>${esc(S.players[i].name)}</th>`).join('')}<th></th></tr></thead><tbody>${rows.slice(0,9).join('')}${half(C.halves[0],'前半')}
+    ${rows.slice(9).join('')}${half(C.halves[1],'後半')}${half(ord,'合計')}</tbody></table></div>
     <div class="legend"><span><span class="hsup">●</span> ハンデ付きホール（●の数＝打数）</span><span><span class="mk hb">○</span> ホールベスト（数字は獲得点）</span><span><span class="mk x">N</span> ニアピン</span><span><span class="mk x">砂</span> 砂イチ</span><span><span class="mk x">サ</span> サオ</span></div>`;
 
   return `<main class="wrap">${top}
