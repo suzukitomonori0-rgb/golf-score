@@ -1,223 +1,47 @@
 <!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1E5A3A">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="週末ハンディ">
-<title>週末ゴルフ ハンディキャップ</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
-<style>
-:root{--bg:#F1F4F2;--surface:#fff;--sunk:#E6ECE8;--ink:#14231A;--muted:#5B6E62;--line:#D3DDD6;--green:#1E5A3A;--green2:#2F7D52;--warn:#B7791F;--warnbg:#FFF6E0;--bad:#B23A3A;
---f:"Noto Sans JP","Hiragino Sans","Yu Gothic",system-ui,sans-serif}
-*{box-sizing:border-box}
-html,body{-webkit-text-size-adjust:100%}
-body{margin:0;font-family:var(--f);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;padding-bottom:calc(72px + env(safe-area-inset-bottom))}
-header{position:sticky;top:0;z-index:5;background:var(--green);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
-header h1{margin:0;font-size:17px;font-weight:900}
-header p{margin:2px 0 0;font-size:12px;opacity:.85}
-main{max-width:640px;margin:0 auto;padding:14px 12px}
-.sec{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-h2{font-size:15px;margin:0 0 10px;font-weight:900}
-h3{font-size:14px;margin:14px 0 6px}
-.muted{color:var(--muted);font-size:12.5px}
-.note{background:var(--warnbg);border:1px solid #F0D58C;color:#5A4206;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:12px}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
-th{font-size:11.5px;color:var(--muted);font-weight:700}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
-.hi{font-size:20px;font-weight:900;color:var(--green)}
-.pend{font-size:12px;color:var(--muted)}
-tr.click{cursor:pointer}
-tr.click:active{background:var(--sunk)}
-button,.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 14px;background:var(--green);color:#fff;cursor:pointer}
-button.sub{background:var(--sunk);color:var(--ink)}
-button.small{padding:5px 9px;font-size:12.5px}
-button.danger{background:var(--bad)}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-input,select,textarea{font:inherit;font-size:16px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
-input.num{width:76px;text-align:right}
-textarea{width:100%;min-height:110px;font-size:13px}
-label{font-size:13px}
-.badge{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:1px}
-.b-ok{background:#DDF1E4;color:#1E5A3A}.b-warn{background:var(--warnbg);color:var(--warn);border:1px solid #F0D58C}.b-x{background:#eee;color:#777}
-.used{font-weight:900;color:var(--green)}
-.off{opacity:.45}
-nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;color:var(--muted);border-radius:0;padding:12px 4px;font-size:13px}
-nav button.on{color:var(--green);box-shadow:inset 0 3px 0 var(--green)}
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10;display:flex;align-items:flex-end;justify-content:center}
-.modal{background:var(--surface);width:100%;max-width:640px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom))}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
-.kv b{font-weight:900}
-ol.f{padding-left:20px;margin:6px 0}ol.f li{margin-bottom:6px}
-code{background:var(--sunk);border-radius:5px;padding:1px 5px;font-size:13px}
-body.embed{padding-bottom:16px}
-body.embed header{display:none}
-body.embed nav{position:sticky;top:0;bottom:auto;border-top:0;border-bottom:1px solid var(--line);padding-bottom:0}
-body.embed nav button.on{box-shadow:inset 0 -3px 0 var(--green)}
-body.embed .toast{bottom:24px}
-.status{font-size:12px;color:var(--muted);text-align:center;margin:0 0 10px}
-.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#14231A;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;z-index:20}
-</style>
-</head>
-<body>
-<header><h1>週末ゴルフ ハンディキャップ</h1><p>WHS（JGA採用の世界共通方式）準拠・非公式</p></header>
-<nav id="nav"></nav>
-<div id="app"></div>
-<script src="whs.js"></script>
-<script src="sync.js"></script>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ゴルフのスコア・ゲーム集計とコース攻略アプリ">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ゴルフ スコア＆コース攻略">
+<meta property="og:title" content="ゴルフ スコア＆コース攻略">
+<meta property="og:description" content="ゴルフのスコア・ゲーム集計とコース攻略アプリ">
+<meta property="og:url" content="https://suzukitomonori0-rgb.github.io/golf-score/">
+<meta property="og:image" content="https://suzukitomonori0-rgb.github.io/golf-score/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>ゴルフ スコア＆コース攻略</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&display=swap">
+<style>body{margin:0;font-family:"Noto Sans JP","Hiragino Sans",sans-serif;background:#F1F4F2;color:#14231A;padding:32px max(16px,env(safe-area-inset-left))}
+h1{font-size:20px;margin:0 0 20px}a{display:block;max-width:420px;padding:18px 20px;margin-bottom:12px;border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:17px}
+.k{background:#1E5A3A}.s{background:#1C88C7}.r{background:#C2332F}.y{background:#F2B705;color:#2A1F00!important}.o{background:#D2600A}</style></head>
+<body><h1>ゴルフ スコア＆ゲーム</h1>
+<a class="k" href="koga/">古河ゴルフリンクス</a>
+<a class="r" href="koga-kodama/">古河ゴルフリンクス（週末ゴルフルール）</a>
+<a class="y" href="misato/">美里ロイヤルゴルフクラブ（週末ゴルフルール）</a>
+<a class="o" href="misato-gc/">美里ゴルフ倶楽部（週末ゴルフルール）</a>
+<a class="s" href="kasugai/">春日居ゴルフ倶楽部</a>
+<a class="k" href="yomiuri/">千葉よみうりカントリークラブ</a>
+<a class="k" href="yomiuri-mai/">千葉よみうり 枚数帳</a>
+<a class="s" href="kodama/">児玉カントリー倶楽部</a>
+<h1 style="margin-top:28px">週末ゴルフ</h1>
+<a class="k" href="handicap/">ハンディキャップ（児玉・古河）</a>
+<h1 style="margin-top:28px">コース攻略</h1>
+<a class="k" href="koga-review/">古河GL攻略</a>
+<a class="s" href="kodama-review/">児玉CC攻略</a>
+<a class="k" href="kodama-onetap/">ワンタップ課題発見（児玉）</a>
+<a class="k" href="kosugi-review/">小杉CC攻略</a>
+<a class="k" href="kosugi-onetap/">ワンタップ課題発見（小杉）</a>
+<a class="y" href="narita-review/">成田ハイツリー攻略</a>
 <script>
-(function(){
-"use strict";
-const EMBED=/[?&]embed=1/.test(location.search);
-if(EMBED)document.body.classList.add('embed');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const f1=x=>(x<0?'+'+(-x).toFixed(1):x.toFixed(1)); // WHSではプラスハンディを「+」表記
-const day=t=>{const d=new Date(t);return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`};
-const {NINES,CNAME,TEES,COMBOS,comboKey,holesOf,isGeneric,courseHcp,strokesOn,idxFrom,r1}=WHS;
-/* ---------- データ（スプレッドシートから） ---------- */
-let DATA=null,STATUS={offline:false,unset:!window.WGH||!WGH.configured,loading:true};
-let HIDDEN={};try{HIDDEN=JSON.parse(localStorage.getItem('wgh-hidden-v1'))||{}}catch(e){}
-const saveHidden=()=>{try{localStorage.setItem('wgh-hidden-v1',JSON.stringify(HIDDEN))}catch(e){}};
-const ratings=()=>WHS.ratings(DATA),rounds=()=>WHS.rounds(DATA),compute=()=>WHS.compute(DATA);
-
-/* ---------- 画面 ---------- */
-let view='list',modal=null;
-const app=document.getElementById('app'),nav=document.getElementById('nav');
-function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2400)}
-function statusLine(){
-  if(STATUS.unset)return `<div class="note">スコアの送信先（Googleスプレッドシート）がまだ設定されていません。</div>`;
-  if(STATUS.loading&&!DATA)return `<p class="status">読み込み中…</p>`;
-  if(STATUS.offline)return `<p class="status">電波がないため前回（${DATA&&DATA.at?day(DATA.at):'—'}）の内容を表示しています</p>`;
-  return `<p class="status">全員分のスコアから計算 · <button class="sub small" data-reload>更新</button></p>`;
-}
-function unconfirmed(){return ((DATA&&DATA.courses)||[]).some(c=>!c.ok)}
-function vList(){
-  const P=compute(),RT=ratings();
-  const names=Object.keys(P).filter(n=>!HIDDEN[n]&&!isGeneric(n)).sort((a,b)=>{const x=P[a].hi,y=P[b].hi;if(x==null&&y==null)return a.localeCompare(b,'ja');if(x==null)return 1;if(y==null)return -1;return x-y});
-  const note=unconfirmed()?`<div class="note">コースの<b>スロープレーティングが未確認</b>の組み合わせがあり、標準値113で計算しています。正しい値が分かったらスプレッドシートの「コース」シートを直すと、全員の数値に反映されます。</div>`:'';
-  if(!names.length)return `<main>${statusLine()}${note}<div class="sec"><h2>ハンディキャップ一覧</h2><p class="muted">まだスコアがありません。児玉・古河のスコアアプリで「全て確定して終了」したラウンドが自動で集まります。インデックスは3ラウンド分たまると出ます。</p></div></main>`;
-  const ch=(p,c,ck)=>{const x=RT[c]&&RT[c][ck]&&RT[c][ck].reg;if(p.hi==null||!x)return '—';return courseHcp(p.hi,+x.cr,+x.sr,72)};
-  const rows=names.map(n=>{const p=P[n];
-    return `<tr class="click" data-player="${esc(n)}"><td><b>${esc(n)}</b><br><span class="muted">${p.scores.length}枚</span></td>
-      <td class="n">${p.hi==null?`<span class="pend">あと${p.need}枚</span>`:`<span class="hi">${f1(p.hi)}</span>`}</td>
-      <td class="n">${ch(p,'kodama','WS')}</td><td class="n">${ch(p,'koga','OI')}</td></tr>`}).join('');
-  return `<main>${statusLine()}${note}<div class="sec"><h2>ハンディキャップ一覧</h2>
-  <table><thead><tr><th>名前</th><th class="n">インデックス</th><th class="n">児玉<br>西・南</th><th class="n">古河</th></tr></thead><tbody>${rows}</tbody></table>
-  <p class="muted" style="margin-top:8px">右2列はその日に使う「コースハンディキャップ」（レギュラーティー）。名前をタップすると、他の組み合わせ・コンペ用（95%）の数値と、計算に使ったスコアが見られます。</p></div></main>`;
-}
-function vPlayer(n){
-  const P=compute(),p=P[n],RT=ratings();if(!p)return '';
-  let chTable='';
-  if(p.hi!=null){
-    const rows=[];
-    for(const c of ['kodama','koga'])for(const ck in COMBOS[c])for(const t of ['reg','back']){
-      const x=RT[c]&&RT[c][ck]&&RT[c][ck][t];if(!x)continue;
-      const ch=courseHcp(p.hi,+x.cr,+x.sr,72),ph=Math.round((p.hi*x.sr/113+(x.cr-72))*0.95);
-      rows.push(`<tr><td>${CNAME[c]} ${COMBOS[c][ck]}<br><span class="muted">${TEES[t]}</span></td><td class="n"><b>${ch}</b></td><td class="n">${ph}</td></tr>`)}
-    chTable=`<h3>その日のハンディ</h3><table><thead><tr><th>コース・ティー</th><th class="n">コースHC</th><th class="n">コンペ用95%</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
-  }
-  const win=p.scores.slice(-20);
-  const sr=[...win].reverse().map(s=>{const u=p.used.has(s.uid);
-    return `<tr class="${u?'':'off'}"><td>${day(s.date)}<br><span class="muted">${CNAME[s.course]} ${COMBOS[s.course][s.ck]||''}・${TEES[s.tee]}</span></td>
-    <td class="n">${s.gross}${s.capped?`<br><span class="muted">調整後${s.ags}</span>`:''}${s.manual?'<br><span class="muted">合計のみ</span>':''}</td>
-    <td class="n ${u?'used':''}">${f1(r1(s.diff+s.adj))}${s.adj?`<br><span class="muted">元${f1(s.diff)}</span>`:''}</td></tr>`}).join('');
-  return `<div class="ov" data-close><div class="modal">
-   <div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(n)}</h2><button class="sub small" data-close>閉じる</button></div>
-   <div class="kv" style="margin:10px 0"><span>インデックス</span><b class="hi">${p.hi==null?`あと${p.need}枚で算出`:f1(p.hi)}</b>
-   <span>採用スコア</span><span>${p.hi==null?'—':`直近${win.length}枚のうち良い${p.used.size}枚`}</span></div>
-   ${chTable}
-   <h3>直近のスコア（太字が計算に採用）</h3>
-   <table><thead><tr><th>日付・コース</th><th class="n">スコア</th><th class="n">ディファレンシャル</th></tr></thead><tbody>${sr}</tbody></table>
-   <p class="muted">「調整後」はホールごとの上限（ハンディ取得前はパー+5、取得後はネットダブルボギー）をかけたスコアです。</p>
-   <div class="row" style="margin-top:10px"><button class="sub small" data-hide="${esc(n)}">${HIDDEN[n]?'一覧に表示する':'この端末の一覧から隠す'}</button></div>
-  </div></div>`;
-}
-function vRounds(){
-  const rs=rounds().sort((a,b)=>b.date-a.date);
-  const items=rs.map(r=>{
-    const ps=(r.players||[]).map(p=>`${esc(p.name)} ${p.s?(p.s.some(v=>v==null)?'途中':p.s.reduce((a,b)=>a+b,0)):p.gross}`).join('・');
-    return `<div class="sec ${r.excluded?'off':''}" style="padding:10px 12px">
-      <div class="row" style="justify-content:space-between"><b>${day(r.date)} ${CNAME[r.course]} ${COMBOS[r.course][r.ck]||''}</b><span class="muted">${TEES[r.tee||'reg']}${r.excluded?'・除外':''}</span></div>
-      <div style="font-size:13.5px;margin-top:4px">${ps}</div></div>`}).join('');
-  return `<main>${statusLine()}
-   <div class="sec"><h2>ラウンド</h2>
-    <p class="muted">児玉・古河のアプリで「全て確定して終了」すると、ここに自動で集まります。ティーの変更や計算から外す操作は、スプレッドシートの「ラウンド」シートで行います。</p>
-    <button class="sub" data-modal="manual">アプリで記録しなかったラウンドを追加</button></div>
-   ${items||'<div class="sec muted">ラウンドはまだありません。</div>'}</main>`;
-}
-function vCourses(){
-  const cs=(DATA&&DATA.courses)||[];
-  const rows=cs.map(c=>`<tr><td>${esc(c.name||(CNAME[c.course]+' '+c.combo))}${c.ok?'<span class="badge b-ok">確認済</span>':'<span class="badge b-warn">要確認</span>'}${c.memo&&!c.ok?`<br><span class="muted">${esc(c.memo)}</span>`:''}</td><td class="n">${c.cr}</td><td class="n">${c.sr}</td></tr>`).join('');
-  return `<main>${statusLine()}<div class="note">CR＝コースレーティング、SR＝スロープレーティング（55〜155、標準113）。数値はスプレッドシートの「コース」シートで直すと、全員の計算に反映されます。</div>
-  <div class="sec"><h2>コースの数値</h2>${rows?`<table><thead><tr><th>コース・ティー</th><th class="n">CR</th><th class="n">SR</th></tr></thead><tbody>${rows}</tbody></table>`:'<p class="muted">まだ読み込めていません。</p>'}</div></main>`;
-}
-function vHow(){
-  return `<main><div class="sec"><h2>計算のしかた（WHS）</h2>
-  <ol class="f">
-   <li><b>ホールごとの上限</b>：ハンディが出るまではパー+5、出た後は「パー+2+そのホールでもらえる打数」（ネットダブルボギー）で打ち切ります。</li>
-   <li><b>ディファレンシャル</b>：<code>(113 ÷ SR) × (調整後スコア − CR)</code></li>
-   <li><b>インデックス</b>：直近20枚のうち良い8枚の平均。20枚未満は枚数に応じて採用枚数が変わります（3枚で算出開始、3枚なら最良1枚−2.0 など）。上限54.0。</li>
-   <li><b>その日のハンディ</b>：<code>インデックス × SR ÷ 113 + (CR − パー)</code> を四捨五入。個人戦のコンペでは95%を使うのが標準です。</li>
-   <li><b>自動の歯止め</b>：普段より7打以上良いスコアが出たら直近20枚を1〜2打下げます。直近1年の最低値から3以上急に上がる分は半分に抑え、5以上は上げません。</li>
-  </ol>
-  <p class="muted">途中でやめたラウンドと9ホールだけのラウンドは対象外です。天候などによる補正（PCC）は使っていません。JGAの公式インデックスが必要な場合は、JGA公認のクラブやオンラインクラブからJ-sysにスコアを提出してください。</p></div></main>`;
-}
-function vModal(){
-  if(!modal)return '';
-  if(modal.startsWith('player:'))return vPlayer(modal.slice(7));
-  if(modal==='manual'){const t=new Date(),iso=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-    return `<div class="ov" data-close><div class="modal"><h2>ラウンドを追加（合計スコア）</h2>
-    <p class="muted">ホールごとの上限がかけられないため、大叩きしたホールがある場合は、そのホールを上限（パー+5、またはネットダブルボギー）に直した合計を入れてください。</p>
-    <div class="kv" style="align-items:center;gap:8px 10px">
-     <label>日付</label><input type="date" id="m-date" value="${iso}">
-     <label>コース</label><select id="m-combo">${Object.entries(COMBOS).flatMap(([c,o])=>Object.entries(o).map(([k,n])=>`<option value="${c}.${k}">${CNAME[c]} ${n}</option>`)).join('')}</select>
-     <label>ティー</label><select id="m-tee">${Object.entries(TEES).map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select>
-    </div>
-    <h3>スコア（名前と合計）</h3>
-    ${[0,1,2,3].map(i=>`<div class="row" style="margin-bottom:6px"><input id="m-n${i}" placeholder="名前" style="flex:1" list="names"><input id="m-g${i}" class="num" inputmode="numeric" placeholder="合計"></div>`).join('')}
-    <datalist id="names">${Object.keys(compute()).filter(n=>!isGeneric(n)).map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
-    <div class="row" style="margin-top:10px"><button data-domanual>追加する</button><button class="sub" data-close>閉じる</button></div></div></div>`}
-  return '';
-}
-function render(){
-  const V={list:vList,rounds:vRounds,courses:vCourses,how:vHow}[view]();
-  app.innerHTML=V+vModal();
-  nav.innerHTML=[['list','一覧'],['rounds','ラウンド'],['courses','コース'],['how','計算方法']].map(([k,n])=>`<button class="${view===k?'on':''}" data-view="${k}">${n}</button>`).join('');
-}
-async function reload(){
-  STATUS.loading=true;render();
-  if(!window.WGH){STATUS={unset:true};render();return}
-  const r=await WGH.load();DATA=r.data;STATUS={offline:r.offline,unset:!!r.unset,loading:false};render();
-}
-
-/* ---------- 操作 ---------- */
-app.addEventListener('click',async e=>{
-  const t=e.target.closest('button,[data-close],tr[data-player]');if(!t)return;const d=t.dataset;
-  if(d.close!==undefined){if(t.classList.contains('ov')&&e.target!==t)return;modal=null;render();return}
-  if(d.player){modal='player:'+d.player;render();return}
-  if(d.modal){modal=d.modal;render();return}
-  if(d.reload!==undefined){reload();return}
-  if(d.hide){HIDDEN[d.hide]?delete HIDDEN[d.hide]:HIDDEN[d.hide]=true;saveHidden();modal=null;render();return}
-  if(d.domanual!==undefined){
-    const dt=document.getElementById('m-date').value,[c,k]=document.getElementById('m-combo').value.split('.'),tee=document.getElementById('m-tee').value;
-    const players=[];for(let i=0;i<4;i++){const n=document.getElementById('m-n'+i).value.trim(),g=Number(document.getElementById('m-g'+i).value);if(n&&g>=50&&g<=200)players.push({name:n,s:null,gross:g})}
-    if(!dt||!players.length){toast('日付と、名前・合計（50〜200）を入れてください');return}
-    const front=c==='koga'?'O':k[0],back=c==='koga'?'I':k[1];
-    t.disabled=true;
-    try{await WGH.postRounds([{uid:'manual:'+Date.now(),src:'manual',date:new Date(dt+'T12:00:00').getTime(),course:c,front,back,tee,players}]);modal=null;toast('追加しました');reload()}
-    catch(err){t.disabled=false;toast('送れませんでした：'+err.message)}
-    return}
-});
-nav.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.view){view=b.dataset.view;modal=null;render();window.scrollTo(0,0)}});
-
-render();reload();
-window.__wgh={compute,idxFrom,courseHcp,strokesOn,setData:d=>{DATA=d;STATUS={};render()}};
-})();
+// 新しい版が出ていたら自動で読み込み直す
+const PAGE_VERSION="2026.11.17-0920";
+(async()=>{try{
+  const j=await (await fetch("review-version.json?t="+Date.now(),{cache:"no-store"})).json();
+  if(!j.v||j.v===PAGE_VERSION)return;
+  let t=null;try{t=sessionStorage.getItem("top-reload")}catch(e){}
+  if(t===j.v)return;try{sessionStorage.setItem("top-reload",j.v)}catch(e){}
+  await fetch(location.pathname,{cache:"reload"}).catch(()=>{});location.reload();
+}catch(e){}})();
 </script>
-</body>
-</html>
+</body></html>
