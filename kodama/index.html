@@ -266,6 +266,7 @@ header .chipH{width:33px;height:33px;font-size:15px}
 <body>
 <div id="app"></div>
 <script>window.WGH_APP={src:"kodama",course:"kodama",hkey:"kodama-golf-history-v1"};</script>
+<script src="../handicap/whs.js"></script>
 <script src="../handicap/sync.js"></script>
 
 <script>
@@ -433,7 +434,7 @@ function renderHole(C){
     const birdie=H.done&&H.s[i]<=par-1;
     return `<div class="pc${lead?' lead':''}">
       <div class="prow">
-        <div class="pname"><b>${esc(pl.name)}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}</b>${overCap(C,i)?'<span class="capb">上限突破がんばれ！</span>':''}</div>
+        <div class="pname"><b>${esc(pl.name)}${window.WGH?WGH.hcTag(pl.name):''}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}</b>${overCap(C,i)?'<span class="capb">上限突破がんばれ！</span>':''}</div>
         <div class="stp${H.done||H.s[i]!=null?'':' draft'}"><button class="sb" data-step="${i}:-1" aria-label="${esc(pl.name)}のスコアを1つ減らす"${val<=1?' disabled':''}>−</button><div class="sv" aria-live="polite"><b>${val}</b><small>${relName(val-par)}</small></div><button class="sb" data-step="${i}:1" aria-label="${esc(pl.name)}のスコアを1つ増やす"${val>=par+9?' disabled':''}>＋</button></div>
       </div>
       <div class="chips crow">${medChips}<span class="sep"></span>
@@ -637,6 +638,7 @@ app.addEventListener('input',e=>{
   if(d.rhc!==undefined){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.roster[+d.rhc].hc=isNaN(v)?0:Math.min(36,v);syncPlayers();save();const hn=t.closest('.field')&&t.closest('.field').nextElementSibling;const vv=isNaN(v)?0:Math.min(36,v);if(hn&&hn.classList.contains('hint'))hn.textContent=`前半 ${vv}・後半 ${vv}`}
   if(d.rate){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.rate=isNaN(v)?0:v;save()}
 });
+if(window.WGH_APP)window.WGH_APP.rerender=()=>{if(S.view==='hole'&&!modal)render()};
 render();
 })();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
