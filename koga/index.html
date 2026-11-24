@@ -211,6 +211,7 @@ button.x{border:0;background:var(--sunk);border-radius:999px;width:36px;height:3
 <body>
 <div id="app"></div>
 <script>window.WGH_APP={src:"koga",course:"koga",hkey:"koga-golf-history-v1"};</script>
+<script src="../handicap/whs.js"></script>
 <script src="../handicap/sync.js"></script>
 
 <script>
@@ -353,7 +354,7 @@ function renderHole(C){
     const birdie=H.done&&H.s[i]<=par-1;
     return `<div class="pc${lead?' lead':''}">
       <div class="prow">
-        <div class="pname"><b>${esc(pl.name)}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}${lead?' <span class="mk hb">○</span>':''}</b>
+        <div class="pname"><b>${esc(pl.name)}${window.WGH?WGH.hcTag(pl.name):''}${(()=>{const ord=order();let t=0,n=0;for(let k=0;k<=S.cur;k++){const x=ord[k],Hx=S.holes[x];const v=Hx.done?Hx.s[i]:(k===S.cur&&Hx.s[i]!=null?Hx.s[i]:null);if(v!=null){t+=v-COURSE[x].p;n++}}return n?` <span class="ovp${t>0?' o':t<0?' u':''}">${t>0?'+'+t:t===0?'±0':t}</span>`:''})()}${lead?' <span class="mk hb">○</span>':''}</b>
           <span>HC ${esc(pl.hc)}${st?` <span class="hcb">ハンデ ${st}打</span>`:' · ハンデなし'}</span></div>
         <div class="net">ネット<b>${H.done||H.s[i]!=null?val-st:'–'}</b></div>
         <div class="stp${H.done||H.s[i]!=null?'':' draft'}"><button class="sb" data-step="${i}:-1" aria-label="${esc(pl.name)}のスコアを1つ減らす"${val<=1?' disabled':''}>−</button><div class="sv" aria-live="polite"><b>${val}</b><small>${relName(val-par)}</small></div><button class="sb" data-step="${i}:1" aria-label="${esc(pl.name)}のスコアを1つ増やす"${val>=par+9?' disabled':''}>＋</button></div>
@@ -545,6 +546,7 @@ app.addEventListener('input',e=>{
   if(d.phc!==undefined){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.players[+d.phc].hc=isNaN(v)?0:Math.min(36,v);save();const hn=t.closest('.field')&&t.closest('.field').nextElementSibling;const vv=isNaN(v)?0:Math.min(36,v);if(hn&&hn.classList.contains('hint'))hn.textContent=`前半 ${vv}・後半 ${vv}`}
   if(d.rate){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.rate=isNaN(v)?0:v;save()}
 });
+if(window.WGH_APP)window.WGH_APP.rerender=()=>{if(S.view==='hole'&&!modal)render()};
 render();
 })();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
