@@ -147,6 +147,7 @@ td.hcell{background:color-mix(in srgb,var(--green) 12%,transparent)}
 .live{width:6px;height:6px;border-radius:50%;background:var(--win);display:inline-block}
 @media (prefers-reduced-motion:no-preference){.live{animation:blink 2s ease-in-out infinite}@keyframes blink{50%{opacity:.25}}}
 /* tab bar */
+.hdcpf{position:fixed;left:0;top:env(safe-area-inset-top,0px);width:100%;height:calc(100% - env(safe-area-inset-top,0px) - 51px - env(safe-area-inset-bottom,0px));border:0;background:#F1F4F2}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
   display:flex;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs button{flex:1;background:none;border:0;padding:12px 6px 14px;font-size:13px;font-weight:700;color:var(--muted);border-top:3px solid transparent}
@@ -209,6 +210,8 @@ button.x{border:0;background:var(--sunk);border-radius:999px;width:36px;height:3
 </head>
 <body>
 <div id="app"></div>
+<script>window.WGH_APP={src:"koga",course:"koga",hkey:"koga-golf-history-v1"};</script>
+<script src="../handicap/sync.js"></script>
 
 <script>
 (function(){
@@ -493,8 +496,8 @@ function renderModal(){
 
 function render(){
   const C=compute();
-  document.getElementById('app').innerHTML=renderHeader()+(S.view==='sum'?renderSum(C):S.view==='hist'?renderHist():renderHole(C))+
-    `<nav class="tabs"><button class="${S.view==='hole'?'on':''}" data-view="hole">ホール入力</button><button class="${S.view==='sum'?'on':''}" data-view="sum">集計</button><button class="${S.view==='hist'?'on':''}" data-view="hist">履歴</button></nav>`+renderModal();
+  document.getElementById('app').innerHTML=(S.view==='hdcp'?'<iframe class="hdcpf" src="../handicap/?embed=1" title="ハンディキャップ"></iframe>':renderHeader()+(S.view==='sum'?renderSum(C):S.view==='hist'?renderHist():renderHole(C)))+
+    `<nav class="tabs"><button class="${S.view==='hole'?'on':''}" data-view="hole">ホール入力</button><button class="${S.view==='sum'?'on':''}" data-view="sum">集計</button><button class="${S.view==='hist'?'on':''}" data-view="hist">履歴</button><button class="${S.view==='hdcp'?'on':''}" data-view="hdcp">ハンディ</button></nav>`+renderModal();
   const cur=document.querySelector('.chipH.cur');
   if(cur){const s=document.getElementById('strip');s.scrollLeft=cur.offsetLeft-s.clientWidth/2+cur.offsetWidth/2}
 }
@@ -509,7 +512,7 @@ app.addEventListener('click',e=>{
   if(d.view){setView(d.view);return}
   if(d.end){if(!endArm){endArm=true;render();return}
     const rec={id:Date.now(),count:S.count,players:JSON.parse(JSON.stringify(S.players)),startIn:S.startIn,rate:S.rate,holes:JSON.parse(JSON.stringify(S.holes))};
-    HIST.unshift(rec);saveHist();
+    HIST.unshift(rec);saveHist();if(window.wghSync)window.wghSync();
     const keep={count:S.count,players:S.players,startIn:S.startIn,rate:S.rate};S=Object.assign(fresh(),keep);
     endArm=false;S.view='hist';histId=rec.id;save();render();window.scrollTo(0,0);return}
   if(d.endcancel){endArm=false;render();return}
