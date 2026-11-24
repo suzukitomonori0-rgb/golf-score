@@ -261,6 +261,9 @@ h2{margin:0;font-size:16px;font-weight:700}
 .gsvg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .gfree .mk{z-index:3}
 .gfree .mk.grab{pointer-events:auto;touch-action:none;cursor:grab}
+.gfree .mk.ghost{opacity:.42}
+.gfree .mk.ghost::before{content:"";position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);border:2px dashed var(--ink);border-radius:50%;opacity:.7}
+.gfree .mk.mflag.ghost::before{top:88%;left:22%}
 .gfree .mk.grab::after{content:"";position:absolute;left:50%;top:50%;width:48px;height:48px;transform:translate(-50%,-50%);border-radius:50%}
 .gguide{position:absolute;pointer-events:none;z-index:2;border:0 dashed var(--flag)}
 .gguide.v{top:-12px;bottom:-12px;border-left-width:2px;transform:translateX(-1px)}
@@ -396,7 +399,7 @@ h2{margin:0;font-size:16px;font-weight:700}
       <h3>2. 各ホールで入力</h3>
       <ul>
         <li><b>ティーショット</b>：左ラフ／FW／右ラフ／OB／1ペナ／池をワンタップ。パー3は<b>風 → 番手 → ピンに対して縦の距離</b>を選び、ペナルティがあったときだけOB・1ペナ・池を押します。</li>
-        <li><b>グリーン</b>：ホールごとの形で描いたグリーンの中の好きな場所をタップして「ピン位置」→「乗った位置」の順に置きます。置いた印を指で押さえたまま動かすと微調整でき、印以外の場所を指で滑らせると画面がスクロールします。指の位置を通る縦横の線と場所の名前が出ます。間違えたら下の×で消せます。外したら円の外のボタンを押し、続けて「寄せた後」にパットを打った場所をタップします。</li>
+        <li><b>グリーン</b>：最初から旗（ピン）はセンター、ボールは手前に薄く置いてあります。それぞれを指で押さえたまま動かして、ピンの位置とボールが止まった位置に合わせます（そのままの場所でよければ軽くタップ）。動かしている間は縦横の線と場所の名前が出ます。印以外の場所を指で滑らせると画面がスクロールします。間違えたら下の×で消せます。グリーンを外したら外側のボタンを押し、出てくる「寄」を寄せた後の場所に動かします。</li>
         <li><b>ファーストパット</b>：カップまでの歩数（1歩＝65cm）と、<b>上り・下り</b>、<b>ライン</b>を選びます。</li>
         <li><b>打数・パット</b>：最初から<b>パー・2パット</b>が入っています。違うときだけ＋−で直し、「次の番へ」で記録されます。</li>
         <li><b>一番悔やまれる1打</b>と<b>ひとことメモ</b>は分かる範囲で。メモにはグリーンの特徴（例：二段グリーンで奥が高い）も書けます。</li>
@@ -678,11 +681,10 @@ function renderHole(){
     :`<div class="grp"><span class="label">ティーショット</span>${tileRow("tee",TEE,h.tee,6)}</div>`}
     ${p3?`<div class="grp"><span class="label">ペナルティ（あった場合だけ）</span>${tileRow("tee",PEN3,h.tee,3)}</div>`:""}
     <div class="grp"><span class="label">グリーン（上が奥）</span>
-      <div class="gmode"><button data-gm="pin" aria-pressed="${gmode==="pin"}">ピン位置</button><button data-gm="ball" aria-pressed="${gmode==="ball"}">乗った位置</button>${off?`<button data-gm="chip" aria-pressed="${gmode==="chip"}">寄せた後</button>`:""}</div>
       ${gnBox(gn)}
       ${greenPad(h,rc,gn)}
-      <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?qn(h.pin)+'<button class="gx" data-gclear="pin" aria-label="ピンを消す">×</button>':"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?qn(h.ball)+'<button class="gx" data-gclear="ball" aria-label="ボールを消す">×</button>':"未入力"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${qn(h.chip)}<button class="gx" data-gclear="chip" aria-label="寄せた後を消す">×</button></span>`:""}</div>
-      <p class="ghint">${gmode==="pin"?"グリーンの中をタップしてピンを置きます。置いたピンを指で押さえたまま動かすと細かく調整できます。":gmode==="chip"?"寄せた後にボールが止まった場所をタップしてください。":"ボールが止まった場所をタップ。置いたボールは指で押さえたまま動かせます。グリーンに乗らなかったときは外側のボタンを押します。"}</p>
+      <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?qn(h.pin)+'<button class="gx" data-gclear="pin" aria-label="ピンを消す">×</button>':"<small>未確定</small>"}</span><span><span class="bl"></span> ボール ${h.ball?qn(h.ball)+'<button class="gx" data-gclear="ball" aria-label="ボールを消す">×</button>':"<small>未確定</small>"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${qn(h.chip)}<button class="gx" data-gclear="chip" aria-label="寄せた後を消す">×</button></span>`:""}</div>
+      <p class="ghint">${off?"グリーンの外のボタンを選びました。「寄」を寄せた後にボールが止まった場所へ動かしてください。":"旗とボールを指で押さえたまま動かして、ピンとボールが止まった位置に合わせます。その場所でよければ軽くタップ。"}</p>
       ${recBox(h,rc)}
     </div>
     <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${tileRow("first",FIRST,h.first,4)}</div>
@@ -731,11 +733,14 @@ function greenPad(h,rc,gn){
   const svg=`<svg class="gsvg" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="gclip">${outline}</clipPath></defs><g clip-path="url(#gclip)"><rect width="100" height="100" style="fill:var(--green-soft)"/>${shade}<path d="M50 0V100M0 50H100" style="stroke:var(--line)" stroke-width=".6" stroke-dasharray="2 2"/></g>${outline.replace("/>",' fill="none" style="stroke:var(--green)" stroke-width="1.4" stroke-linejoin="round"/>')}</svg>`;
   const at=k=>!k?null:isXY(k)?xyOf(k):AX[k]?AX[k]:k[0]==="P"?[((+k[2])+.5)*25,((+k[1])+.5)*25]:(POS[k]||null);
   const mk=(k,html,cls)=>{const p=at(k);return p?`<span class="mk ${cls}" style="left:${p[0]}%;top:${p[1]}%">${html}</span>`:""};
-  const labels=pm?"":["BL","BR","FL","FR"].map(q=>`<span class="ql" style="left:${POS[q][0]}%;top:${POS[q][1]+(q[0]==="B"?-12:12)}%">${recQ(q)?"<em>狙い目</em>":""}${QN[q]}</span>`).join("");
-  let marks=mk(h.pin,'<span class="fl">⚑</span>','mflag'+(pm?" grab":""));
-  if(h.ball&&h.ball[0]!=="o")marks+=mk(h.ball,'<span class="bl"></span>','mball'+(gmode==="ball"?" grab":""));
-  if(h.ball&&h.ball[0]==="o"&&h.chip)marks+=mk(h.chip,'<span class="cp">寄</span>','mchip'+(gmode==="chip"?" grab":""));
-  const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}"${gmode!=="ball"?" disabled":""}>${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
+  const labels=!h.pin?"":["BL","BR","FL","FR"].map(q=>`<span class="ql" style="left:${POS[q][0]}%;top:${POS[q][1]+(q[0]==="B"?-12:12)}%">${recQ(q)?"<em>狙い目</em>":""}${QN[q]}</span>`).join("");
+  // 旗とボールは最初から薄く置いておき（未確定）、指で動かすかタップすると確定する
+  const gk=(v,g,cls,html,def)=>mk(v||def,html,cls+" grab"+(v?"":" ghost")).replace('<span class="mk','<span data-g="'+g+'" class="mk');
+  const off=h.ball&&h.ball[0]==="o";
+  let marks=gk(h.pin,"pin","mflag",'<span class="fl">⚑</span>',mkXY(50,50));
+  if(!off)marks+=gk(h.ball,"ball","mball",'<span class="bl"></span>',mkXY(50,84));
+  else marks+=gk(h.chip,"chip","mchip",'<span class="cp">寄</span>',mkXY(...({oF:[50,86],oB:[50,14],oL:[14,50],oR:[86,50]}[h.ball]||[50,84])));
+  const o=(k,c)=>`<button class="off ${c}${h.ball===k?" sel":""}" data-gq="${k}">${h.ball===k?'<span class="bl"></span><br>':""}${QN[k]}</button>`;
   let step="";
   if(gn&&gn.step){const v=gn.dir==="L"||gn.dir==="R";const hi=gn.dir?{B:"奥",F:"手前",L:"左",R:"右"}[gn.dir]+"が高い":"段";
     step=`<span class="gstep ${v?"v":"h"}"></span><span class="gstepl ${v?"v":"h"}">${gn.step}・${hi}</span>`;}
@@ -763,7 +768,7 @@ document.addEventListener("pointerdown",e=>{
   const pad=e.target.closest("#gpad");if(!pad||e.button>0)return;
   const g=e.target.closest(".mk.grab");
   if(g){e.preventDefault();try{pad.setPointerCapture(e.pointerId)}catch(_){}
-    const [x,y]=gPoint(e,pad);gdrag={pad,id:e.pointerId,sx:x,sy:y,ox:parseFloat(g.style.left),oy:parseFloat(g.style.top),k:null};return}
+    gmode=g.dataset.g||gmode;const [x,y]=gPoint(e,pad);gdrag={pad,id:e.pointerId,sx:x,sy:y,ox:parseFloat(g.style.left),oy:parseFloat(g.style.top),k:mkXY(parseFloat(g.style.left),parseFloat(g.style.top))};return}
   gtap={pad,id:e.pointerId,cx:e.clientX,cy:e.clientY,t:Date.now()};
 });
 document.addEventListener("pointermove",e=>{
@@ -771,13 +776,13 @@ document.addEventListener("pointermove",e=>{
   if(!gdrag||e.pointerId!==gdrag.id)return;e.preventDefault();
   const [x,y]=gPoint(e,gdrag.pad);gdrag.k=gShow(gdrag.pad,gdrag.ox+x-gdrag.sx,gdrag.oy+y-gdrag.sy)});
 function gCommit(k){const h=R.holes[R.cur];
-  if(gmode==="pin"){h.pin=k;if(!h.ball)gmode="ball"}
+  if(gmode==="pin")h.pin=k;
   else if(gmode==="chip")h.chip=k;
   else{h.ball=k;h.chip=null}
   save();renderHole()}
 function gEnd(e){
   if(gtap&&e.pointerId===gtap.id){const t=gtap;gtap=null;
-    if(e.type==="pointerup"&&Date.now()-t.t<700&&document.body.contains(t.pad))gCommit(gShow(t.pad,...gPoint(e,t.pad)));return}
+return}
   if(!gdrag||e.pointerId!==gdrag.id)return;const k=gdrag.k;gdrag=null;
   if(k)gCommit(k);else renderHole()}
 document.addEventListener("pointerup",gEnd);document.addEventListener("pointercancel",gEnd);
@@ -1186,11 +1191,9 @@ document.addEventListener("click",e=>{
   if(t.dataset.revnew){show("in");$("confirmBox").hidden=false;$("confirmBox").scrollIntoView({block:"center"});return}
   if(t.dataset.start!=null){R.start=+t.dataset.start;R.cur=R.start;gmode="pin";save();renderInput();return}
   if(t.dataset.gm){gmode=t.dataset.gm;renderHole();return}
-  if(t.dataset.gclear){const f=t.dataset.gclear;h[f]=null;if(f==="ball")h.chip=null;gmode=f;if(gmode==="chip"&&!(h.ball&&h.ball[0]==="o"))gmode="ball";save();renderHole();return}
-  if(t.dataset.gq){let k=t.dataset.gq;
-    if(gmode==="pin"){if(k[0]==="o")return;h.pin=h.pin===k?null:k;if(h.pin&&!h.ball)gmode="ball";}
-    else if(gmode==="chip"){if(k[0]==="o")return;h.chip=h.chip===k?null:k;}
-    else{h.ball=h.ball===k?null:k;if(h.ball&&h.ball[0]==="o"&&!h.chip)gmode="chip";}
+  if(t.dataset.gclear){const f=t.dataset.gclear;h[f]=null;if(f==="ball")h.chip=null;save();renderHole();return}
+  if(t.dataset.gq){let k=t.dataset.gq;if(k[0]!=="o")return;
+    if(h.ball===k){h.ball=null;h.chip=null}else{h.ball=k;h.chip=null}
     save();renderHole();return}
   if(t.dataset.h!=null){warn=null;R.cur=+t.dataset.h;gmode="pin";renderInput();save();return}
   if(t.dataset.s){
@@ -1260,7 +1263,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.24-1632";
+const APP_VERSION="2026.11.24-1635";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
