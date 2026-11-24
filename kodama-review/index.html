@@ -675,7 +675,7 @@ function renderHole(){
       ${gnBox(gn)}
       ${greenPad(h,rc,gn)}
       <div class="glegend"><span><span class="fl">⚑</span> ピン ${h.pin?qn(h.pin)+'<button class="gx" data-gclear="pin" aria-label="ピンを消す">×</button>':"未入力"}</span><span><span class="bl"></span> ボール ${h.ball?qn(h.ball)+'<button class="gx" data-gclear="ball" aria-label="ボールを消す">×</button>':"未入力"}</span>${off&&h.chip?`<span><span class="cp">寄</span> 寄せた後 ${qn(h.chip)}<button class="gx" data-gclear="chip" aria-label="寄せた後を消す">×</button></span>`:""}</div>
-      <p class="ghint">${gmode==="pin"?"グリーンの中をタップしてピンを置きます。指を当てたまま動かすと細かく調整できます。":gmode==="chip"?"寄せた後にボールが止まった場所をタップしてください。":"ボールが止まった場所をタップ。グリーンに乗らなかったときは外側のボタンを押します。"}${GPOLY?"<br>グリーンの形はGDOのコース図をもとにした目安です。":""}</p>
+      <p class="ghint">${gmode==="pin"?"グリーンの中をタップしてピンを置きます。指を当てたまま動かすと細かく調整できます。":gmode==="chip"?"寄せた後にボールが止まった場所をタップしてください。":"ボールが止まった場所をタップ。グリーンに乗らなかったときは外側のボタンを押します。"}</p>
       ${recBox(h,rc)}
     </div>
     <div class="grp"><span class="label">ファーストパット（カップまでの歩数）</span>${tileRow("first",FIRST,h.first,4)}</div>
@@ -1239,7 +1239,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.24-1411";
+const APP_VERSION="2026.11.24-1418";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
