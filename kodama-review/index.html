@@ -260,6 +260,11 @@ h2{margin:0;font-size:16px;font-weight:700}
 .gwrap:has(.gfree) .off.side .bl{width:16px;height:16px}
 .gsvg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .gfree .mk{z-index:3}
+.gguide{position:absolute;pointer-events:none;z-index:2;border:0 dashed var(--flag)}
+.gguide.v{top:-12px;bottom:-12px;border-left-width:2px;transform:translateX(-1px)}
+.gguide.h{left:-12px;right:-12px;border-top-width:2px;transform:translateY(-1px)}
+.gglab{position:absolute;left:50%;top:4px;transform:translateX(-50%);z-index:4;pointer-events:none;background:var(--ink);color:var(--card);font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.gglab.low{top:auto;bottom:4px}
 .loupe{position:absolute;width:96px;height:96px;border-radius:50%;overflow:hidden;border:3px solid var(--green);background:var(--card);box-shadow:0 4px 14px rgba(0,0,0,.3);transform:translate(-50%,calc(-100% - 34px));pointer-events:none;z-index:10}
 .loupe .lin{position:absolute;left:0;top:0;transform-origin:0 0}
 .loupe .lin .mk{z-index:3}
@@ -389,7 +394,7 @@ h2{margin:0;font-size:16px;font-weight:700}
       <h3>2. 各ホールで入力</h3>
       <ul>
         <li><b>ティーショット</b>：左ラフ／FW／右ラフ／OB／1ペナ／池をワンタップ。パー3は<b>風 → 番手 → ピンに対して縦の距離</b>を選び、ペナルティがあったときだけOB・1ペナ・池を押します。</li>
-        <li><b>グリーン</b>：ホールごとの形で描いたグリーンの中の好きな場所をタップして「ピン位置」→「乗った位置」の順に置きます。指を当てたまま動かすと微調整でき、指の上に拡大表示が出ます。間違えたら下の×で消せます。外したら円の外のボタンを押し、続けて「寄せた後」にパットを打った場所をタップします。</li>
+        <li><b>グリーン</b>：ホールごとの形で描いたグリーンの中の好きな場所をタップして「ピン位置」→「乗った位置」の順に置きます。指を当てたまま動かすと微調整でき、指の位置を通る縦横の線と場所の名前が出ます。間違えたら下の×で消せます。外したら円の外のボタンを押し、続けて「寄せた後」にパットを打った場所をタップします。</li>
         <li><b>ファーストパット</b>：カップまでの歩数（1歩＝65cm）と、<b>上り・下り</b>、<b>ライン</b>を選びます。</li>
         <li><b>打数・パット</b>：最初から<b>パー・2パット</b>が入っています。違うときだけ＋−で直し、「次の番へ」で記録されます。</li>
         <li><b>一番悔やまれる1打</b>と<b>ひとことメモ</b>は分かる範囲で。メモにはグリーンの特徴（例：二段グリーンで奥が高い）も書けます。</li>
@@ -732,9 +737,9 @@ function greenPad(h,rc,gn){
   let step="";
   if(gn&&gn.step){const v=gn.dir==="L"||gn.dir==="R";const hi=gn.dir?{B:"奥",F:"手前",L:"左",R:"右"}[gn.dir]+"が高い":"段";
     step=`<span class="gstep ${v?"v":"h"}"></span><span class="gstepl ${v?"v":"h"}">${gn.step}・${hi}</span>`;}
-  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","side")}<div class="gcwrap"><div class="green gfree" id="gpad">${svg}${step}${labels}${marks}</div><div class="loupe" id="loupe" hidden><div class="lin" id="loupeIn"></div><span class="lx"></span></div></div>${o("oR","side")}<span></span>${o("oF","")}<span></span></div>`;
+  return `<div class="gwrap"><span></span>${o("oB","")}<span></span>${o("oL","side")}<div class="gcwrap"><div class="green gfree" id="gpad">${svg}${step}${labels}${marks}</div></div>${o("oR","side")}<span></span>${o("oF","")}<span></span></div>`;
 }
-// グリーンの円をタップ／ドラッグして位置を置く（指で隠れないよう、動かしている間は上に拡大表示）
+// グリーンの円をタップ／ドラッグして位置を置く（動かしている間は指の位置を通る縦横の線と場所の名前を出す）
 let gdrag=null;
 function gPoint(e,pad){const r=pad.getBoundingClientRect();return [(e.clientX-r.left)/r.width*100,(e.clientY-r.top)/r.height*100]}
 function gShow(pad,x,y){
@@ -742,10 +747,11 @@ function gShow(pad,x,y){
   let m=pad.querySelector(".mk."+cls);
   if(!m){m=document.createElement("span");m.className="mk "+cls;m.innerHTML=gmode==="pin"?'<span class="fl">⚑</span>':gmode==="chip"?'<span class="cp">寄</span>':'<span class="bl"></span>';pad.appendChild(m)}
   m.style.left=px+"%";m.style.top=py+"%";
-  const lp=$("loupe"),li=$("loupeIn");if(lp&&li){const w=pad.clientWidth,S=1.8,L=96;
-    li.innerHTML=pad.innerHTML.replace(/id="gclip"/,'id="gclip2"').replace(/url\(#gclip\)/,"url(#gclip2)");li.style.width=w+"px";li.style.height=w+"px";
-    li.style.transform=`translate(${L/2-px/100*w*S}px,${L/2-py/100*w*S}px) scale(${S})`;
-    lp.style.left=(pad.offsetLeft+px/100*w)+"px";lp.style.top=(pad.offsetTop+py/100*w)+"px";lp.hidden=false}
+  // 指の位置を通る縦横のガイド線と、置く場所の名前（指で隠れても線の続きで位置が分かる）
+  let gv=pad.querySelector(".gguide.v"),gh=pad.querySelector(".gguide.h"),gl=pad.querySelector(".gglab");
+  if(!gv){gv=document.createElement("span");gv.className="gguide v";gh=document.createElement("span");gh.className="gguide h";gl=document.createElement("span");gl.className="gglab";pad.append(gv,gh,gl)}
+  gv.style.left=px+"%";gh.style.top=py+"%";
+  gl.textContent=(gmode==="pin"?"ピン":gmode==="chip"?"寄せた後":"ボール")+"："+posName(k);gl.classList.toggle("low",py<50);
   return k;
 }
 document.addEventListener("pointerdown",e=>{
@@ -1239,7 +1245,7 @@ $("saveRound").onclick=async()=>{
 })();
 renderInput();
 // ===== 更新チェック：開いたとき・アプリに戻ったときに新しい版があれば読み込み直す =====
-const APP_VERSION="2026.11.24-1418";
+const APP_VERSION="2026.11.24-1421";
 async function checkUpdate(){
   try{
     const r=await fetch("../review-version.json?t="+Date.now(),{cache:"no-store"});
