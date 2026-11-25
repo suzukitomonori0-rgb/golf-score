@@ -536,23 +536,27 @@ function renderSum(C,top=''){
   </main>`;
 }
 
+// 履歴の一覧：この端末の記録＋他のメンバーが記録して共有されたもの（新しい順）
+function HL(){const sh=(window.WGH&&WGH.sharedHist)?WGH.sharedHist():[];const ids=new Set(HIST.map(r=>r.id));
+  return HIST.concat(sh.filter(r=>!ids.has(r.id)).map(r=>Object.assign({},r,{_shared:true}))).sort((x,y)=>y.id-x.id)}
 function renderHist(){
   if(histId!=null){
-    const rec=HIST.find(x=>x.id===histId);
+    const rec=HL().find(x=>x.id===histId);
     if(rec){
       const head=`<div class="sec" style="display:flex;align-items:center;gap:8px"><button class="btn sm" data-hback="1" style="padding:9px 14px">◀ 一覧</button>
         <div style="flex:1;min-width:0"><b>${fmtDate(rec.id)}</b><div class="hint" style="margin:0">児玉カントリー倶楽部 · ${CN(rec.front||'W')}→${CN(rec.back||'S')}</div></div></div>`;
       const body=withRec(rec,()=>renderSum(compute(),head));
+      if(rec._shared)return body.replace(/<\/main>$/,'<div class="hint" style="margin-top:18px">他のメンバーの端末で記録されたラウンドです。この端末からは削除できません。</div></main>');
       return body.replace(/<\/main>$/,`<button class="btn warn${delArm?' on':''}" data-hdel="${rec.id}" style="width:100%;margin-top:22px">${delArm?'もう一度押すと削除します':'この記録を削除'}</button></main>`);
     }
     histId=null;
   }
-  if(!HIST.length)return `<main class="wrap"><div class="sec"><h2>履歴</h2><div class="empty">まだ保存されたラウンドはありません。集計画面の「全て確定して終了」で保存されます。</div></div></main>`;
-  const items=HIST.map(rec=>withRec(rec,()=>{const C=compute();const ps=P();const top=[...ps].sort((a,b)=>C.tot[b]-C.tot[a]);
+  if(!HL().length)return `<main class="wrap"><div class="sec"><h2>履歴</h2><div class="empty">まだ保存されたラウンドはありません。集計画面の「全て確定して終了」で保存されます。</div></div></main>`;
+  const items=HL().map(rec=>withRec(rec,()=>{const C=compute();const ps=P();const top=[...ps].sort((a,b)=>C.tot[b]-C.tot[a]);
     return `<button class="st" data-hopen="${rec.id}" style="grid-template-columns:minmax(0,1fr) auto;text-align:left;width:100%">
-      <div class="nm" style="white-space:normal"><b>${fmtDate(rec.id)}</b>${(()=>{const k=Object.values(rec.holes).filter(x=>x.done).length;return k<18?` <span class="tag">${k}H途中終了</span>`:''})()}<div style="font-size:12px;color:var(--muted);font-weight:500">${top.map(i=>`${esc(S.players[i].name)} <span class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${C.bal[i]>0?'+':''}${C.bal[i]}</span>`).join('　')}</div></div>
+      <div class="nm" style="white-space:normal"><b>${fmtDate(rec.id)}</b>${rec._shared?' <span class="tag">共有</span>':''}${(()=>{const k=Object.values(rec.holes).filter(x=>x.done).length;return k<18?` <span class="tag">${k}H途中終了</span>`:''})()}<div style="font-size:12px;color:var(--muted);font-weight:500">${top.map(i=>`${esc(S.players[i].name)} <span class="${C.bal[i]>0?'pos':C.bal[i]<0?'neg':''}">${C.bal[i]>0?'+':''}${C.bal[i]}</span>`).join('　')}</div></div>
       <div style="color:var(--muted);font-size:20px">›</div></button>`})).join('');
-  return `<main class="wrap"><div class="sec"><h2>履歴 · ${HIST.length}ラウンド</h2><div class="stand">${items}</div></div></main>`;
+  return `<main class="wrap"><div class="sec"><h2>履歴 · ${HL().length}ラウンド</h2><div class="stand">${items}</div></div></main>`;
 }
 
 function renderModal(){
@@ -609,7 +613,7 @@ app.addEventListener('click',e=>{
   if(d.hopen){histId=+d.hopen;delArm=false;render();window.scrollTo(0,0);return}
   if(d.hback){histId=null;delArm=false;render();window.scrollTo(0,0);return}
   if(d.hdel){if(!delArm){delArm=true;render();return}
-    HIST=HIST.filter(x=>x.id!==+d.hdel);saveHist();histId=null;delArm=false;render();window.scrollTo(0,0);return}
+    HIST=HIST.filter(x=>x.id!==+d.hdel);saveHist();if(window.WGH&&WGH.hideHist)WGH.hideHist(+d.hdel);histId=null;delArm=false;render();window.scrollTo(0,0);return}
   if(d.go!==undefined){S.view='hole';go(+d.go);return}
   const h=hole(),H=S.holes[h];
   if(d.oly){const[i,k]=d.oly.split(':');const on=H.oly[+i]!==k;H.oly[+i]=on?k:'';save();const rc=t.getBoundingClientRect();render();if(on)pop(rc,({g:'稼ぐねー金！',s:'ナイス銀！',b:'おいしい銅！',i:'コツコツ鉄！',d:'ラッキー⁉'})[k]+` +${MED[k].pt}点`);return}
@@ -638,7 +642,7 @@ app.addEventListener('input',e=>{
   if(d.rhc!==undefined){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.roster[+d.rhc].hc=isNaN(v)?0:Math.min(36,v);syncPlayers();save();const hn=t.closest('.field')&&t.closest('.field').nextElementSibling;const vv=isNaN(v)?0:Math.min(36,v);if(hn&&hn.classList.contains('hint'))hn.textContent=`前半 ${vv}・後半 ${vv}`}
   if(d.rate){const v=parseInt(t.value.replace(/[^\d]/g,''),10);S.rate=isNaN(v)?0:v;save()}
 });
-if(window.WGH_APP)window.WGH_APP.rerender=()=>{if(S.view==='hole'&&!modal)render()};
+if(window.WGH_APP)window.WGH_APP.rerender=()=>{if((S.view==='hole'||S.view==='hist')&&!modal&&!delArm)render()};
 render();
 })();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
