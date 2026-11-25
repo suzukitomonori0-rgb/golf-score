@@ -6,7 +6,9 @@ const ENDPOINT='https://script.google.com/macros/s/AKfycbzl38EFADz_jKgnHqdjSAXVF
 
 const CACHE_KEY='wgh-cache-v1';
 const HI_KEY='wgh-hi-v1';
-const sentKey=src=>'wgh-sent-v1:'+src;
+const sentKey=src=>'wgh-sent-v2:'+src;   // v2：ゲームの設定・結果も丸ごと送る
+const histKey=src=>'wgh-hist-v1:'+src;   // 他の端末の履歴（前回読み込んだ分）
+const hideKey=src=>'wgh-hhide-v1:'+src;  // この端末で削除した履歴
 function readJSON(k,def){try{const v=JSON.parse(localStorage.getItem(k));return v==null?def:v}catch(e){return def}}
 function writeJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
@@ -23,7 +25,7 @@ function compact(app,rec){
     for(let h=1;h<=18;h++){const H=rec.holes&&rec.holes[h];const v=H&&H.done&&H.s?H.s[i]:null;s.push(v>0?Number(v):null)}
     players.push({name,s});
   }
-  return {uid:app.src+':'+rec.id,src:app.src,date:rec.id,course:app.course,front,back,players};
+  return {uid:app.src+':'+rec.id,src:app.src,date:rec.id,course:app.course,front,back,players,rec};
 }
 
 let busy=false;
@@ -32,7 +34,7 @@ async function push(){
   const app=window.WGH_APP;if(!ENDPOINT||!app||busy)return {sent:0};
   const hist=readJSON(app.hkey,[]);if(!Array.isArray(hist)||!hist.length)return {sent:0};
   const sent=new Set(readJSON(sentKey(app.src),[]));
-  const pending=hist.filter(r=>r&&r.id&&!sent.has(app.src+':'+r.id)).slice(0,50);
+  const pending=hist.filter(r=>r&&r.id&&!sent.has(app.src+':'+r.id)).slice(0,20);
   if(!pending.length)return {sent:0};
   busy=true;
   try{
@@ -57,13 +59,26 @@ function hcTag(name){
 // 全員分のラウンドとコース情報を読み込む（つながらなければ前回の内容）
 async function load(){
   if(!ENDPOINT)return {data:readJSON(CACHE_KEY,null),offline:true,unset:true};
+  const app=window.WGH_APP;
   try{
-    const res=await fetch(ENDPOINT+(ENDPOINT.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store'});
+    const res=await fetch(ENDPOINT+(ENDPOINT.includes('?')?'&':'?')+(app?'src='+encodeURIComponent(app.src)+'&':'')+'t='+Date.now(),{cache:'no-store'});
     const j=await res.json();
+    if(j&&j.ok&&app&&Array.isArray(j.history))writeJSON(histKey(app.src),j.history.filter(r=>r&&r.id&&r.holes&&Array.isArray(r.players)));
     if(j&&j.ok){const data={rounds:j.rounds||[],courses:j.courses||[],at:Date.now()};writeJSON(CACHE_KEY,data);refreshHi(data);return {data,offline:false}}
   }catch(e){}
   const data=readJSON(CACHE_KEY,null);refreshHi(data);
   return {data,offline:true};
+}
+
+// 他のメンバーが記録した履歴（この端末にあるもの・この端末で削除したものは除く）
+function sharedHist(){
+  const app=window.WGH_APP;if(!app)return [];
+  const hide=new Set(readJSON(hideKey(app.src),[]));
+  return readJSON(histKey(app.src),[]).filter(r=>!hide.has(r.id));
+}
+function hideHist(id){
+  const app=window.WGH_APP;if(!app)return;
+  const hide=readJSON(hideKey(app.src),[]);if(hide.indexOf(id)<0){hide.push(id);writeJSON(hideKey(app.src),hide)}
 }
 
 // 手入力のラウンドを送る（ハンディページ用）
@@ -73,7 +88,7 @@ async function postRounds(rounds){
   const j=await res.json();if(!j||!j.ok)throw new Error((j&&j.error)||'送信に失敗しました');return j;
 }
 
-window.WGH={ENDPOINT,push,load,postRounds,hcTag,configured:!!ENDPOINT};
+window.WGH={ENDPOINT,push,load,postRounds,hcTag,sharedHist,hideHist,configured:!!ENDPOINT};
 window.wghSync=push;
 
 // スコアアプリでは、開いた時・電波が戻った時・画面に戻った時・1分ごとに未送信分を送る
@@ -86,7 +101,7 @@ if(window.WGH_APP&&ENDPOINT){
   const refresh=async()=>{await push();await load();if(typeof window.WGH_APP.rerender==='function')window.WGH_APP.rerender()};
   setTimeout(refresh,1500);
   window.addEventListener('online',push);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')push()});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh()});
   setInterval(push,60000);
 }
 })();
